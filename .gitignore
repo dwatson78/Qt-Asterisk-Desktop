@@ -35,3 +35,6 @@ Makefile*
 
 #qevelop
 *.qdevelop
+
+#Backup files
+*~
