@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QtAsteriskDesktopPrefs</class>
+ <widget class="QDialog" name="QtAsteriskDesktopPrefs">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>374</width>
+    <height>360</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Preferences</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0">
+    <widget class="QDialogButtonBox" name="_buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QTabWidget" name="_tabPrefs">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="_tabAmi">
+      <attribute name="title">
+       <string>AMI Connection</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="_amiHostLit">
+         <property name="text">
+          <string>Host:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0" colspan="2">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="_amiHost"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="_amiUserNameLit">
+         <property name="text">
+          <string>User name:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="_amiPasswordLit">
+         <property name="text">
+          <string>Password:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="_amiPortLit">
+         <property name="text">
+          <string>Port:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="_amiConnectIntervalLit">
+         <property name="text">
+          <string>Reconnect
+interval:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="_amiPort"/>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="_amiUserName"/>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="_amiPassword"/>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="_amiConnectInterval"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="_tabDevices">
+      <attribute name="title">
+       <string>Devices</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="_device"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="_deviceLit">
+         <property name="text">
+          <string>Device:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>_tabPrefs</tabstop>
+  <tabstop>_amiHost</tabstop>
+  <tabstop>_amiPort</tabstop>
+  <tabstop>_amiUserName</tabstop>
+  <tabstop>_amiPassword</tabstop>
+  <tabstop>_amiConnectInterval</tabstop>
+  <tabstop>_buttonBox</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>_buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>QtAsteriskDesktopPrefs</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>_buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>QtAsteriskDesktopPrefs</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
