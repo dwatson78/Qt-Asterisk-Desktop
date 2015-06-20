@@ -1,6 +1,10 @@
-<!DOCTYPE RCC><RCC version="1.0">
- <qresource>
-     <file>icons/dialog-close.png</file>
-     <file>icons/dialog-ok-apply.png</file>
- </qresource>
- </RCC>
+<RCC>
+    <qresource prefix="/">
+        <file>icons/dialog-close.png</file>
+        <file>icons/dialog-ok-apply.png</file>
+        <file>icons/call-transfer.png</file>
+        <file>icons/call-hangup.png</file>
+        <file>icons/call-park.png</file>
+        <file>icons/call-answer.png</file>
+    </qresource>
+</RCC>

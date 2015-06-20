@@ -123,6 +123,18 @@ public:
     RTCPSent
   };
 
+  enum ExtStatus{
+    Removed     = -2,
+    Deactivated = -1,
+    NotInUse    = 0,
+    InUse       = 1 << 0,
+    Busy        = 1 << 1,
+    Unavailable = 1 << 2,
+    Ringing     = 1 << 3,
+    OnHold      = 1 << 4
+  };
+  Q_DECLARE_FLAGS(ExtStatuses, ExtStatus)
+
   explicit AsteriskManager(QObject *parent = 0);
 
   QString eventValue(AsteriskManager::Event event);
@@ -285,5 +297,6 @@ signals:
   void responseSent(AsteriskManager::Response response, QVariantMap headers, QString actionID);
   void eventGenerated(AsteriskManager::Event event, QVariantMap headers);
 };
+Q_DECLARE_OPERATORS_FOR_FLAGS(AsteriskManager::ExtStatuses)
 
 #endif // ASTERISKMANAGER_H

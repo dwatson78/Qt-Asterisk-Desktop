@@ -16,18 +16,25 @@ SOURCES +=   \
              src/qtasteriskdesktopprefs.cpp \
              src/asteriskmanager.cpp \
              src/confbridgeuser.cpp \
-             src/statusicon.cpp
+             src/statusicon.cpp \
+             src/astcall.cpp \
+             src/astchannel.cpp \
+             src/astparkedcall.cpp
 
 HEADERS +=   \
              src/qtasteriskdesktopmain.h \
              src/qtasteriskdesktopprefs.h \
              src/asteriskmanager.h \
              src/confbridgeuser.h \
-             src/statusicon.h
+             src/statusicon.h \
+             src/astcall.h \
+             src/astchannel.h \
+             src/astparkedcall.h
 
 FORMS +=     \
              src/ui/qtasteriskdesktopmain.ui \
-             src/ui/qtasteriskdesktopprefs.ui
+             src/ui/qtasteriskdesktopprefs.ui \
+             src/ui/astparkedcallwidget.ui
 
 RESOURCES += \
              resources.qrc

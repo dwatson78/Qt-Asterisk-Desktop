@@ -433,7 +433,7 @@ QString AsteriskManager::actionOriginate(QString channel,
   insertNotEmpty(&headers, "Async", async);
   insertNotEmpty(&headers, "Codecs", codecs.join(","));
 
-  qDebug() << "Headers:" << headers;
+  //qDebug() << "Headers:" << headers;
 
   if (!variables.isEmpty()) {
     QMapIterator<QString, QVariant> variable(variables);
@@ -820,6 +820,39 @@ void AsteriskManager::onReadyRead()
     if (line != "\r\n") {
       if (keyValue.indexIn(line) > -1)
         packetBuffer[keyValue.cap(1)] = stringValue(keyValue.cap(2).trimmed());
+      else if (line.startsWith("ChanVariable"))
+      {
+        if(!packetBuffer.contains("ChanVars"))
+        {
+          QMap<QString, QVariant> chanvars;
+          packetBuffer.insert("ChanVars",chanvars);
+        }
+        QMap<QString, QVariant> chanvars = packetBuffer.value("ChanVars").toMap();
+        //Get the Channel Name
+        bool debugMe = false;
+        if(packetBuffer.contains("Event") && packetBuffer.value("Event").toString() == "Dial")
+          debugMe = true;
+        QRegExp re ("^ChanVariable\\(([^)]+)\\):\\ (.*)$");
+        if(re.exactMatch(line))
+        {
+          if(!chanvars.contains(re.cap(1)))
+          {
+            QMap<QString, QVariant> chanvarvals;
+            chanvars.insert(re.cap(1),chanvarvals);
+          }
+          QMap<QString, QVariant> chanvarvals = chanvars.value(re.cap(1)).toMap();
+          QRegExp re2 ("^([^=]+)=(.*)$");
+          if(re2.exactMatch(re.cap(2).trimmed()))
+          {
+            if(re2.captureCount() == 2)
+            {
+              chanvarvals.insert(re2.cap(1), re2.cap(2));
+            }
+          }
+          chanvars.insert(re.cap(1),chanvarvals);
+        }
+        packetBuffer.insert("ChanVars",chanvars);
+      }
       else if (line.startsWith("Asterisk Call Manager"))
         emit connected(line.replace("Asterisk Call Manager/", QByteArray()).trimmed());
     } else if (!packetBuffer.isEmpty()) {

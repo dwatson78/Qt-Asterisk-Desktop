@@ -20,7 +20,7 @@ public:
     int index = mo.indexOfEnumerator("prefs");
     QMetaEnum me = mo.enumerator(index);
     return QString(me.valueToKey(pref));
-  };
+  }
 };
 
 class QtAsteriskDesktopPrefs : public QDialog
