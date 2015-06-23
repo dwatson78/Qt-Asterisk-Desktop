@@ -30,7 +30,7 @@ public:
 
 public slots:
   void sDestroyChannel(AstChannel * channel);
-  void sParkedCallEvent(AsteriskManager::Event eventType, QVariantMap event);
+  void sParkedCallEvent(AsteriskManager::Event eventType, QVariantMap event, AstChannel *from = 0);
   void sParkTimeOut(QVariantMap event);
   void sParkGiveUp(QVariantMap event);
 

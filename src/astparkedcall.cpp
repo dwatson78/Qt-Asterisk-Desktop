@@ -58,12 +58,25 @@ AstParkedCall::~AstParkedCall()
   emit destroying(this);
 }
 
-void AstParkedCall::sParkedCallEvent(AsteriskManager::Event eventType, QVariantMap event)
+void AstParkedCall::sParkedCallEvent(AsteriskManager::Event eventType, QVariantMap event, AstChannel *from)
 {
   switch(eventType)
   {
     case AsteriskManager::ParkedCall:
       break;
+    case AsteriskManager::Bridge:
+    {
+      if(NULL != from)
+      {
+        this->ui->_statusInfo1->setText(QString("Answered: %1").arg(from->getCallIdStr()));
+        disconnect(AdmStatic::getInstance()
+                   ->getTimer(),  SIGNAL(timeout()),
+                   this,          SLOT(sTickTock())
+        );
+        this->setEnabled(false);
+      }
+      break;
+    }
     case AsteriskManager::UnParkedCall:
     {
       QString name;
@@ -80,7 +93,7 @@ void AstParkedCall::sParkedCallEvent(AsteriskManager::Event eventType, QVariantM
       }
       disconnect(AdmStatic::getInstance()
                  ->getTimer(),  SIGNAL(timeout()),
-              this,             SLOT(sTickTock())
+                 this,          SLOT(sTickTock())
       );
       this->setEnabled(false);
       break;

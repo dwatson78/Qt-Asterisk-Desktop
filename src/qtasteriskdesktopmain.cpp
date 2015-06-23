@@ -377,6 +377,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           _parkedMap->value(uuid)->sParkedCallEvent(arg1, arg2);
         }
       }
+      break;
     }
     case AsteriskManager::Hangup:
     case AsteriskManager::Newstate:
@@ -407,7 +408,11 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     {
       if(arg2.value("Bridgestate").toString() == "Link")
       {
-        QString uuid1 = arg2.value("Uniqueid1").toString();
+        QString uuid1,uuid2;
+        uuid1 = arg2.value("Uniqueid1").toString();
+        uuid2 = arg2.value("Uniqueid2").toString();
+
+        // Call handling
         if(!_callMap->contains(uuid1))
         {
           AstCall *call = new AstCall(uuid1);
@@ -424,17 +429,23 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
                   this, SLOT(sDestroyingCall(AstCall*))
           );
 
-
           if(_chanMap->contains(uuid1))
             call->addChannel(_chanMap->value(uuid1));
 
-          QString uuid2 = arg2.value("Uniqueid2").toString();
           if(_chanMap->contains(uuid2))
             call->addChannel(_chanMap->value(uuid2));
 
           _callMap->insert(uuid1,call);
 
           ui->_layoutMyDevice->addWidget(call,2,0,1,1,0);
+        }
+        // Parked call handling
+        if(!uuid1.isNull() && !uuid2.isNull())
+        {
+          if(_parkedMap->contains(uuid1) && _chanMap->contains(uuid2))
+          {
+            _parkedMap->value(uuid1)->sParkedCallEvent(arg1,arg2,_chanMap->value(uuid2));
+          }
         }
       }
       break;
@@ -711,7 +722,8 @@ void QtAsteriskDesktopMain::sCallPark(AstCall * call)
                       .arg(otherChan->getChannel())
                       .arg(myChan->getChannel())
           ;
-          _ami->actionPark(otherChan->getChannel(),myChan->getChannel(),45000);
+          int timeout = 45000;
+          _ami->actionPark(otherChan->getChannel(),myChan->getChannel(),timeout);
         }
       }
     }
