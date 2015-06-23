@@ -4,7 +4,6 @@
 #include <QWidget>
 #include <QMap>
 #include <QTime>
-#include <QTimer>
 
 #include <QGridLayout>
 #include <QVBoxLayout>
@@ -53,7 +52,6 @@ private:
 
 
   QTime   *_time;
-  QTimer  *_timer;
 
   QGridLayout *_lyt;
   QVBoxLayout *_lytChannels;

@@ -6,5 +6,7 @@
         <file>icons/call-hangup.png</file>
         <file>icons/call-park.png</file>
         <file>icons/call-answer.png</file>
+        <file>icons/important.png</file>
+        <file>icons/error.png</file>
     </qresource>
 </RCC>

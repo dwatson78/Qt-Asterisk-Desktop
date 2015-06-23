@@ -19,7 +19,9 @@ SOURCES +=   \
              src/statusicon.cpp \
              src/astcall.cpp \
              src/astchannel.cpp \
-             src/astparkedcall.cpp
+             src/astparkedcall.cpp \
+             src/admstatic.cpp \
+             src/admicontext.cpp
 
 HEADERS +=   \
              src/qtasteriskdesktopmain.h \
@@ -29,12 +31,15 @@ HEADERS +=   \
              src/statusicon.h \
              src/astcall.h \
              src/astchannel.h \
-             src/astparkedcall.h
+             src/astparkedcall.h \
+             src/admstatic.h \
+             src/admicontext.h
 
 FORMS +=     \
              src/ui/qtasteriskdesktopmain.ui \
              src/ui/qtasteriskdesktopprefs.ui \
-             src/ui/astparkedcallwidget.ui
+             src/ui/astparkedcallwidget.ui \
+             src/ui/admicontext.ui
 
 RESOURCES += \
              resources.qrc

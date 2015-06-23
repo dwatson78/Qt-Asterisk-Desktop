@@ -24,6 +24,9 @@ AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
   /*uint*/    this->_callIdPresNum      = QVariant(QVariant::UInt);
   /*QString*/ this->_callIdPresDesc     = QString();
 
+  this->_time = new QTime();
+  _time->start();
+
   this->_isParked = false;
   this->_parkedExten            = QVariant(QVariant::UInt);
   this->_parkedFromName         = QString();

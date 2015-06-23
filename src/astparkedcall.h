@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QGridLayout>
+#include <QTime>
 #include "astchannel.h"
 
 namespace Ui
@@ -35,6 +36,8 @@ public slots:
 
   void sStartAnswerParkedCall();
 
+  void sTickTock();
+
 protected:
 
 signals:
@@ -45,8 +48,7 @@ signals:
 
 private:
   Ui::AstParkedCallWidget *ui;
-
-  QGridLayout * _lyt;
+  QTime   *_time;
 
   AstChannel *_chanParked;
   AstChannel *_chanFrom;

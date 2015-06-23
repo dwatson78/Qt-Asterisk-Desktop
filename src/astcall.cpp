@@ -1,7 +1,7 @@
 #include "astcall.h"
 #include <QSpacerItem>
 #include <QToolButton>
-
+#include "admstatic.h"
 
 
 AstCall::AstCall(QString uuid, QWidget *parent) :
@@ -12,17 +12,15 @@ AstCall::AstCall(QString uuid, QWidget *parent) :
   _time = new QTime();
   _time->start();
 
-  _timer = new QTimer();
-  connect(_timer, SIGNAL(timeout()),
-          this,   SLOT(sTickTock())
-  );
-  _timer->start(500);
-
   this->_channels = new QMap<QString,AstChannel*>();
   this->_channelWidgets = new QMap<QString,QLabel*>();
 
-
   this->_initWidgit();
+
+  connect(AdmStatic::getInstance()
+          ->getTimer(), SIGNAL(timeout()),
+          this,         SLOT(sTickTock())
+  );
 }
 AstCall::~AstCall()
 {
@@ -176,8 +174,10 @@ void AstCall::sHangupChannel(AstChannel *channel)
   if(isAllHungup)
   {
     qDebug() << "Everyone hungup!";
-    _timer->stop();
-    _timer->blockSignals(true);
+    disconnect(AdmStatic::getInstance()
+               ->getTimer(),  SIGNAL(timeout()),
+               this,          SLOT(sTickTock())
+    );
   }
 }
 
@@ -206,31 +206,7 @@ void AstCall::sRemoveChannel(AstChannel *channel)
 
 void AstCall::sTickTock()
 {
-  qDebug() << tr("sTickTock: Elapsed Time: %1")
-              .arg(QString::number(_time->elapsed())
-  );
-  _elapsed = _time->elapsed();
-  int tsecs = _elapsed / 1000;
-  int secs  = tsecs % 60;
-  int mins  = (tsecs % 3600) / 60;
-  int hours = tsecs / 3600;
-  QString elapsStr;
-
-  if(hours == 0)
-  {
-    elapsStr = tr("%1:%2")
-        .arg(mins,2,10,QLatin1Char('0'))
-        .arg(secs,2,10,QLatin1Char('0'))
-        ;
-  } else {
-    elapsStr = tr("%1:%2:%3")
-        .arg(hours)
-        .arg(mins,2,10,QLatin1Char('0'))
-        .arg(secs,2,10,QLatin1Char('0'))
-        ;
-  }
-
-  _lbl1->setText(tr("Dial: Elapsed(%1)").arg(elapsStr));
+  _lbl1->setText(tr("Dial: Elapsed(%1)").arg(AdmStatic::elapsedTimeToString(_time)));
 }
 
 void AstCall::sStartCallXfer()

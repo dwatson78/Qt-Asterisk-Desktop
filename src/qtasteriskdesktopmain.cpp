@@ -363,7 +363,19 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     {
       if(arg1 != AsteriskManager::ParkedCall)
       {
-
+        QString uuid;
+        if(arg2.contains("Uniqueid"))
+          uuid = arg2.value("Uniqueid",QString()).toString();
+        else if(arg2.contains("UniqueId"))
+          uuid = arg2.value("UniqueId",QString()).toString();
+        else if(arg2.contains("UniqueID"))
+          uuid = arg2.value("UniqueID",QString()).toString();
+        else
+          uuid = QString();
+        if(uuid != QString() && _parkedMap->contains(uuid))
+        {
+          _parkedMap->value(uuid)->sParkedCallEvent(arg1, arg2);
+        }
       }
     }
     case AsteriskManager::Hangup:

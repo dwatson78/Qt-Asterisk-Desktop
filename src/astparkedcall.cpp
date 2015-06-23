@@ -3,12 +3,24 @@
 #include <QLabel>
 #include <QIcon>
 #include <QToolButton>
+#include "admstatic.h"
+#include "admicontext.h"
 
 AstParkedCall::AstParkedCall(AstChannel *chanParked, AstChannel *chanFrom, QVariantMap event, QWidget *parent) :
   QWidget(parent),
   ui(new Ui::AstParkedCallWidget)
 {
   ui->setupUi(this);
+
+  // Start the clock
+  _time = new QTime();
+  _time->start();
+
+  connect(AdmStatic::getInstance()
+          ->getTimer(), SIGNAL(timeout()),
+          this,         SLOT(sTickTock())
+  );
+
   this->_chanParked = chanParked;
   connect(this->_chanParked, SIGNAL(destroying(AstChannel*)),
           this,SLOT(sDestroyChannel(AstChannel*))
@@ -37,94 +49,9 @@ AstParkedCall::AstParkedCall(AstChannel *chanParked, AstChannel *chanFrom, QVari
           this,                     SLOT(sStartAnswerParkedCall())
   );
 
-  ui->_parkInfo->setText(QString("Slot: %1: %2")
-                         .arg(_parkedExten.toString())
-                         .arg(_chanParked->getCallIdStr())
-  );
-
+  ui->_lblExten->setText(_parkedExten.toString());
+  ui->_parkInfo->setText(_chanParked->getCallIdStr());
   ui->_fromInfo->setText(getParkedFromStr());
-
-/*
-  _lyt = new QGridLayout();
-
-  //Add the data
-  QLabel *_lblParkedLit = new QLabel("Parked: ");
-  _lblParkedLit->setObjectName("_lblParkedLit");
-  _lyt->addWidget(_lblParkedLit,0,0,1,1,(Qt::AlignLeading | Qt::AlignVCenter));
-
-  QLabel *_lblFromLit = new QLabel("From: ");
-  _lblFromLit->setObjectName("_lblFromLit");
-  _lyt->addWidget(_lblFromLit,1,0,1,1,(Qt::AlignLeading | Qt::AlignVCenter));
-
-  QLabel *_lblParked = new QLabel(QString("Slot: %1: %2")
-                                  .arg(_parkedExten.toString())
-                                  .arg(_chanParked->getCallIdStr())
-  );
-  _lblParked->setObjectName("_lblParked");
-  _lyt->addWidget(_lblParked,0,1,1,1,(Qt::AlignLeading | Qt::AlignVCenter));
-
-  QLabel *_lblFrom = new QLabel(QString("%1")
-                                .arg(getParkedFromStr())
-  );
-  _lblFrom->setObjectName("_lblFrom");
-  _lyt->addWidget(_lblFrom,1,1,1,1,(Qt::AlignLeading | Qt::AlignVCenter));
-
-  //Set up the call buttons
-  QHBoxLayout * _tbBox = new QHBoxLayout();
-  _tbBox->setSpacing(2);
-
-  // Set up Call Pickup
-  QIcon iconCallPickup;
-  iconCallPickup.addFile(QString::fromUtf8(":/icons/call-pickup.png"), QSize(), QIcon::Normal, QIcon::Off);
-  QToolButton * _tbCallPickup = new QToolButton();
-  _tbCallPickup->setObjectName(QString::fromUtf8("_tbCallPickup"));
-  _tbCallPickup->setIcon(iconCallPickup);
-  _tbCallPickup->setIconSize(QSize(24, 24));
-  connect(_tbCallPickup,  SIGNAL(clicked()),
-          this,           SLOT(sStartAnswerParkedCall())
-  );
-  _tbBox->addWidget(_tbCallPickup);
-
-  // Finish setting up the call buttons
-  _tbBox->addItem(new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum));
-  _lyt->addLayout(_tbBox,2,0,1,3,(Qt::AlignLeading | Qt::AlignVCenter));
-
-
-  // Set up the Status Indicators
-  QFrame *_frameStatus = new QFrame();
-  _frameStatus->setObjectName("_frameStatus");
-  _frameStatus->setFrameStyle(QFrame::StyledPanel);
-
-  QGridLayout *_layoutStatus = new QGridLayout();
-  _layoutStatus->setObjectName("_layoutStatus");
-  _frameStatus->setLayout(_layoutStatus);
-
-  QLabel * _lblStatus1 = new QLabel("Time on Park: ");
-  _lblStatus1->setObjectName("_lblStatus1");
-  _layoutStatus->addWidget(_lblStatus1,0,0,1,1,(Qt::AlignLeading | Qt::AlignVCenter));
-
-  /* QSpacerItem *_hspacer1 = new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum);
-  _layoutStatus->addSpacerItem(_hspacer1);
-
-  QLabel * _lblStatus2 = new QLabel("2");
-  _lblStatus2->setObjectName("_lblStatus2");
-  _layoutStatus->addWidget(_lblStatus2, 0, (Qt::AlignCenter | Qt::AlignVCenter));
-
-  QSpacerItem *_hspacer2 = new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum);
-  _layoutStatus->addSpacerItem(_hspacer2);
-
-  QLabel * _lblStatus3 = new QLabel("3");
-  _lblStatus3->setObjectName("_lblStatus3");
-  _layoutStatus->addWidget(_lblStatus3, 0, (Qt::AlignTrailing | Qt::AlignVCenter));
-  * /
-
-  _lyt->addWidget(_frameStatus,3,0,1,3,(Qt::AlignLeading | Qt::AlignVCenter));
-
-  QSpacerItem *_hspacer3 = new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Minimum);
-  _lyt->addItem(_hspacer3,0,2,2,1,(Qt::AlignLeading | Qt::AlignVCenter));
-
-  this->setLayout(_lyt);
-  */
 }
 AstParkedCall::~AstParkedCall()
 {
@@ -138,11 +65,46 @@ void AstParkedCall::sParkedCallEvent(AsteriskManager::Event eventType, QVariantM
     case AsteriskManager::ParkedCall:
       break;
     case AsteriskManager::UnParkedCall:
+    {
+      QString name;
+      QVariant num(QVariant::UInt);
+      if(event.contains("ConnectedLineName"))
+        name = event.value("ConnectedLineName").toString();
+      if(event.contains("ConnectedLineNum") && event.value("ConnectedLineNum").toString() != "")
+        num = event.value("ConnectedLineNum").toUInt();
+      if(!num.isNull())
+      {
+        this->ui->_statusInfo1->setText(QString("Answered: %1 <%2>").arg(name).arg(num.toString()));
+      } else {
+        this->ui->_statusInfo1->setText(QString("Answered: %1").arg(name));
+      }
+      disconnect(AdmStatic::getInstance()
+                 ->getTimer(),  SIGNAL(timeout()),
+              this,             SLOT(sTickTock())
+      );
+      this->setEnabled(false);
       break;
+    }
     case AsteriskManager::ParkedCallGiveUp:
+    {
+      this->ui->_statusInfo1->setText("Parked caller hungup");
+      disconnect(AdmStatic::getInstance()
+                 ->getTimer(),  SIGNAL(timeout()),
+              this,             SLOT(sTickTock())
+      );
+      this->setEnabled(false);
       break;
+    }
     case AsteriskManager::ParkedCallTimeOut:
+    {
+      this->ui->_statusInfo1->setText("Parked call timeout");
+      disconnect(AdmStatic::getInstance()
+                 ->getTimer(),  SIGNAL(timeout()),
+              this,             SLOT(sTickTock())
+      );
+      this->setEnabled(false);
       break;
+    }
     default:
       break;
   }
@@ -224,4 +186,24 @@ QString AstParkedCall::getParkedFromStr()
 void AstParkedCall::sStartAnswerParkedCall()
 {
   emit pickUpParkedCall(this);
+}
+
+void AstParkedCall::sTickTock()
+{
+  if(_time->elapsed() >= 33000)
+  {
+    QPixmap pix(":/icons/error.png");
+    this->ui->_statusInfo3->setPixmap(pix);
+    this->ui->_lblExten->setPixmap(pix);
+  } else if(_time->elapsed() >= 20000) {
+    QPixmap pix(":/icons/important.png");
+    this->ui->_statusInfo3->setPixmap(pix);
+    this->ui->_lblExten->setPixmap(pix);
+  } else {
+    //this->ui->_statusInfo3->setPixmap(QPixmap());
+  }
+  this->ui->_statusInfo3->setText(
+        QString("Parked: %1")
+        .arg(AdmStatic::elapsedTimeToString(_time))
+  );
 }

@@ -3,6 +3,7 @@
 
 #include "asteriskmanager.h"
 #include <QObject>
+#include <QTime>
 #include <QVariantMap>
 
 class ChanPart : public QObject
@@ -138,6 +139,8 @@ signals:
 
 private:
   const QString* _uuid;
+  QTime     *_time;
+
   QString   _accountCode;
   QString   _callIdName;
   QVariant  _callIdNum;
@@ -145,7 +148,7 @@ private:
   QVariant  _chanState;
   QString   _chanStateDesc;
   QString   _context;
-  QVariant   _exten;
+  QVariant  _exten;
   QString   _connectedLineName;
   QVariant  _connectedLineNum;
   QVariant  _hangupCauseNum;
