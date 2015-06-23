@@ -5,6 +5,7 @@
 
 #include "asteriskmanager.h"
 #include "confbridgeuser.h"
+#include "admcallwidget.h"
 
 #include <QDebug>
 #include <QGroupBox>
@@ -437,7 +438,10 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
 
           _callMap->insert(uuid1,call);
 
-          ui->_layoutMyDevice->addWidget(call,2,0,1,1,0);
+          //ui->_layoutMyDevice->addWidget(call,2,0,1,1,0);
+          
+          AdmCallWidget *cw = new AdmCallWidget();
+          ui->_layoutCalls->addWidget(cw);
         }
         // Parked call handling
         if(!uuid1.isNull() && !uuid2.isNull())
@@ -478,7 +482,10 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
 
           _callMap->insert(uuid,call);
 
-          ui->_layoutMyDevice->addWidget(call,2,0,1,1,0);
+          //ui->_layoutMyDevice->addWidget(call,2,0,1,1,0);
+          
+          AdmCallWidget *cw = new AdmCallWidget();
+          ui->_layoutCalls->addWidget(cw);
         }
       }
       break;
