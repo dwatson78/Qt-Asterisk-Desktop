@@ -377,7 +377,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           _parkedMap->value(uuid)->sParkedCallEvent(arg1, arg2);
         }
       }
-      break;
+      // Do not add a break here
     }
     case AsteriskManager::Hangup:
     case AsteriskManager::Newstate:
