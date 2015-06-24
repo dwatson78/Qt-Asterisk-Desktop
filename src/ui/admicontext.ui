@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>AdmIconText</class>
- <widget class="QWidget" name="AdmIconText">
+ <widget class="QFrame" name="AdmIconText">
   <property name="geometry">
    <rect>
     <x>0</x>

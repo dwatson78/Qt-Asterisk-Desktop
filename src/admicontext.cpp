@@ -2,7 +2,7 @@
 #include "ui_admicontext.h"
 
 AdmIconText::AdmIconText(const QPixmap &pixmap, const QString &text, QWidget *parent) :
-  QWidget(parent),
+  QFrame(parent),
   ui(new Ui::AdmIconText)
 {
   ui->setupUi(this);
@@ -15,7 +15,7 @@ AdmIconText::AdmIconText(const QPixmap &pixmap, const QString &text, QWidget *pa
     setText(text);
 }
 AdmIconText::AdmIconText(QWidget *parent) :
-  QWidget(parent),
+  QFrame(parent),
   ui(new Ui::AdmIconText)
 {
   ui->setupUi(this);
@@ -24,6 +24,7 @@ AdmIconText::AdmIconText(QWidget *parent) :
 
 AdmIconText::~AdmIconText()
 {
+  emit destroying(this);
   delete ui;
 }
 

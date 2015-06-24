@@ -91,10 +91,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="_status3">
-        <property name="text">
-         <string/>
-        </property>
+       <widget class="AdmIconText" name="_status3">
        </widget>
       </item>
      </layout>
@@ -119,7 +116,10 @@
       <number>1</number>
      </property>
      <item>
-      <widget class="QToolButton" name="_tbXfer">
+      <widget class="DraggableToolButton" name="_tbXfer">
+       <property name="toolTip">
+        <string>Blindly transfer this call</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -137,6 +137,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="_tbPark">
+       <property name="toolTip">
+        <string>Park this call</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -170,6 +173,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="_tbHangup">
+       <property name="toolTip">
+        <string>Hangup this call</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -212,6 +218,18 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>AdmIconText</class>
+   <extends>QFrame</extends>
+   <header>src/admicontext.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DraggableToolButton</class>
+   <extends>QToolButton</extends>
+   <header>src/draggabletoolbutton.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../resources.qrc"/>
  </resources>

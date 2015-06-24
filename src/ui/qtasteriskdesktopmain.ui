@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>754</width>
-    <height>666</height>
+    <width>515</width>
+    <height>268</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,119 @@
        <attribute name="title">
         <string>MyDevice</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_4">
+       <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,1,0">
+        <item row="0" column="2">
+         <widget class="QToolBox" name="_toolBoxXfer">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="mouseTracking">
+           <bool>true</bool>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::NoContextMenu</enum>
+          </property>
+          <property name="acceptDrops">
+           <bool>true</bool>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <property name="tabSpacing">
+           <number>3</number>
+          </property>
+          <widget class="QWidget" name="_peersAvail">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>148</width>
+             <height>83</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Available</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="spacing">
+             <number>2</number>
+            </property>
+            <property name="margin">
+             <number>2</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="_layoutSipPeersAvail">
+              <property name="spacing">
+               <number>2</number>
+              </property>
+             </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>0</width>
+                <height>468</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="_peersUnavail">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>98</width>
+             <height>28</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Unavailable</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="spacing">
+             <number>2</number>
+            </property>
+            <property name="margin">
+             <number>2</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="_layoutSipPeersUnavail"/>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
         <item row="0" column="0">
          <layout class="QGridLayout" name="_layoutMyDevice">
           <item row="3" column="0">
@@ -181,6 +293,19 @@
           </item>
          </layout>
         </item>
+        <item row="0" column="1">
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="_tabParked">
@@ -244,8 +369,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>754</width>
-     <height>27</height>
+     <width>515</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -1,7 +1,7 @@
 #ifndef ADMICONTEXT_H
 #define ADMICONTEXT_H
 
-#include <QWidget>
+#include <QFrame>
 #include <QPixmap>
 #include <QLabel>
 
@@ -9,7 +9,7 @@ namespace Ui {
   class AdmIconText;
 }
 
-class AdmIconText : public QWidget
+class AdmIconText : public QFrame
 {
   Q_OBJECT
   Q_PROPERTY(QString  text      READ getText    WRITE setText)
@@ -28,8 +28,12 @@ public:
 
   QLabel *getIconLabel();
   QLabel *getTextLabel();
-private:
+protected:
   Ui::AdmIconText *ui;
+signals:
+  void destroying(AdmIconText*);
+private:
+
 };
 
 #endif // ADMICONTEXT_H
