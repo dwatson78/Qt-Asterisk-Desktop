@@ -8,7 +8,8 @@
 #include "statusicon.h"
 #include "astchannel.h"
 #include "astparkedcall.h"
-#include "astcall.h"
+#include "admcallwidget.h"
+#include "astsippeer.h"
 
 namespace Ui {
 class QtAsteriskDesktopMain;
@@ -40,14 +41,14 @@ public slots:
   void sDial();
   void sSetExtStatus(uint ext, AsteriskManager::ExtStatuses statuses);
 
-  void sCallXfer(AstCall * call, const QString & exten);
-  void sCallPark(AstCall * call);
-  void sCallHangup(AstCall * call);
+  void sCallXfer(AdmCallWidget * call, const QString & exten);
+  void sCallPark(AdmCallWidget * call);
+  void sCallHangup(AdmCallWidget * call);
 
   void sDestroyingParkedCalled(AstParkedCall *parkedCall);
   void sPickUpParkedCall(AstParkedCall *parkedCall);
   void sDestroyingChannel(AstChannel *channel);
-  void sDestroyingCall(AstCall *call);
+  void sDestroyingCall(AdmCallWidget *call);
 
 
 private:
@@ -55,9 +56,11 @@ private:
   AsteriskManager *_ami;
   StatusIcon *_statusIcon;
   QString _loginActionId;
+  QString _sipPeersActionId;
   QMap<QString, AstChannel*>  *_chanMap;
   QMap<QString, AstParkedCall*>  *_parkedMap;
-  QMap<QString, AstCall*>     *_callMap;
+  QMap<QString, AdmCallWidget*>     *_callMap;
+  QList<AstSipPeer *> * _sipPeers;
 
 };
 

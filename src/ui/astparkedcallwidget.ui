@@ -226,7 +226,7 @@
  <customwidgets>
   <customwidget>
    <class>AdmIconText</class>
-   <extends>QWidget</extends>
+   <extends>QFrame</extends>
    <header>src/admicontext.h</header>
   </customwidget>
  </customwidgets>

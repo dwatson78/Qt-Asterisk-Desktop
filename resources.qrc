@@ -8,5 +8,6 @@
         <file>icons/call-answer.png</file>
         <file>icons/important.png</file>
         <file>icons/error.png</file>
+        <file>icons/music-indicator.png</file>
     </qresource>
 </RCC>

@@ -5,6 +5,8 @@
 
 #include "asteriskmanager.h"
 #include "confbridgeuser.h"
+#include "admcallwidget.h"
+#include "admicontextdrop.h"
 
 #include <QDebug>
 #include <QGroupBox>
@@ -20,8 +22,11 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   ui->setupUi(this);
   _chanMap = new QMap<QString, AstChannel*>();
   _parkedMap = new QMap<QString, AstParkedCall*>();
-  _callMap = new QMap<QString, AstCall*>();
+  _callMap = new QMap<QString, AdmCallWidget*>();
+  _sipPeers = new QList<AstSipPeer*>();
   _loginActionId = QString();
+
+  _sipPeersActionId = QString();
   _statusIcon = new StatusIcon(this);
   ui->statusBar->addPermanentWidget(_statusIcon);
 
@@ -123,7 +128,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     qDebug() << "arg2: " << iter.key() << ": " << iter.value();
   }
   qDebug() << "arg3: " << arg3;
-  if(arg3 == _loginActionId)
+  if(_loginActionId.isNull() == false && arg3 == _loginActionId)
   {
     qDebug() << "This is our login result!!!!\n\n";
     _statusIcon->setLoggedIn(arg1 == AsteriskManager::Success, arg2.value("Message").toString());
@@ -138,7 +143,48 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
                  this,            SLOT(sDial())
       );
     }
+    _loginActionId = QString();
+    _sipPeersActionId = _ami->actionSIPpeers();
   }
+  if(_sipPeersActionId.isNull() == false && arg3 == _sipPeersActionId)
+  {
+    _sipPeersActionId = QString();
+    AdmIconTextDrop *peerWidget;
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+  }
+
 }
 
 void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, QVariantMap arg2)
@@ -415,18 +461,18 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         // Call handling
         if(!_callMap->contains(uuid1))
         {
-          AstCall *call = new AstCall(uuid1);
-          connect(call, SIGNAL(callXfer(AstCall*,QString)),
-                  this, SLOT(sCallXfer(AstCall*,QString))
+          AdmCallWidget *call = new AdmCallWidget();
+          connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
+                  this, SLOT(sCallXfer(AdmCallWidget*,QString))
           );
-          connect(call, SIGNAL(callPark(AstCall*)),
-                  this, SLOT(sCallPark(AstCall*))
+          connect(call, SIGNAL(callPark(AdmCallWidget*)),
+                  this, SLOT(sCallPark(AdmCallWidget*))
           );
-          connect(call, SIGNAL(callHangup(AstCall*)),
-                  this, SLOT(sCallHangup(AstCall*))
+          connect(call, SIGNAL(callHangup(AdmCallWidget*)),
+                  this, SLOT(sCallHangup(AdmCallWidget*))
           );
-          connect(call, SIGNAL(destroying(AstCall*)),
-                  this, SLOT(sDestroyingCall(AstCall*))
+          connect(call, SIGNAL(destroying(AdmCallWidget*)),
+                  this, SLOT(sDestroyingCall(AdmCallWidget*))
           );
 
           if(_chanMap->contains(uuid1))
@@ -437,7 +483,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
 
           _callMap->insert(uuid1,call);
 
-          ui->_layoutMyDevice->addWidget(call,2,0,1,1,0);
+          ui->_layoutCalls->addWidget(call);
         }
         // Parked call handling
         if(!uuid1.isNull() && !uuid2.isNull())
@@ -457,18 +503,18 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         QString uuid = arg2.value("UniqueID").toString();
         if(_chanMap->contains(uuid))
         {
-          AstCall *call = new AstCall(uuid);
-          connect(call, SIGNAL(callXfer(AstCall*,QString)),
-                  this, SLOT(sCallXfer(AstCall*,QString))
+          AdmCallWidget *call = new AdmCallWidget();
+          connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
+                  this, SLOT(sCallXfer(AdmCallWidget*,QString))
           );
-          connect(call, SIGNAL(callPark(AstCall*)),
-                  this, SLOT(sCallPark(AstCall*))
+          connect(call, SIGNAL(callPark(AdmCallWidget*)),
+                  this, SLOT(sCallPark(AdmCallWidget*))
           );
-          connect(call, SIGNAL(callHangup(AstCall*)),
-                  this, SLOT(sCallHangup(AstCall*))
+          connect(call, SIGNAL(callHangup(AdmCallWidget*)),
+                  this, SLOT(sCallHangup(AdmCallWidget*))
           );
-          connect(call, SIGNAL(destroying(AstCall*)),
-                  this, SLOT(sDestroyingCall(AstCall*))
+          connect(call, SIGNAL(destroying(AdmCallWidget*)),
+                  this, SLOT(sDestroyingCall(AdmCallWidget*))
           );
           call->addChannel(_chanMap->value(uuid));
 
@@ -478,8 +524,20 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
 
           _callMap->insert(uuid,call);
 
-          ui->_layoutMyDevice->addWidget(call,2,0,1,1,0);
+          ui->_layoutCalls->addWidget(call);
         }
+      }
+      break;
+    }
+    case AsteriskManager::PeerEntry:
+    {
+      AstSipPeer *peer = new AstSipPeer(arg2);
+      if(!peer->getMyDevice())
+      {
+        _sipPeers->append(peer);
+        AdmIconTextDrop *peerWidget = new AdmIconTextDrop();
+        peerWidget->setText(peer->getObjectName().toString());
+        ui->_layoutSipPeersAvail->addWidget(peerWidget);
       }
       break;
     }
@@ -657,7 +715,7 @@ void QtAsteriskDesktopMain::sSetExtStatus(uint ext, AsteriskManager::ExtStatuses
   }
 }
 
-void QtAsteriskDesktopMain::sCallXfer(AstCall * call, const QString & exten)
+void QtAsteriskDesktopMain::sCallXfer(AdmCallWidget * call, const QString & exten)
 {
   QMap<QString,AstChannel*> *chans = call->getChannels();
   if(chans->count() == 2)
@@ -677,15 +735,15 @@ void QtAsteriskDesktopMain::sCallXfer(AstCall * call, const QString & exten)
           ChanPart *cpart = i.value()->getChannelParts();
           if(cpart->getType() == dvcType && cpart->getExten() == dvcExten)
             continue;
-          qDebug() << tr("I'm about to transfer channel %1 to %2").arg(i.value()->getChannel()).arg("730");
-          _ami->actionRedirect(i.value()->getChannel(),"730","default",1,QString(),QString(),QString(),0);
+          qDebug() << tr("I'm about to transfer channel %1 to %2").arg(i.value()->getChannel()).arg(exten);
+          _ami->actionRedirect(i.value()->getChannel(),exten,"default",1,QString(),QString(),QString(),0);
         }
       }
     }
   }
 }
 
-void QtAsteriskDesktopMain::sCallPark(AstCall * call)
+void QtAsteriskDesktopMain::sCallPark(AdmCallWidget * call)
 {
   QMap<QString,AstChannel*> *chans = call->getChannels();
   if(chans->count() == 2)
@@ -731,7 +789,7 @@ void QtAsteriskDesktopMain::sCallPark(AstCall * call)
 }
 
 
-void QtAsteriskDesktopMain::sCallHangup(AstCall * call)
+void QtAsteriskDesktopMain::sCallHangup(AdmCallWidget * call)
 {
   QMap<QString,AstChannel*> *chans = call->getChannels();
   if(chans->count() > 0)
@@ -797,7 +855,7 @@ void QtAsteriskDesktopMain::sDestroyingChannel(AstChannel *channel)
     _chanMap->remove(channel->getUuid());
 }
 
-void QtAsteriskDesktopMain::sDestroyingCall(AstCall *call)
+void QtAsteriskDesktopMain::sDestroyingCall(AdmCallWidget *call)
 {
   if(_callMap->contains(call->getUuid()))
     _callMap->remove(call->getUuid());
