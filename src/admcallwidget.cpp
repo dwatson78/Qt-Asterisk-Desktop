@@ -86,6 +86,7 @@ void AdmCallWidget::sUpdateChannel(AstChannel *channel)
 
 void AdmCallWidget::sHangupChannel(AstChannel *channel)
 {
+  Q_UNUSED(channel);
   bool isAllHungup = true;
   bool valid = false;
   uint cause;

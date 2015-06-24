@@ -125,7 +125,6 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
                   .arg(this->getCallIdStr())
                   .arg(this->getConnectedLineStr())
                   ;
-      ChanPart *p = this->getChannelParts();
       emit updated(this);
       break;
     }
@@ -151,7 +150,6 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
           this->_callIdPresDesc = caps.at(2);
         }
       }
-      ChanPart *p = this->getChannelParts();
       emit updated(this);
       break;
     }
@@ -248,7 +246,6 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
                   .arg(this->_hangupCauseDesc)
                   .arg(this->_hangupCauseNum.isNull() ? "" : this->_hangupCauseNum.toString())
                   ;
-      ChanPart *p = this->getChannelParts();
       emit updated(this);
       emit hangup(this);
       QTimer::singleShot(5000, this, SLOT(deleteLater()));

@@ -59,6 +59,7 @@ void AdmIconTextDrop::dragLeaveEvent(QDragLeaveEvent *event)
   ui->_text->setPalette(p);
   ui->_icon->setAutoFillBackground(true);
   ui->_icon->setPalette(p);
+  event->accept();
 }
 
 void AdmIconTextDrop::dropEvent(QDropEvent *event)
@@ -79,5 +80,6 @@ void AdmIconTextDrop::dropEvent(QDropEvent *event)
     //AdmIconTextDrop *o = this;
     AdmCallWidget *cw = mime->admCallWidget();
     cw->sStartCallXfer(this);
+    event->acceptProposedAction();
   }
 }

@@ -85,5 +85,5 @@ AstSipPeer::~AstSipPeer()
 
 void AstSipPeer::sUpdatePeer(const QVariantMap &event)
 {
-
+  Q_UNUSED(event);
 }

@@ -37,20 +37,17 @@ DraggableToolButton::DraggableToolButton(QWidget *parent) :
 
 void DraggableToolButton::mousePressEvent(QMouseEvent *event)
 {
-  AdmCallWidget *cw = qobject_cast<AdmCallWidget *>(parent());
-  if(NULL != cw)
+  if(event->button() == Qt::LeftButton)
   {
-    QDrag *drag = new QDrag(this);
-    drag->setPixmap(this->icon().pixmap(24,24));
-    MimeDataAstCall *mimeData = new MimeDataAstCall;
-    mimeData->setAdmCallWidget(cw);
-    drag->setMimeData(mimeData);
-    drag->exec();
+    AdmCallWidget *cw = qobject_cast<AdmCallWidget *>(parent());
+    if(NULL != cw)
+    {
+      QDrag *drag = new QDrag(this);
+      drag->setPixmap(this->icon().pixmap(24,24));
+      MimeDataAstCall *mimeData = new MimeDataAstCall;
+      mimeData->setAdmCallWidget(cw);
+      drag->setMimeData(mimeData);
+      drag->exec();
+    }
   }
 }
-
-/*void DraggableToolButton::dragMoveEvent(QDragMoveEvent *event)
-{
-  event->setDropAction(Qt::MoveAction);
-  event->accept();
-}*/
