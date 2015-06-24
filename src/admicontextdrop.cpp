@@ -34,45 +34,27 @@ void AdmIconTextDrop::dragEnterEvent(QDragEnterEvent *event)
 
     // Accept the drop and change appearance
     event->acceptProposedAction();
-    setFrameShape(QFrame::StyledPanel);
-    setFrameShadow(QFrame::Sunken);
 
-    QPalette p = ui->_text->palette();
-    QColor c = p.color(ui->_text->backgroundRole());
-    c = c.darker(150);
-    p.setColor(ui->_text->backgroundRole(), c);
     ui->_text->setAutoFillBackground(true);
-    ui->_text->setPalette(p);
-    ui->_icon->setAutoFillBackground(true);
-    ui->_icon->setPalette(p);
+    ui->_text->setBackgroundRole(QPalette::Highlight);
+    ui->_text->setForegroundRole(QPalette::HighlightedText);
   }
 }
 
 void AdmIconTextDrop::dragLeaveEvent(QDragLeaveEvent *event)
 {
-  this->setFrameShape(QFrame::NoFrame);
-  QPalette p = ui->_text->palette();
-  QColor c = p.color(ui->_text->backgroundRole());
-  c = c.lighter(150);
-  p.setColor(ui->_text->backgroundRole(), c);
   ui->_text->setAutoFillBackground(true);
-  ui->_text->setPalette(p);
-  ui->_icon->setAutoFillBackground(true);
-  ui->_icon->setPalette(p);
+  ui->_text->setBackgroundRole(QPalette::Button);
+  ui->_text->setForegroundRole(QPalette::ButtonText);
+
   event->accept();
 }
 
 void AdmIconTextDrop::dropEvent(QDropEvent *event)
 {
-  this->setFrameShape(QFrame::NoFrame);
-  QPalette p = ui->_text->palette();
-  QColor c = p.color(ui->_text->backgroundRole());
-  c = c.lighter(150);
-  p.setColor(ui->_text->backgroundRole(), c);
   ui->_text->setAutoFillBackground(true);
-  ui->_text->setPalette(p);
-  ui->_icon->setAutoFillBackground(true);
-  ui->_icon->setPalette(p);
+  ui->_text->setBackgroundRole(QPalette::Button);
+  ui->_text->setForegroundRole(QPalette::ButtonText);
 
   const MimeDataAstCall *mime = qobject_cast<const MimeDataAstCall *>(event->mimeData());
   if(NULL != mime && mime->hasAdmCallWidget())
