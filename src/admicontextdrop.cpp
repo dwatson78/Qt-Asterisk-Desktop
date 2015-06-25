@@ -21,7 +21,6 @@ void AdmIconTextDrop::_initSelf()
 
 void AdmIconTextDrop::dragEnterEvent(QDragEnterEvent *event)
 {
-  emit sigDragEnterEvent(this,event);
   //meDataAstCall
   const MimeDataAstCall *mime = qobject_cast<const MimeDataAstCall *>(event->mimeData());
   if(NULL != mime && mime->hasAdmCallWidget())
@@ -30,15 +29,19 @@ void AdmIconTextDrop::dragEnterEvent(QDragEnterEvent *event)
     AdmCallWidget *cw = mime->admCallWidget();
     bool found = false;
     cw->getChannelForDevice("SIP",this->getText(),&found);
-    if(found)
-      return;
-
-    // Accept the drop and change appearance
-    event->acceptProposedAction();
-
-    ui->_text->setAutoFillBackground(true);
-    ui->_text->setBackgroundRole(QPalette::Highlight);
-    ui->_text->setForegroundRole(QPalette::HighlightedText);
+    if(!found)
+    {
+      // Accept the drop and change appearance
+      emit sigDragEnterEvent(this,event);
+      event->acceptProposedAction();
+      ui->_text->setAutoFillBackground(true);
+      ui->_text->setBackgroundRole(QPalette::Highlight);
+      ui->_text->setForegroundRole(QPalette::HighlightedText);
+    } else {
+      event->ignore();
+    }
+  } else {
+    event->ignore();
   }
 }
 void AdmIconTextDrop::dragMoveEvent(QDragMoveEvent *event)

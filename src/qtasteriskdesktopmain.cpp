@@ -288,10 +288,6 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
       {
         connect(peerWidget,     SIGNAL(sigDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)),
                 ui->scrollArea, SLOT(sDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)));
-        connect(peerWidget,     SIGNAL(sigDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)),
-                ui->scrollArea, SLOT(sDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)));
-        connect(peerWidget,     SIGNAL(sigDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)),
-                ui->scrollArea, SLOT(sDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)));
       }
     }
   }
@@ -650,10 +646,6 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         ui->_layoutSipPeersAvail->addWidget(peerWidget);
         connect(peerWidget,     SIGNAL(sigDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)),
                 ui->scrollArea, SLOT(sDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)));
-        connect(peerWidget,     SIGNAL(sigDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)),
-                ui->scrollArea, SLOT(sDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)));
-        connect(peerWidget,     SIGNAL(sigDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)),
-                ui->scrollArea, SLOT(sDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)));
       }
       break;
     }
