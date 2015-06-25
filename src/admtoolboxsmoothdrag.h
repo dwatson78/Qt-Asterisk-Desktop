@@ -26,6 +26,7 @@ public:
   static const int ScrollUp   = 1;
   static const int ScrollDown = 2;
   static const int ScrollRegionHeight = 30;
+  static const int ScrollMinHeight = ((ScrollRegionHeight*2)+2);
   static const int ScrollByValue = 10;
   static const int ScrollTimerTimout = 50; //50 milliseconds
 

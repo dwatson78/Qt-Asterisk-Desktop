@@ -10,6 +10,7 @@ AdmScrollAreaSmoothDrag::AdmScrollAreaSmoothDrag(QWidget *parent) :
   // Setup the object
   acceptDrops();
   setMouseTracking(true);
+  setMinimumHeight(ScrollMinHeight);
 
   // Initialize variables
   _scrollDir = ScrollOff;
@@ -20,7 +21,7 @@ AdmScrollAreaSmoothDrag::AdmScrollAreaSmoothDrag(QWidget *parent) :
 void AdmScrollAreaSmoothDrag::dragEnterEvent(QDragEnterEvent *event)
 {
   // Make sure the timer is not going and we are scrollable
-  if(NULL == _timer && _scrollDir == ScrollOff && verticalScrollBar()->isVisible() && height() >= ((ScrollRegionHeight*2)+1))
+  if(NULL == _timer && _scrollDir == ScrollOff && verticalScrollBar()->isVisible() && height() >= ScrollMinHeight)
   {
     // Get the mouse position
     _pointDragMoveEvent = event->pos();
@@ -50,7 +51,7 @@ void AdmScrollAreaSmoothDrag::dragEnterEvent(QDragEnterEvent *event)
 void AdmScrollAreaSmoothDrag::sDragEnterEvent(AdmIconTextDrop *obj, QDragEnterEvent *event)
 {
   // Make sure the timer is not going and we are scrollable
-  if(_timer == NULL && _scrollDir == ScrollOff && verticalScrollBar()->isVisible() && height() >= ((ScrollRegionHeight*2)+1))
+  if(_timer == NULL && _scrollDir == ScrollOff && verticalScrollBar()->isVisible() && height() >= ScrollMinHeight)
   {
     // Get the mouse position
     _pointDragMoveEvent = mapTo(this,event->pos());
