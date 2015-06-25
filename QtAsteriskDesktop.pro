@@ -10,6 +10,9 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 
 TARGET = QtAsteriskDesktop
 
+QMAKE_CXXFLAGS += \
+    -Werror
+
 SOURCES +=   \
     src/main.cpp \
     src/qtasteriskdesktopmain.cpp \
@@ -25,7 +28,8 @@ SOURCES +=   \
     src/admchanwidget.cpp \
     src/astsippeer.cpp \
     src/draggabletoolbutton.cpp \
-    src/admicontextdrop.cpp
+    src/admicontextdrop.cpp \
+    src/admtoolboxsmoothdrag.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -41,7 +45,8 @@ HEADERS +=   \
     src/admchanwidget.h \
     src/astsippeer.h \
     src/draggabletoolbutton.h \
-    src/admicontextdrop.h
+    src/admicontextdrop.h \
+    src/admtoolboxsmoothdrag.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \

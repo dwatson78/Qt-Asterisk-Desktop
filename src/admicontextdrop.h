@@ -4,6 +4,7 @@
 #include "admicontext.h"
 
 #include <QDragEnterEvent>
+#include <QDragMoveEvent>
 #include <QDragLeaveEvent>
 
 class AdmIconTextDrop : public AdmIconText
@@ -17,11 +18,15 @@ public:
 public slots:
 
 protected:
-  void dragEnterEvent(QDragEnterEvent *event);
-  void dragLeaveEvent(QDragLeaveEvent *event);
-  void dropEvent(QDropEvent *event);
+  void dragEnterEvent (QDragEnterEvent  *event);
+  void dragMoveEvent  (QDragMoveEvent   *event);
+  void dragLeaveEvent (QDragLeaveEvent  *event);
+  void dropEvent      (QDropEvent       *event);
 
 signals:
+  void sigDragEnterEvent(AdmIconTextDrop *obj, QDragEnterEvent  *event);
+  void sigDragMoveEvent (AdmIconTextDrop *obj, QDragMoveEvent   *event);
+  void sigDragLeaveEvent(AdmIconTextDrop *obj, QDragLeaveEvent  *event);
 
 private:
   void _initSelf();
