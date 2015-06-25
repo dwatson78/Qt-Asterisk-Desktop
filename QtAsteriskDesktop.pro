@@ -25,7 +25,8 @@ SOURCES +=   \
     src/admchanwidget.cpp \
     src/astsippeer.cpp \
     src/draggabletoolbutton.cpp \
-    src/admicontextdrop.cpp
+    src/admicontextdrop.cpp \
+    src/toolboxdraganddrop.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -41,7 +42,8 @@ HEADERS +=   \
     src/admchanwidget.h \
     src/astsippeer.h \
     src/draggabletoolbutton.h \
-    src/admicontextdrop.h
+    src/admicontextdrop.h \
+    src/toolboxdraganddrop.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \

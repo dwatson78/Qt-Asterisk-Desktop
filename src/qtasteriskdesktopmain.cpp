@@ -183,8 +183,118 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     peerWidget->setText("*2");
     ui->_layoutSipPeersAvail->addWidget(peerWidget);
 
-  }
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
 
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("730");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("3004");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    peerWidget = new AdmIconTextDrop();
+    peerWidget->setText("*2");
+    ui->_layoutSipPeersAvail->addWidget(peerWidget);
+
+    //QObjectList list = ui->_layoutSipPeersAvail->w
+    qDebug() << "ui->_layoutSipPeersAvail->count(): " << ui->_layoutSipPeersAvail->count();
+    for(int i = 0; i < ui->_layoutSipPeersAvail->count(); ++i)
+    {
+      peerWidget = qobject_cast<AdmIconTextDrop *>(ui->_layoutSipPeersAvail->itemAt(i)->widget());
+      if(NULL != peerWidget)
+      {
+        connect(peerWidget,     SIGNAL(sigDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)),
+                ui->scrollArea, SLOT(sDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)));
+        connect(peerWidget,     SIGNAL(sigDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)),
+                ui->scrollArea, SLOT(sDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)));
+        connect(peerWidget,     SIGNAL(sigDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)),
+                ui->scrollArea, SLOT(sDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)));
+      }
+    }
+  }
 }
 
 void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, QVariantMap arg2)
@@ -538,6 +648,12 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         AdmIconTextDrop *peerWidget = new AdmIconTextDrop();
         peerWidget->setText(peer->getObjectName().toString());
         ui->_layoutSipPeersAvail->addWidget(peerWidget);
+        connect(peerWidget,     SIGNAL(sigDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)),
+                ui->scrollArea, SLOT(sDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)));
+        connect(peerWidget,     SIGNAL(sigDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)),
+                ui->scrollArea, SLOT(sDragMoveEvent(AdmIconTextDrop*,QDragMoveEvent*)));
+        connect(peerWidget,     SIGNAL(sigDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)),
+                ui->scrollArea, SLOT(sDragLeaveEvent(AdmIconTextDrop*,QDragLeaveEvent*)));
       }
       break;
     }

@@ -21,6 +21,7 @@ void AdmIconTextDrop::_initSelf()
 
 void AdmIconTextDrop::dragEnterEvent(QDragEnterEvent *event)
 {
+  emit sigDragEnterEvent(this,event);
   //meDataAstCall
   const MimeDataAstCall *mime = qobject_cast<const MimeDataAstCall *>(event->mimeData());
   if(NULL != mime && mime->hasAdmCallWidget())
@@ -40,9 +41,14 @@ void AdmIconTextDrop::dragEnterEvent(QDragEnterEvent *event)
     ui->_text->setForegroundRole(QPalette::HighlightedText);
   }
 }
+void AdmIconTextDrop::dragMoveEvent(QDragMoveEvent *event)
+{
+  emit sigDragMoveEvent(this,event);
+}
 
 void AdmIconTextDrop::dragLeaveEvent(QDragLeaveEvent *event)
 {
+  emit sigDragLeaveEvent(this, event);
   ui->_text->setAutoFillBackground(true);
   ui->_text->setBackgroundRole(QPalette::Button);
   ui->_text->setForegroundRole(QPalette::ButtonText);
