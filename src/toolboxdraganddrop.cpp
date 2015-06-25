@@ -49,13 +49,13 @@ void ScrollAreaAutoScrollOnDrag::sDragEnterEvent(AdmIconTextDrop *obj, QDragEnte
   {
     qDebug() << "Scroll Up";
     verticalScrollBar()->setValue(verticalScrollBar()->value()-(obj->height()*1.5));
-    usleep(150);
+//    usleep(150);
   }
   if(rect().height() + verticalScrollBar()->value() - (eventPos.ry()+obj->y()) <= (obj->height()*1.5))
   {
     qDebug() << "Scroll Down";
     verticalScrollBar()->setValue(verticalScrollBar()->value()+(obj->height()*1.5));
-    usleep(150);
+//    usleep(150);
   }
   //event->accept();
 }
@@ -89,7 +89,7 @@ ToolBoxDragAndDrop::ToolBoxDragAndDrop(QWidget *parent) :
   acceptDrops();
   setMouseTracking(true);
   _timer = NULL;
-  _event = NULL;
+  _pointDragMoveEvent = QPoint();
 }
 
 void ToolBoxDragAndDrop::dragEnterEvent(QDragEnterEvent *event)
@@ -97,6 +97,7 @@ void ToolBoxDragAndDrop::dragEnterEvent(QDragEnterEvent *event)
   event->acceptProposedAction();
 }
 
+// Create a delayed response to the drag move and 
 void ToolBoxDragAndDrop::dragMoveEvent(QDragMoveEvent *event)
 {
   if(NULL !=_timer)
@@ -104,9 +105,9 @@ void ToolBoxDragAndDrop::dragMoveEvent(QDragMoveEvent *event)
     _timer->blockSignals(true);
     _timer->stop();
     _timer = NULL;
-    _event = NULL;
+    _pointDragMoveEvent = QPoint();
   }
-  _event = event;
+  _pointDragMoveEvent = event->pos();
   _timer = new QTimer();
   _timer->setSingleShot(true);
   connect(_timer,SIGNAL(timeout()),this,SLOT(sDelayedDragMoveEvent()));
@@ -114,45 +115,46 @@ void ToolBoxDragAndDrop::dragMoveEvent(QDragMoveEvent *event)
 }
 void ToolBoxDragAndDrop::sDelayedDragMoveEvent()
 {
-  qDebug() << "ToolBoxDragAndDrop::dragMove";
+  qDebug() << "ToolBoxDragAndDrop::sDelayedDragMoveEvent";
   _timer->blockSignals(true);
   _timer->stop();
-  _timer = NULL;
-  QPoint p = _event->pos();
 
-  qDebug() << QString("event->pos(): %1,%2")
-              .arg(p.rx())
-              .arg(p.ry());
+  /*qDebug() << QString("_pointDragMoveEvent: %1,%2")
+              .arg(_pointDragMoveEvent.rx())
+              .arg(_pointDragMoveEvent.ry());*/
+  
   int x = -1;
   foreach(QAbstractButton *btn, findChildren<QAbstractButton *>())
   {
     ++x;
-    qDebug() << QString("btn->pos(): %1,%2")
-                .arg(QString::number(btn->pos().rx()))
-                .arg(QString::number(btn->pos().ry()));
 
-    QPoint mp = mapTo(this,btn->pos());
-    QRect r(  /*btn->pos().x()-6,*/
-              mp.rx()-6,
-              /*btn->pos().y()-2,*/
-              mp.ry()-6,
-              btn->rect().width()+6,
-              btn->rect().height()+6
+    /*qDebug() << QString("btn->pos(): %1,%2")
+                .arg(QString::number(btn->pos().rx()))
+                .arg(QString::number(btn->pos().ry()));*/
+
+    QPoint mp = mapTo(this, btn->pos());
+    QRect r(  mp.rx(),
+              mp.ry(),
+              btn->rect().width(),
+              btn->rect().height()
     );
-    qDebug() << QString("Rectangle: x1: %1, y1: %2, width: %3, height: %4")
+    /*qDebug() << QString("Rectangle: x1: %1, y1: %2, width: %3, height: %4")
                 .arg(r.x())
                 .arg(r.y())
                 .arg(r.width())
-                .arg(r.height())
-                ;
-    if(r.contains(p,false))
+                .arg(r.height());*/
+
+    if(r.contains(_pointDragMoveEvent,false))
     {
-      qDebug() << QString("Button found!!");
+      //qDebug() << QString("Button found!!");
       setCurrentWidget(widget(x));
       break;
     }
   }
-  _event = NULL;
+  
+  // Uninitialize event values
+  _timer = NULL;
+  _pointDragMoveEvent = QPoint();
 }
 
 
@@ -163,6 +165,6 @@ void ToolBoxDragAndDrop::dragLeaveEvent(QDragLeaveEvent *event)
     _timer->blockSignals(true);
     _timer->stop();
     _timer = NULL;
-    _event = NULL;
+    _pointDragMoveEvent = QPoint();
   }
 }

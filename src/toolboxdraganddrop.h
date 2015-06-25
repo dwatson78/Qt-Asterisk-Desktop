@@ -7,6 +7,7 @@
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDragLeaveEvent>
+#include <QPoint>
 #include <QTimer>
 
 #include "admicontextdrop.h"
@@ -18,18 +19,18 @@ public:
   explicit ScrollAreaAutoScrollOnDrag(QWidget *parent = 0);
 
 protected:
-  void dragEnterEvent(QDragEnterEvent *event);
+  void dragEnterEvent (QDragEnterEvent  *event);
 
-  void dragLeaveEvent(QDragLeaveEvent *event);
-  void mouseMoveEvent(QMouseEvent *event);
-  void enterEvent(QEvent *event);
-  void leaveEvent(QEvent *event);
+  void dragLeaveEvent (QDragLeaveEvent  *event);
+  void mouseMoveEvent (QMouseEvent      *event);
+  void enterEvent     (QEvent           *event);
+  void leaveEvent     (QEvent           *event);
 signals:
 
 public slots:
-  void sDragEnterEvent(AdmIconTextDrop *obj, QDragEnterEvent *event);
-  void sDragMoveEvent(AdmIconTextDrop *obj, QDragMoveEvent *event);
-  void sDragLeaveEvent(AdmIconTextDrop *obj, QDragLeaveEvent *event);
+  void sDragEnterEvent(AdmIconTextDrop  *obj, QDragEnterEvent *event);
+  void sDragMoveEvent (AdmIconTextDrop  *obj, QDragMoveEvent  *event);
+  void sDragLeaveEvent(AdmIconTextDrop  *obj, QDragLeaveEvent *event);
 };
 
 class ToolBoxDragAndDrop : public QToolBox
@@ -37,20 +38,20 @@ class ToolBoxDragAndDrop : public QToolBox
   Q_OBJECT
 public:
   explicit ToolBoxDragAndDrop(QWidget *parent = 0);
-  
+
 protected:
-  void dragEnterEvent(QDragEnterEvent *event);
-  void dragMoveEvent(QDragMoveEvent *event);
-  void dragLeaveEvent(QDragLeaveEvent *event);
+  void dragEnterEvent (QDragEnterEvent  *event);
+  void dragMoveEvent  (QDragMoveEvent   *event);
+  void dragLeaveEvent (QDragLeaveEvent  *event);
 
 signals:
   
 public slots:
   void sDelayedDragMoveEvent();
+
 private:
-  QTimer *_timer;
-  QDragMoveEvent *_event;
-  
+  QTimer          *_timer;
+  QPoint          _pointDragMoveEvent;
 };
 
 #endif // TOOLBOXDRAGANDDROP_H
