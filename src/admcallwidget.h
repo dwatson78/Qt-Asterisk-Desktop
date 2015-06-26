@@ -4,7 +4,7 @@
 #include <QFrame>
 #include "astchannel.h"
 #include "admchanwidget.h"
-#include "admicontextdrop.h"
+#include "admextensionwidget.h"
 
 namespace Ui {
   class AdmCallWidget;
@@ -29,8 +29,7 @@ public slots:
   void sHangupChannel(AstChannel* channel);
   void sRemoveChannel(AstChannel* channel);
 
-  void sStartCallXfer();
-  void sStartCallXfer(AdmIconTextDrop *admIconTextDrop);
+  void sStartCallXfer(AdmExtensionWidget  *widget);
   void sStartCallPark();
   void sStartCallHangup();
 

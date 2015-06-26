@@ -6,7 +6,6 @@
 #include "asteriskmanager.h"
 #include "confbridgeuser.h"
 #include "admcallwidget.h"
-#include "admicontextdrop.h"
 
 #include <QDebug>
 #include <QGroupBox>
@@ -149,6 +148,16 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
   if(_sipPeersActionId.isNull() == false && arg3 == _sipPeersActionId)
   {
     _sipPeersActionId = QString();
+
+    // Setup the extensions programs
+    AdmExtensionWidget *peerWidget;
+    peerWidget = new AdmExtensionWidget();
+    peerWidget->setExten(QString("730"));
+    peerWidget->setText("Tracking #");
+    peerWidget->setPixmap(QPixmap(":/icons/status-avail.png"));
+    ui->_layoutPrograms->addWidget(peerWidget);
+    connect(peerWidget,           SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
+            ui->_scrollPrograms,  SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
   }
 }
 
@@ -500,11 +509,13 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
       if(!peer->getMyDevice())
       {
         _sipPeers->append(peer);
-        AdmIconTextDrop *peerWidget = new AdmIconTextDrop();
-        peerWidget->setText(peer->getObjectName().toString());
+        AdmExtensionWidget *peerWidget = new AdmExtensionWidget();
+        peerWidget->setExten(peer->getObjectName());
+        peerWidget->setText(peer->getDescription());
+        peerWidget->setPixmap(QPixmap(":/icons/status-avail.png"));
         ui->_layoutSipPeersAvail->addWidget(peerWidget);
-        connect(peerWidget,     SIGNAL(sigDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)),
-                ui->scrollArea, SLOT(sDragEnterEvent(AdmIconTextDrop*,QDragEnterEvent*)));
+        connect(peerWidget,     SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
+                ui->_scrollPeersAvail, SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
       }
       break;
     }

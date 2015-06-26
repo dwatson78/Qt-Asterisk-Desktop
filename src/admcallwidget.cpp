@@ -144,13 +144,9 @@ void AdmCallWidget::sTickTock()
                         .arg(AdmStatic::elapsedTimeToString(_time)));
 }
 
-void AdmCallWidget::sStartCallXfer()
+void AdmCallWidget::sStartCallXfer(AdmExtensionWidget *widget)
 {
-  emit callXfer(this,"730");
-}
-void AdmCallWidget::sStartCallXfer(AdmIconTextDrop *admIconTextDrop)
-{
-  emit callXfer(this,admIconTextDrop->getText());
+  emit callXfer(this,widget->getExten());
 }
 
 void AdmCallWidget::sStartCallPark()

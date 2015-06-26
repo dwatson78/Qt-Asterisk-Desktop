@@ -28,8 +28,8 @@ SOURCES +=   \
     src/admchanwidget.cpp \
     src/astsippeer.cpp \
     src/draggabletoolbutton.cpp \
-    src/admicontextdrop.cpp \
-    src/admtoolboxsmoothdrag.cpp
+    src/admtoolboxsmoothdrag.cpp \
+    src/admextensionwidget.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -45,8 +45,8 @@ HEADERS +=   \
     src/admchanwidget.h \
     src/astsippeer.h \
     src/draggabletoolbutton.h \
-    src/admicontextdrop.h \
-    src/admtoolboxsmoothdrag.h
+    src/admtoolboxsmoothdrag.h \
+    src/admextensionwidget.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -54,7 +54,8 @@ FORMS +=     \
     src/ui/astparkedcallwidget.ui \
     src/ui/admicontext.ui \
     src/ui/admcallwidget.ui \
-    src/ui/admchanwidget.ui
+    src/ui/admchanwidget.ui \
+    src/ui/admextensionwidget.ui
 
 RESOURCES += \
     resources.qrc

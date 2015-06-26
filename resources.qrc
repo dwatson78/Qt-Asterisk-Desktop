@@ -9,5 +9,8 @@
         <file>icons/important.png</file>
         <file>icons/error.png</file>
         <file>icons/music-indicator.png</file>
+        <file>icons/status-avail.png</file>
+        <file>icons/status-busy.png</file>
+        <file>icons/status-unavail.png</file>
     </qresource>
 </RCC>

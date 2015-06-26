@@ -11,7 +11,7 @@
 #include <QTimer>
 #include <QCursor>
 
-#include "admicontextdrop.h"
+#include "admextensionwidget.h"
 
 #define SCROLL_UP = 1
 #define SCROLL_DOWN = 1
@@ -35,7 +35,7 @@ protected:
 signals:
 
 public slots:
-  void sDragEnterEvent(AdmIconTextDrop  *obj, QDragEnterEvent *event);
+  void sDragEnterEvent(AdmExtensionWidget  *obj, QDragEnterEvent *event);
   void sTickTock();
 private:
   int       _scrollDir;

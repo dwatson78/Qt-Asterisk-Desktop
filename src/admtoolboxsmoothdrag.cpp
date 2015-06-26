@@ -48,7 +48,7 @@ void AdmScrollAreaSmoothDrag::dragEnterEvent(QDragEnterEvent *event)
   }
 }
 
-void AdmScrollAreaSmoothDrag::sDragEnterEvent(AdmIconTextDrop *obj, QDragEnterEvent *event)
+void AdmScrollAreaSmoothDrag::sDragEnterEvent(AdmExtensionWidget *obj, QDragEnterEvent *event)
 {
   // Make sure the timer is not going and we are scrollable
   if(_timer == NULL && _scrollDir == ScrollOff && verticalScrollBar()->isVisible() && height() >= ScrollMinHeight)

@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AdmIconText</class>
- <widget class="QFrame" name="AdmIconText">
+ <class>AdmExtensionWidget</class>
+ <widget class="QFrame" name="AdmExtensionWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>18</width>
-    <height>16</height>
+    <width>31</width>
+    <height>18</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Form</string>
+  <property name="mouseTracking">
+   <bool>true</bool>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1">
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,1">
    <property name="spacing">
     <number>4</number>
    </property>
    <property name="margin">
-    <number>0</number>
+    <number>1</number>
    </property>
    <item>
     <widget class="QLabel" name="_icon">
@@ -28,7 +31,14 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="_text">
+    <widget class="QLabel" name="_exten">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="_desc">
      <property name="text">
       <string/>
      </property>
