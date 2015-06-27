@@ -30,8 +30,12 @@ public:
   static const int ScrollByValue = 10;
   static const int ScrollTimerTimout = 50; //50 milliseconds
 
+  void setWidget(QWidget *widget);
+
 protected:
   void dragEnterEvent (QDragEnterEvent  *event);
+  bool eventFilter(QObject *obj, QEvent *event);
+
 signals:
 
 public slots:

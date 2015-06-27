@@ -12,6 +12,9 @@ AdmExtensionWidget::AdmExtensionWidget(QWidget *parent) :
   acceptDrops();
   setMouseTracking(true);
   ui->_icon->setVisible(false);
+  _statusNum = AsteriskManager::NotInUse;
+  _isDndOn = false;
+  _sipPeer = NULL;
 }
 
 AdmExtensionWidget::~AdmExtensionWidget()
@@ -139,4 +142,217 @@ void AdmExtensionWidget::dropEvent(QDropEvent *event)
     cw->sStartCallXfer(this);
     event->acceptProposedAction();
   }
+}
+
+void AdmExtensionWidget::setSipPeer(AstSipPeer *peer)
+{
+  if(NULL != _sipPeer)
+  {
+    disconnect(_sipPeer, SIGNAL(destroying(AstSipPeer*)),
+            this,     SLOT(sSipPeerDestroying(AstSipPeer*)));
+    disconnect(_sipPeer, SIGNAL(sUpdated(AstSipPeer*)),
+            this,     SLOT(sSipPeerUpdated(AstSipPeer*)));
+    disconnect(_sipPeer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
+            this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
+    disconnect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
+            this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+    _sipPeer = NULL;
+  }
+  _sipPeer = peer;
+  connect(_sipPeer, SIGNAL(destroying(AstSipPeer*)),
+          this,     SLOT(sSipPeerDestroying(AstSipPeer*)));
+  connect(_sipPeer, SIGNAL(sUpdated(AstSipPeer*)),
+          this,     SLOT(sSipPeerUpdated(AstSipPeer*)));
+  connect(_sipPeer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
+          this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
+  connect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
+          this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+}
+
+AstSipPeer *AdmExtensionWidget::getSipPeer()
+{
+  return _sipPeer;
+}
+
+void AdmExtensionWidget::sSipPeerDestroying(AstSipPeer *peer)
+{
+  Q_UNUSED(peer);
+  disconnect(_sipPeer, SIGNAL(destroying(AstSipPeer*)),
+          this,     SLOT(sSipPeerDestroying(AstSipPeer*)));
+  disconnect(_sipPeer, SIGNAL(sUpdated(AstSipPeer*)),
+          this,     SLOT(sSipPeerUpdated(AstSipPeer*)));
+  disconnect(_sipPeer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
+          this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
+  disconnect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
+          this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+  _sipPeer = NULL;
+}
+
+void AdmExtensionWidget::sSipPeerUpdated(AstSipPeer *peer)
+{
+  ui->_desc->setText(peer->getDescription());
+}
+
+void AdmExtensionWidget::sExtensionStatusEvent(const QVariantMap &event)
+{
+  qDebug() << "AdmExtensionWidget::sExtensionStatusEvent";
+  if(event.contains("Status"))
+  {
+    uint statusNum = event.value("Status").toUInt();
+    _statusNum = statusNum;
+    _updateStatusIcon();
+  }
+}
+
+void AdmExtensionWidget::sExtensionDndStatusEvent(const QVariantMap &event)
+{
+  if(event.contains("Status"))
+  {
+    uint statusNum = event.value("Status").toUInt();
+    AsteriskManager::ExtStatuses statuses(statusNum);
+    _isDndOn = !statuses.testFlag(AsteriskManager::NotInUse);
+    _updateStatusIcon();
+  }
+}
+
+void AdmExtensionWidget::sSipExtensionStatusEvent(AstSipPeer *peer, const QVariantMap &event)
+{
+  if(   NULL != _sipPeer
+        && NULL != peer
+        && peer == _sipPeer
+    )
+  {
+    this->sExtensionStatusEvent(event);
+  }
+}
+
+void AdmExtensionWidget::sSipExtensionDndStatusEvent(AstSipPeer *peer, const QVariantMap &event, bool isDndOn)
+{
+  if(   NULL != _sipPeer
+     && NULL != peer
+     && peer == _sipPeer)
+  {
+    //Status already checked by the AstSipPeer class before emitting signal
+    if(event.count() > 0)
+      sExtensionDndStatusEvent(event);
+    else
+    {
+      _isDndOn = isDndOn;
+      _updateStatusIcon();
+    }
+
+    if(_isDndOn != isDndOn)
+    {
+      qDebug() << "Error: This should never happen. _isDndOn != isDndOn";
+      qDebug() << QString("isDndOn: %1. _isDndOn: %2")
+                  .arg(isDndOn)
+                  .arg(_isDndOn);
+    }
+  }
+}
+
+void AdmExtensionWidget::_updateStatusIcon()
+{
+  AsteriskManager::ExtStatuses statuses(_statusNum);
+  if(   statuses.testFlag(AsteriskManager::Deactivated)
+     || statuses.testFlag(AsteriskManager::Removed)
+     || statuses.testFlag(AsteriskManager::Unavailable))
+  {
+    setPixmap(QPixmap(":/icons/status-unavail.png"));
+  } else if (_isDndOn) {
+    setPixmap(QPixmap(":/icons/status-dnd.png"));
+  } else {
+    if(statuses.testFlag(AsteriskManager::NotInUse))
+      setPixmap(QPixmap(":/icons/status-avail.png"));
+    else if(statuses.testFlag(AsteriskManager::InUse)
+            || statuses.testFlag(AsteriskManager::Busy))
+      setPixmap(QPixmap(":/icons/status-busy.png"));
+
+    if(statuses.testFlag(AsteriskManager::Ringing))
+      setPixmap(QPixmap(":/icons/status-ring.png"));
+    if(statuses.testFlag(AsteriskManager::OnHold))
+      setPixmap(QPixmap(":/icons/status-onhold.png"));
+  }
+
+  QString status;
+  if(statuses.testFlag(AsteriskManager::Removed))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Removed");
+  if(statuses.testFlag(AsteriskManager::Deactivated))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Deactivated");
+  if(statuses.testFlag(AsteriskManager::NotInUse))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("NotInUse");
+  if(statuses.testFlag(AsteriskManager::InUse))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("InUse");
+  if(statuses.testFlag(AsteriskManager::Busy))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Busy");
+  if(statuses.testFlag(AsteriskManager::Unavailable))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Unavailable");
+  if(statuses.testFlag(AsteriskManager::Ringing))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Ringing");
+  if(statuses.testFlag(AsteriskManager::OnHold))
+    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("OnHold");
+  qDebug() << status;
+
+  /*uint status = arg2.value("Status").toUInt();
+        AsteriskManager::ExtStatuses f1(status);
+        sSetExtStatus(arg2.value("Exten").toUInt(), f1);*/
+
+    /*QSettings set;
+    if(set.contains("DEVICES/default"))
+    {
+      if(set.contains("DEVICES/default"))
+      {
+        QString dvc = set.value("DEVICES/default").toString();
+        QStringList parts = dvc.split("/");
+        bool *valid = new bool(false);
+        uint dvcExt = parts.at(1).toUInt(valid);
+        if(valid && ext == dvcExt)
+        {
+          / *
+      Removed     = -2,
+      Deactivated = -1,
+      NotInUse    = 0,
+      InUse       = 1 << 0,
+      Busy        = 1 << 1,
+      Unavailable = 1 << 2,
+      Ringing     = 1 << 3,
+      OnHold      = 1 << 4
+  * /
+          QString status;
+          if(statuses.testFlag(AsteriskManager::Removed))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("Removed");
+          if(statuses.testFlag(AsteriskManager::Deactivated))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("Deactivated");
+          if(statuses.testFlag(AsteriskManager::NotInUse))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("NotInUse");
+          if(statuses.testFlag(AsteriskManager::InUse))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("InUse");
+          if(statuses.testFlag(AsteriskManager::Busy))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("Busy");
+          if(statuses.testFlag(AsteriskManager::Unavailable))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("Unavailable");
+          if(statuses.testFlag(AsteriskManager::Ringing))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("Ringing");
+          if(statuses.testFlag(AsteriskManager::OnHold))
+            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+                .arg("OnHold");
+          ui->_extStatus->setText(status);
+        }
+      }
+    }*/
 }

@@ -49,6 +49,9 @@ public slots:
   void sPickUpParkedCall(AstParkedCall *parkedCall);
   void sDestroyingChannel(AstChannel *channel);
   void sDestroyingCall(AdmCallWidget *call);
+  void sDestroyingSipPeer(AstSipPeer *peer);
+  void sDestroyingAdmExtensionWidget(AdmExtensionWidget *widget);
+
 
 
 private:
@@ -57,10 +60,12 @@ private:
   StatusIcon *_statusIcon;
   QString _loginActionId;
   QString _sipPeersActionId;
-  QMap<QString, AstChannel*>  *_chanMap;
-  QMap<QString, AstParkedCall*>  *_parkedMap;
-  QMap<QString, AdmCallWidget*>     *_callMap;
-  QList<AstSipPeer *> * _sipPeers;
+  QMap<QString, AstSipPeer *>         * _showSipPeerActionId;
+  QMap<QString, AstChannel*>          * _chanMap;
+  QMap<QString, AstParkedCall*>       * _parkedMap;
+  QMap<QString, AdmCallWidget*>       * _callMap;
+  QMap<QString, AdmExtensionWidget *> * _extensionMap;
+  QMap<QString, AstSipPeer *>         * _sipPeerMap;
 
 };
 

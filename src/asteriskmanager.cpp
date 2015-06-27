@@ -209,9 +209,12 @@ QString AsteriskManager::actionDBDelTree()
   return sendAction("DBDelTree");
 }
 
-QString AsteriskManager::actionDBGet()
+QString AsteriskManager::actionDBGet(const QString &family, const QString &key)
 {
-  return sendAction("DBGet");
+  QVariantMap headers;
+  headers["Family"] = family;
+  headers["Key"] = key;
+  return sendAction("DBGet",headers);
 }
 
 QString AsteriskManager::actionDBPut()

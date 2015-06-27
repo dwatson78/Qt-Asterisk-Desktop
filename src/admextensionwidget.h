@@ -7,6 +7,9 @@
 #include <QDragMoveEvent>
 #include <QDragLeaveEvent>
 #include <QDropEvent>
+#include <QVariantMap>
+
+#include "astsippeer.h"
 
 namespace Ui {
 class AdmExtensionWidget;
@@ -36,6 +39,18 @@ public:
   QLabel *getIconLabel();
   QLabel *getExtenLabel();
   QLabel *getTextLabel();
+
+  void setSipPeer(AstSipPeer *peer);
+  AstSipPeer *getSipPeer();
+
+public slots:
+  void sSipPeerDestroying(AstSipPeer *peer);
+  void sExtensionStatusEvent(const QVariantMap &event);
+  void sExtensionDndStatusEvent(const QVariantMap &event);
+  void sSipPeerUpdated(AstSipPeer *peer);
+  void sSipExtensionStatusEvent(AstSipPeer *peer, const QVariantMap &event);
+  void sSipExtensionDndStatusEvent(AstSipPeer *peer, const QVariantMap &event, bool isDndOn);
+
 protected:
   void dragEnterEvent (QDragEnterEvent  *event);
   void dragMoveEvent  (QDragMoveEvent   *event);
@@ -48,7 +63,12 @@ signals:
   void sigDragLeaveEvent(AdmExtensionWidget *obj, QDragLeaveEvent  *event);
 
 private:
-  Ui::AdmExtensionWidget *ui;
+  Ui::AdmExtensionWidget  * ui;
+  AstSipPeer              * _sipPeer;
+  uint                      _statusNum;
+  bool                      _isDndOn;
+
+  void _updateStatusIcon();
 };
 
 #endif // ADMEXTENSIONWIDGET_H

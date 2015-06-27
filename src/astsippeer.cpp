@@ -1,6 +1,11 @@
 #include "astsippeer.h"
 
+#include <QDebug>
 #include <QSettings>
+#include <QRegExp>
+
+#include "asteriskmanager.h"
+
 AstSipPeer::AstSipPeer(const QVariantMap &event, QObject *parent) :
   QObject(parent)
 {
@@ -76,6 +81,8 @@ AstSipPeer::AstSipPeer(const QVariantMap &event, QObject *parent) :
     if(s.value("DEVICES/default").toString() == peerDvc)
       _myDevice = true;
   }
+
+  _isDndOn = false;
 }
 
 AstSipPeer::~AstSipPeer()
@@ -86,4 +93,112 @@ AstSipPeer::~AstSipPeer()
 void AstSipPeer::sUpdatePeer(const QVariantMap &event)
 {
   Q_UNUSED(event);
+}
+
+void AstSipPeer::sResponseShowSipPeer(const QVariantMap &event)
+{
+  /*arg2:  "Address-IP" :  QVariant(QString, "10.121.212.154")
+arg2:  "Address-Port" :  QVariant(uint, 5060)
+arg2:  "Busy-level" :  QVariant(uint, 0)
+arg2:  "Call-limit" :  QVariant(uint, 2147483647)
+arg2:  "Callerid" :  QVariant(QString, ""Daniel W Desk" <2004>")
+arg2:  "Callgroup" :  QVariant(QString, "")
+arg2:  "Context" :  QVariant(QString, "from-internal")
+arg2:  "Default-Username" :  QVariant(uint, 2004)
+arg2:  "ObjectName" :  QVariant(uint, 2004)
+arg2:  "Pickupgroup" :  QVariant(QString, "")
+arg2:  "Reg-Contact" :  QVariant(QString, "sip:2004@10.121.212.154")
+arg2:  "SIP-Useragent" :  QVariant(QString, "PolycomVVX-VVX_300-UA/5.3.0.12074")
+arg2:  "Status" :  QVariant(QString, "OK (24 ms)")
+arg2:  "VoiceMailbox" :  QVariant(uint, 5004)
+arg3:  "{b5e85124-23b3-4c32-b024-335f0a6a0b8c}" */
+  QString varName = "Address-IP";
+  if(event.contains(varName))
+    _ipAdress = event.value(varName).toString();
+
+  varName = "Address-Port";
+  if(event.contains(varName))
+    _ipPort = event.value(varName);
+
+  varName = "Busy-level";
+  if(event.contains(varName))
+   _busyLevel = event.value(varName);
+
+  varName = "Call-limit";
+  if(event.contains(varName))
+    _callLimit = event.value(varName);
+
+  varName = "Callerid";
+  if(event.contains(varName))
+    _callerId = event.value(varName).toString();
+  if(!_callerId.isNull() && !_callerId.trimmed().isEmpty())
+  {
+    QRegExp re("\"((?:[^\\\"]|\\.)*)\"\\ <(.*)>$");
+    if(re.exactMatch(_callerId))
+    {
+      _description = re.cap(1);
+    }
+  }
+
+  varName = "Callgroup";
+  if(event.contains(varName))
+    _callGroup = event.value(varName).toString();
+
+  varName = "Context";
+  if(event.contains(varName))
+    _context = event.value(varName).toString();
+
+  varName = "Default-Username";
+  if(event.contains(varName))
+    _defaultUsername = event.value(varName).toString();
+
+  /*varName = "ObjectName";
+  if(event.contains(varName))
+     = event.value(varName);*/
+
+  varName = "Pickupgroup";
+  if(event.contains(varName))
+    _pickupGroup = event.value(varName).toString();
+
+  varName = "Reg-Contact";
+  if(event.contains(varName))
+    _regContact = event.value(varName).toString();
+
+  varName = "SIP-Useragent";
+  if(event.contains(varName))
+    _userAgent = event.value(varName).toString();
+
+  varName = "Status";
+  if(event.contains(varName))
+    _status = event.value(varName).toString();
+
+  varName = "VoiceMailbox";
+  if(event.contains(varName))
+    _vmBox = event.value(varName);
+
+  emit sUpdated(this);
+}
+
+void AstSipPeer::sExtensionStatusEvent(const QVariantMap &event)
+{
+  emit sigExtensionStatusEvent(this, event);
+}
+
+void AstSipPeer::sDndStatusEvent(const QVariantMap &event)
+{
+  if(event.contains("Status"))
+  {
+    uint statusNum = event.value("Status").toUInt();
+    AsteriskManager::ExtStatuses statuses(statusNum);
+    _isDndOn = !statuses.testFlag(AsteriskManager::NotInUse);
+    emit sUpdated(this);
+    emit sigDndStatusEvent(this, event, _isDndOn);
+  }
+}
+
+void AstSipPeer::setDnd(bool isDndOn)
+{
+  _isDndOn=isDndOn;
+  emit sUpdated(this);
+  emit sigDndStatusEvent(this, QVariantMap(), _isDndOn);
 }

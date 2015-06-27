@@ -1,6 +1,7 @@
 #include "admtoolboxsmoothdrag.h"
 
 #include <QDebug>
+#include <QLayout>
 #include <QScrollBar>
 #include <QAbstractButton>
 
@@ -11,11 +12,54 @@ AdmScrollAreaSmoothDrag::AdmScrollAreaSmoothDrag(QWidget *parent) :
   acceptDrops();
   setMouseTracking(true);
   setMinimumHeight(ScrollMinHeight);
+  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
   // Initialize variables
   _scrollDir = ScrollOff;
   _timer = NULL;
   _pointDragMoveEvent = QPoint();
+}
+void AdmScrollAreaSmoothDrag::setWidget(QWidget *widget)
+{
+  widget->installEventFilter(this);
+  QScrollArea::setWidget(widget);
+}
+
+bool AdmScrollAreaSmoothDrag::eventFilter(QObject *obj, QEvent *event)
+{
+  if(event->type() == QEvent::Resize && obj == widget())
+  {
+    //setMinimumWidth(widget()->width());
+    bool parentFound = false;
+    QObject *p = NULL;
+    AdmToolBoxSmoothDrag *o = NULL;
+    p = this;
+    while(parentFound == false)
+    {
+      p = p->parent();
+      if(NULL == p)
+      {
+        break;
+      }
+      o = qobject_cast<AdmToolBoxSmoothDrag *>(p);
+      if(NULL != o)
+      {
+        parentFound = true;
+        int left=0;
+        int top=0;
+        int right=0;
+        int bottom=0;
+        int addWidth=0;
+        o->getContentsMargins(&left,&top,&right,&bottom);
+        addWidth = left+right;
+        getContentsMargins(&left,&top,&right,&bottom);
+        addWidth += left+right;
+        o->setMinimumWidth(widget()->width()+addWidth);
+        break;
+      }
+    }
+  }
+  return false;
 }
 
 void AdmScrollAreaSmoothDrag::dragEnterEvent(QDragEnterEvent *event)

@@ -173,7 +173,7 @@ public:
   QString actionDataGet();
   QString actionDBDel();
   QString actionDBDelTree();
-  QString actionDBGet();
+  QString actionDBGet(const QString &family, const QString &key);
   QString actionDBPut();
   QString actionEvents();
   QString actionExtensionState();

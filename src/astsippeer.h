@@ -29,13 +29,22 @@ public:
   bool            getVideoSupport()   {return _videoSupport;}
   bool            getMyDevice()       {return _myDevice;}
 
+  void setDnd(bool isDndOn);
+
 public slots:
   void sUpdatePeer(const QVariantMap &event);
+  void sResponseShowSipPeer(const QVariantMap &event);
+  void sExtensionStatusEvent(const QVariantMap &event);
+  void sDndStatusEvent(const QVariantMap &event);
+
 
 protected:
 
 signals:
   void destroying(AstSipPeer *);
+  void sUpdated(AstSipPeer *);
+  void sigExtensionStatusEvent(AstSipPeer *, const QVariantMap &event);
+  void sigDndStatusEvent(AstSipPeer *, const QVariantMap &event, bool);
 
 private:
   bool      _acl;
@@ -56,6 +65,19 @@ private:
   bool      _videoSupport;
 
   bool      _myDevice;
+
+  QVariant  _busyLevel;
+  QVariant  _callLimit;
+  QString   _callerId;
+  QString   _callGroup;
+  QString   _context;
+  QString   _defaultUsername;
+  QString   _pickupGroup;
+  QString   _regContact;
+  QString   _userAgent;
+  QVariant  _vmBox;
+
+  bool      _isDndOn;
 };
 
 #endif // ASTSIPPEER_H

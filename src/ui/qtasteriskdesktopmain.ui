@@ -28,7 +28,7 @@
         <item row="0" column="2">
          <widget class="AdmToolBoxSmoothDrag" name="_toolBoxXfer">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -62,8 +62,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>157</width>
-             <height>218</height>
+             <width>148</width>
+             <height>190</height>
             </rect>
            </property>
            <attribute name="label">
@@ -86,8 +86,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>155</width>
-                 <height>216</height>
+                 <width>146</width>
+                 <height>188</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -128,8 +128,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>157</width>
-             <height>218</height>
+             <width>148</width>
+             <height>190</height>
             </rect>
            </property>
            <attribute name="label">
@@ -152,8 +152,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>155</width>
-                 <height>216</height>
+                 <width>146</width>
+                 <height>188</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -194,8 +194,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>157</width>
-             <height>218</height>
+             <width>148</width>
+             <height>190</height>
             </rect>
            </property>
            <attribute name="label">
@@ -218,8 +218,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>155</width>
-                 <height>216</height>
+                 <width>146</width>
+                 <height>188</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -558,6 +558,7 @@
    <class>AdmScrollAreaSmoothDrag</class>
    <extends>QScrollArea</extends>
    <header>src/admtoolboxsmoothdrag.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

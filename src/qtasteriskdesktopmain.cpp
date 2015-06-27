@@ -22,7 +22,12 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   _chanMap = new QMap<QString, AstChannel*>();
   _parkedMap = new QMap<QString, AstParkedCall*>();
   _callMap = new QMap<QString, AdmCallWidget*>();
-  _sipPeers = new QList<AstSipPeer*>();
+
+  _extensionMap = new QMap<QString, AdmExtensionWidget *>();
+
+  _sipPeerMap = new QMap<QString, AstSipPeer*>();
+
+  _showSipPeerActionId = new QMap<QString, AstSipPeer*>();
   _loginActionId = QString();
 
   _sipPeersActionId = QString();
@@ -144,9 +149,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     }
     _loginActionId = QString();
     _sipPeersActionId = _ami->actionSIPpeers();
-  }
-  if(_sipPeersActionId.isNull() == false && arg3 == _sipPeersActionId)
-  {
+  } else if(_sipPeersActionId.isNull() == false && arg3 == _sipPeersActionId) {
     _sipPeersActionId = QString();
 
     // Setup the extensions programs
@@ -154,10 +157,19 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     peerWidget = new AdmExtensionWidget();
     peerWidget->setExten(QString("730"));
     peerWidget->setText("Tracking #");
-    peerWidget->setPixmap(QPixmap(":/icons/status-avail.png"));
+    peerWidget->setPixmap(QPixmap(":/icons/status-ring.png"));
     ui->_layoutPrograms->addWidget(peerWidget);
     connect(peerWidget,           SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
             ui->_scrollPrograms,  SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
+  } else if(_showSipPeerActionId->count() > 0 && _showSipPeerActionId->contains(arg3))
+  {
+    qDebug() << ":::showSipPeerActionId:::";
+    AstSipPeer *peer = _showSipPeerActionId->value(arg3);
+    _showSipPeerActionId->remove(arg3);
+    if(arg1 == AsteriskManager::Success)
+    {
+      peer->sResponseShowSipPeer(arg2);
+    }
   }
 }
 
@@ -200,6 +212,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
   {
     if( iter.value().toString().contains("4004")
         || iter.value().toString().contains("4005")
+        || iter.value().toString().contains("3004")
       )
     {
       catchMe = true;
@@ -506,20 +519,112 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     case AsteriskManager::PeerEntry:
     {
       AstSipPeer *peer = new AstSipPeer(arg2);
+
       if(!peer->getMyDevice())
       {
-        _sipPeers->append(peer);
+        _sipPeerMap->insert(peer->getObjectName().toString(),peer);
+        _ami->actionDBGet("CustomDevstate",QString("DEVDND%1").arg(peer->getObjectName().toString()));
+        connect(peer, SIGNAL(destroying(AstSipPeer*)),
+                this, SLOT(sDestroyingSipPeer(AstSipPeer*)));
         AdmExtensionWidget *peerWidget = new AdmExtensionWidget();
+        _extensionMap->insert(peer->getObjectName().toString(), peerWidget);
+        connect(peerWidget,             SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
+                ui->_scrollPeersAvail,  SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
+        connect(peerWidget, SIGNAL(destroying(AdmExtensionWidget*)),
+                this,       SLOT(sDestroyingAdmExtensionWidget(AdmExtensionWidget*)));
         peerWidget->setExten(peer->getObjectName());
         peerWidget->setText(peer->getDescription());
         peerWidget->setPixmap(QPixmap(":/icons/status-avail.png"));
+        peerWidget->setSipPeer(peer);
         ui->_layoutSipPeersAvail->addWidget(peerWidget);
-        connect(peerWidget,     SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
-                ui->_scrollPeersAvail, SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
+        QString actionId = _ami->actionSIPshowpeer(peer->getObjectName().toString());
+        _showSipPeerActionId->insert(actionId,peer);
       }
       break;
     }
+    case AsteriskManager::ExtensionStatus:
+    {
+      QVariant exten = QVariant();
+      if(arg2.contains("Exten"))
+        exten = arg2.value("Exten");
+
+      AstSipPeer *peer = NULL;
+      QString sipPeerName = QString();
+      if(arg2.contains("Hint"))
+      {
+        QString hint = arg2.value("Hint").toString();
+        QRegExp re("^.*SIP/([^&]+).*$");
+        if(re.exactMatch(hint) && re.captureCount() == 1)
+        {
+          sipPeerName = re.cap(1);
+          qDebug() << QString("sipPeerName: %1").arg(sipPeerName);
+          if(_sipPeerMap->contains(sipPeerName))
+            peer = _sipPeerMap->value(sipPeerName);
+        }
+      }
+      if(_extensionMap->contains(exten.toString()))
+      {
+        AdmExtensionWidget *widget = _extensionMap->value(exten.toString());
+        if(NULL != peer && peer != widget->getSipPeer())
+        {
+          widget->setSipPeer(peer);
+        }
+        widget->sExtensionStatusEvent(arg2);
+      } else if(exten.toString().startsWith("*76")) {
+        QRegExp re("^\\*76(.*)$");
+        if(re.exactMatch(exten.toString()))
+        {
+          exten.setValue(re.cap(1));
+          if(_extensionMap->contains(exten.toString()))
+            _extensionMap->value(exten.toString())->sExtensionDndStatusEvent(arg2);
+          if(_sipPeerMap->contains(exten.toString()))
+            _sipPeerMap->value(exten.toString())->sDndStatusEvent(arg2);
+        }
+      } else if(NULL != peer && exten.toString() != sipPeerName) {
+        peer->sExtensionStatusEvent(arg2);
+      }
+      break;
+    }
+
     default:
+      if(arg2.contains("Event"))
+      {
+        if(arg2.value("Event").toString() == "DBGetResponse")
+        {
+          /*
+            catchMeIfYouCan: Begin Caught Event Info
+            catchMeIfYouCan: arg1: Event:
+            catchMeIfYouCan: arg2:  "ActionID" :  QVariant(QString, "{de20209a-3399-4755-960a-19ca404fee12}")
+            catchMeIfYouCan: arg2:  "Event" :  QVariant(QString, "DBGetResponse")
+            catchMeIfYouCan: arg2:  "Family" :  QVariant(QString, "CustomDevstate")
+            catchMeIfYouCan: arg2:  "Key" :  QVariant(QString, "DEVDND4005")
+            catchMeIfYouCan: arg2:  "Val" :  QVariant(QString, "BUSY")
+            catchMeIfYouCan: End Caught Event Info
+          */
+          QString fam, key;
+          if(arg2.contains("Family"))
+            fam = arg2.value("Family").toString();
+          if(fam == "CustomDevstate")
+          {
+            if(arg2.contains("Key"))
+              key = arg2.value("Key").toString();
+            QRegExp re("^DEVDND(.*)$");
+            if(re.exactMatch(key))
+            {
+              QString sipPeerName = re.cap(1);
+              if(_sipPeerMap->contains(sipPeerName))
+              {
+
+                if(arg2.contains("Val"))
+                {
+                  bool isDndOn = arg2.value("Val").toString() == "BUSY";
+                  _sipPeerMap->value(sipPeerName)->setDnd(isDndOn);
+                }
+              }
+            }
+          }
+        }
+      }
       break;
   }
 }
@@ -837,4 +942,15 @@ void QtAsteriskDesktopMain::sDestroyingCall(AdmCallWidget *call)
 {
   if(_callMap->contains(call->getUuid()))
     _callMap->remove(call->getUuid());
+}
+void QtAsteriskDesktopMain::sDestroyingSipPeer(AstSipPeer *peer)
+{
+  if(_sipPeerMap->contains(peer->getObjectName().toString()))
+    _sipPeerMap->remove(peer->getObjectName().toString());
+}
+
+void QtAsteriskDesktopMain::sDestroyingAdmExtensionWidget(AdmExtensionWidget *widget)
+{
+  if(_extensionMap->contains(widget->getExten()))
+    _extensionMap->remove(widget->getExten());
 }

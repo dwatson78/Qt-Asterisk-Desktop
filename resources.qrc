@@ -13,5 +13,7 @@
         <file>icons/status-busy.png</file>
         <file>icons/status-unavail.png</file>
         <file>icons/status-dnd.png</file>
+        <file>icons/status-onhold.png</file>
+        <file>icons/status-ring.png</file>
     </qresource>
 </RCC>
