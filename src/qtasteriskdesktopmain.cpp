@@ -490,6 +490,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         QString uuid = arg2.value("UniqueID").toString();
         if(_chanMap->contains(uuid))
         {
+          //Disable the music on hold status
+          _chanMap->value(uuid)->sMusicOff(arg2);
           AdmCallWidget *call = new AdmCallWidget();
           connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
                   this, SLOT(sCallXfer(AdmCallWidget*,QString))
@@ -539,6 +541,37 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         ui->_layoutSipPeersAvail->addWidget(peerWidget);
         QString actionId = _ami->actionSIPshowpeer(peer->getObjectName().toString());
         _showSipPeerActionId->insert(actionId,peer);
+      }
+      break;
+    }
+    case AsteriskManager::PeerStatus:
+    {
+      if(arg2.contains("Peer"))
+      {
+        QString peer = arg2.value("Peer").toString();
+        if(arg2.contains("ChannelType"))
+        {
+          QString chanType = arg2.value("ChannelType").toString();
+          if(chanType == "SIP")
+          {
+            if(peer.startsWith("SIP/"))
+              peer = peer.replace(0,4,"");
+
+            bool isPeerLoaded = _sipPeerMap->contains(peer);
+            if(arg2.contains("PeerStatus"))
+            {
+              QString peerStatus = arg2.value("PeerStatus").toString();
+              if(peerStatus == "Registered" || peerStatus == "Reachable")
+              {
+                if(isPeerLoaded)
+                  _sipPeerMap->value(peer)->sPeerStatusEvent(arg2);
+              } else if(peerStatus == "Unregistered" || peerStatus == "Unreachable") {
+                if(isPeerLoaded)
+                  _sipPeerMap->value(peer)->sPeerStatusEvent(arg2);
+              }
+            }
+          }
+        }
       }
       break;
     }
@@ -614,7 +647,6 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
               QString sipPeerName = re.cap(1);
               if(_sipPeerMap->contains(sipPeerName))
               {
-
                 if(arg2.contains("Val"))
                 {
                   bool isDndOn = arg2.value("Val").toString() == "BUSY";
@@ -863,7 +895,7 @@ void QtAsteriskDesktopMain::sCallPark(AdmCallWidget * call)
                       .arg(otherChan->getChannel())
                       .arg(myChan->getChannel())
           ;
-          int timeout = 45000;
+          int timeout = 45000; // 45 seconds
           _ami->actionPark(otherChan->getChannel(),myChan->getChannel(),timeout);
         }
       }
@@ -908,29 +940,26 @@ void QtAsteriskDesktopMain::sDestroyingParkedCalled(AstParkedCall *parkedCall)
   if(_parkedMap->contains(parkedCall->getUuid()))
     _parkedMap->remove(parkedCall->getUuid());
 }
+
 void QtAsteriskDesktopMain::sPickUpParkedCall(AstParkedCall *parkedCall)
 {
   // Get the device
   QSettings set;
   if(set.contains("DEVICES/default"))
   {
-    QString dvc = set.value("DEVICES/default").toString();
-    QString fromChan = dvc.replace("[^0-9a-zA-Z]","");
-    //_ami->actionOriginate(dvc, ui->_dialNum->text(), "default", 1);
-    _ami->actionOriginate(fromChan,
-                          QString::number(parkedCall->getParkedExten(new bool)),
-                          "from-internal",
-                          1,
-                          QString(),
-                          QString(),
-                          0,
-                          QString("PRK %1: %2")
-                            .arg(QString::number(parkedCall->getParkedExten(new bool)))
-                            .arg(parkedCall->getChannelParked()->getCallIdStr())
-    );
+    //Can't pick up our own parked calls!
+    QString exten = set.value("DEVICES/default").toString().replace(QRegExp("^SIP/"),"");
+    if(parkedCall->getChannelParked()->getChannelParts()->getExten() != exten) // TODO: Get the SIP device object name instead!
+    {
+      _ami->actionRedirect(parkedCall->getChannelParked()->getChannel(),
+                         exten, // The default device extension number
+                         "from-internal", // TODO: See if there is a dialplan that could be created for this
+                         1);
+    } else {
+      qDebug() << "Can't pick up our own parked calls!";
+    }
   }
 }
-
 
 void QtAsteriskDesktopMain::sDestroyingChannel(AstChannel *channel)
 {

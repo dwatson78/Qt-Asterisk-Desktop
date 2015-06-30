@@ -191,6 +191,14 @@ void AdmExtensionWidget::sSipPeerDestroying(AstSipPeer *peer)
 void AdmExtensionWidget::sSipPeerUpdated(AstSipPeer *peer)
 {
   ui->_desc->setText(peer->getDescription());
+  if(peer->getStatus() == "Registered" || peer->getStatus() == "Reachable")
+  {
+    _statusNum = AsteriskManager::NotInUse;
+    _updateStatusIcon();
+  } else if(peer->getStatus() == "Unregistered" || peer->getStatus() == "Unreachable") {
+    _statusNum = AsteriskManager::Unavailable;
+    _updateStatusIcon();
+  }
 }
 
 void AdmExtensionWidget::sExtensionStatusEvent(const QVariantMap &event)

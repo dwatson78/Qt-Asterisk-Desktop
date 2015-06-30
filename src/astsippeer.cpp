@@ -90,9 +90,28 @@ AstSipPeer::~AstSipPeer()
   emit destroying(this);
 }
 
-void AstSipPeer::sUpdatePeer(const QVariantMap &event)
+void AstSipPeer::sPeerStatusEvent(const QVariantMap &event)
 {
-  Q_UNUSED(event);
+  if(event.contains("PeerStatus"))
+  {
+    QString peerStatus = event.value("PeerStatus").toString();
+    
+    if(peerStatus == "Registered" || peerStatus == "Reachable")
+    {
+      _status = event.value("PeerStatus").toString();
+      if(event.contains("Address"))
+      {
+        QStringList addrParts = event.value("Address").toString().split(":");
+        _ipAdress = addrParts.at(0);
+        _ipPort = addrParts.count() == 2 ? addrParts.at(1).toUInt() : QVariant(QVariant::UInt);
+      }
+    } else if(peerStatus == "Unregistered" || peerStatus == "Unreachable") {
+      _status = event.value("PeerStatus").toString();
+      _ipAdress = QString();
+      _ipPort = QVariant(QVariant::UInt);
+    }
+  }
+  emit sUpdated(this);
 }
 
 void AstSipPeer::sResponseShowSipPeer(const QVariantMap &event)

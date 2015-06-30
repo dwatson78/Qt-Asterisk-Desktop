@@ -624,9 +624,13 @@ QString AsteriskManager::actionSendText()
   return sendAction("SendText");
 }
 
-QString AsteriskManager::actionSetvar()
+QString AsteriskManager::actionSetvar(const QString &channel, const QString &variable, const QString &value)
 {
-  return sendAction("Setvar");
+  QVariantMap headers;
+  headers["Channel"] = channel;
+  headers["Variable"] = variable;
+  headers["Value"] = value;
+  return sendAction("Setvar",headers);
 }
 
 QString AsteriskManager::actionShowDialPlan()
@@ -730,7 +734,7 @@ QString AsteriskManager::actionWaitEvent()
 QString AsteriskManager::valueToString(QVariant value)
 {
   switch (value.type()) {
-  case QMetaType::Char:
+  case QVariant::Char:
     return value.toChar() == 1 ? "true" : "false";
   default:
     return value.toString();
@@ -740,12 +744,15 @@ QString AsteriskManager::valueToString(QVariant value)
 QVariant AsteriskManager::stringValue(QString string)
 {
   QVariant value(string);
-
   if (string == "true" || string == "false")
     value.setValue(string == "true");
   else if (QVariant(value).convert(QVariant::UInt))
-    value.setValue(string.toUInt());
-
+  {
+    bool ok = false;
+    value.setValue(string.toUInt(&ok));
+    if(!ok)
+      value = QVariant(string);
+  }
   return value;
 }
 
@@ -813,12 +820,9 @@ void AsteriskManager::onReadyRead()
   QRegExp keyValue("^([A-Za-z0-9\\-]+):\\s(.+)$");
   QByteArray line;
 
-//	qDebug("<ami>");
 
   while (canReadLine()) {
     line = readLine();
-
-//		qDebug() << line.trimmed();
 
     if (line != "\r\n") {
       if (keyValue.indexIn(line) > -1)
@@ -832,9 +836,6 @@ void AsteriskManager::onReadyRead()
         }
         QMap<QString, QVariant> chanvars = packetBuffer.value("ChanVars").toMap();
         //Get the Channel Name
-        bool debugMe = false;
-        if(packetBuffer.contains("Event") && packetBuffer.value("Event").toString() == "Dial")
-          debugMe = true;
         QRegExp re ("^ChanVariable\\(([^)]+)\\):\\ (.*)$");
         if(re.exactMatch(line))
         {

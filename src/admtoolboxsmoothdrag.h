@@ -41,10 +41,12 @@ signals:
 public slots:
   void sDragEnterEvent(AdmExtensionWidget  *obj, QDragEnterEvent *event);
   void sTickTock();
+
 private:
   int       _scrollDir;
   QTimer  * _timer;
   QPoint    _pointDragMoveEvent;
+  QWidget *_tbox;
 
 };
 

@@ -143,7 +143,7 @@ private:
 
   QString   _accountCode;
   QString   _callIdName;
-  QVariant  _callIdNum;
+  QString   _callIdNum;
   QString   _channel;
   QVariant  _chanState;
   QString   _chanStateDesc;

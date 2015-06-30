@@ -258,7 +258,7 @@ public:
                uint extraPriority = 0);
   QString actionReload();
   QString actionSendText();
-  QString actionSetvar();
+  QString actionSetvar(const QString &channel, const QString &variable, const QString &value);
   QString actionShowDialPlan();
   QString actionSIPnotify();
   QString actionSIPpeers();

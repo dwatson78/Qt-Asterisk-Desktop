@@ -18,6 +18,7 @@ AdmScrollAreaSmoothDrag::AdmScrollAreaSmoothDrag(QWidget *parent) :
   _scrollDir = ScrollOff;
   _timer = NULL;
   _pointDragMoveEvent = QPoint();
+  _tbox = NULL;
 }
 void AdmScrollAreaSmoothDrag::setWidget(QWidget *widget)
 {
@@ -29,34 +30,39 @@ bool AdmScrollAreaSmoothDrag::eventFilter(QObject *obj, QEvent *event)
 {
   if(event->type() == QEvent::Resize && obj == widget())
   {
-    //setMinimumWidth(widget()->width());
     bool parentFound = false;
-    QObject *p = NULL;
-    AdmToolBoxSmoothDrag *o = NULL;
-    p = this;
-    while(parentFound == false)
+    if(NULL == _tbox)
     {
-      p = p->parent();
-      if(NULL == p)
+      QObject *p = NULL;
+      AdmToolBoxSmoothDrag *o = NULL;
+      p = this;
+      while(parentFound == false)
       {
-        break;
+        p = p->parent();
+        if(NULL == p)
+          return false;
+        o = qobject_cast<AdmToolBoxSmoothDrag *>(p);
+        if(NULL != o)
+        {
+          _tbox = o;
+          parentFound = true;
+        }
       }
-      o = qobject_cast<AdmToolBoxSmoothDrag *>(p);
-      if(NULL != o)
-      {
-        parentFound = true;
-        int left=0;
-        int top=0;
-        int right=0;
-        int bottom=0;
-        int addWidth=0;
-        o->getContentsMargins(&left,&top,&right,&bottom);
-        addWidth = left+right;
-        getContentsMargins(&left,&top,&right,&bottom);
-        addWidth += left+right;
-        o->setMinimumWidth(widget()->width()+addWidth);
-        break;
-      }
+    } else {
+      parentFound = true;
+    }
+    if(parentFound)
+    {
+      int left=0;
+      int top=0;
+      int right=0;
+      int bottom=0;
+      int addWidth=0;
+      _tbox->getContentsMargins(&left,&top,&right,&bottom);
+      addWidth = left+right;
+      getContentsMargins(&left,&top,&right,&bottom);
+      addWidth += left+right;
+      _tbox->setMinimumWidth(widget()->width()+addWidth);
     }
   }
   return false;

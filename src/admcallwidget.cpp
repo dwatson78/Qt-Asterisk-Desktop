@@ -89,7 +89,6 @@ void AdmCallWidget::sHangupChannel(AstChannel *channel)
   Q_UNUSED(channel);
   bool isAllHungup = true;
   bool valid = false;
-  uint cause;
   QMap<QString, AstChannel *>::iterator i;
   for(i = _channels->begin(); i != _channels->end(); ++i)
   {
@@ -98,7 +97,7 @@ void AdmCallWidget::sHangupChannel(AstChannel *channel)
                 .arg(i.value()->getChannel())
                 .arg(i.value()->getHangupCauseStr())
                 ;
-    cause = i.value()->getHangupCauseNum(&valid);
+    i.value()->getHangupCauseNum(&valid);
     if(!valid)
     {
       isAllHungup = false;

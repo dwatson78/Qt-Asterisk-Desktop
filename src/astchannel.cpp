@@ -8,7 +8,7 @@ AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
   /*QString*/ this->_accountCode        = QString();
   /*bool*/    //this->_isCallIdSet        = false;
   /*QString*/ this->_callIdName         = QString();
-  /*uint*/    this->_callIdNum          = QVariant(QVariant::UInt);
+  /*uint*/    this->_callIdNum          = QString();
   /*QString*/ this->_channel            = QString();
   /*uint*/    this->_chanState          = QVariant(QVariant::UInt);
   /*QString*/ this->_chanStateDesc      = "Down";
@@ -44,11 +44,7 @@ AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
     if(event.contains("CallerIDName"))
       this->_callIdName = event.value("CallerIDName").toString();
     if(event.contains("CallerIDNum"))
-    {
-      this->_callIdNum = event.value("CallerIDNum").toString() == ""
-        ? QVariant(QVariant::UInt)
-        : event.value("CallerIDNum").toUInt();
-    }
+      this->_callIdNum = event.value("CallerIDNum").toString();
     if(event.contains("Channel"))
     {
       this->_channel = event.value("Channel").toString();
@@ -96,11 +92,7 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       if(event.contains("CallerIDName"))
         this->_callIdName = event.value("CallerIDName").toString();
       if(event.contains("CallerIDNum"))
-      {
-        this->_callIdNum = event.value("CallerIDNum").toString() == ""
-          ? QVariant(QVariant::UInt)
-          : event.value("CallerIDNum").toUInt();
-      }
+        this->_callIdNum = event.value("CallerIDNum").toString();
       if(event.contains("Channel"))
         this->_channel = event.value("Channel").toString();
       if(event.contains("ChannelState"))
@@ -135,11 +127,7 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       if(event.contains("CallerIDName"))
         this->_callIdName = event.value("CallerIDName").toString();
       if(event.contains("CallerIDNum"))
-      {
-        this->_callIdNum = event.value("CallerIDNum").toString() == ""
-          ? QVariant(QVariant::UInt)
-          : event.value("CallerIDNum").toUInt();
-      }
+        this->_callIdNum = event.value("CallerIDNum").toString();
       if(event.contains("CID-CallingPres"))
       {
         QRegExp re ("^([0-9]+)\\ \\((.*)\\)$");
@@ -186,9 +174,11 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       qDebug() << tr("AstChannel::sChannelEvent: UnParkedCall: Channel: '%1', uuid: '%2'")
                   .arg(this->_channel)
                   .arg(QString(this->_uuid->toLatin1()));
+      this->sMusicOff(event);
       this->sParkOff(event);
       if(NULL != _masq)
       {
+        _masq->sMusicOff(event);
         _masq->sParkOff(event);
       }
       break;
@@ -227,7 +217,7 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       if(!_isParked && event.contains("CallerIDName"))
         this->_callIdName = event.value("CallerIDName").toString();
       if(!_isParked && event.contains("CallerIDNum"))
-        this->_callIdNum = event.value("CallerIDNum").toUInt();
+        this->_callIdNum = event.value("CallerIDNum").toString();
       if(event.contains("Cause"))
         this->_hangupCauseNum = event.value("Cause").toUInt();
       if(event.contains("Cause-txt"))
@@ -259,11 +249,11 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
 QString AstChannel::getCallIdStr()
 {
   if(!this->_callIdName.isNull() && !this->_callIdNum.isNull())
-    return tr("%1 <%2>").arg(this->_callIdName).arg(this->_callIdNum.toString());
+    return tr("%1 <%2>").arg(this->_callIdName).arg(this->_callIdNum);
   else if(!this->_callIdName.isNull() && this->_callIdNum.isNull())
     return this->_callIdName;
   else if(this->_callIdName.isNull() && !this->_callIdNum.isNull())
-    return this->_callIdNum.toString();
+    return this->_callIdNum;
   else
     return "";
 }
@@ -447,7 +437,7 @@ void AstChannel::sMasqueradeChannel(QVariantMap event, AstChannel *clone)
   this->_hangupCauseDesc    = QString(clone->_hangupCauseDesc);
   this->_callIdPresDesc     = QString(clone->_callIdPresDesc);
 
-  this->_callIdNum        = QVariant(clone->_callIdNum);
+  this->_callIdNum        = QString(clone->_callIdNum);
   this->_chanState        = QVariant(clone->_chanState);
   this->_exten            = QVariant(clone->_exten);
   this->_connectedLineNum = QVariant(clone->_connectedLineNum);

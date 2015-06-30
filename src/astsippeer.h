@@ -32,7 +32,7 @@ public:
   void setDnd(bool isDndOn);
 
 public slots:
-  void sUpdatePeer(const QVariantMap &event);
+  void sPeerStatusEvent(const QVariantMap &event);
   void sResponseShowSipPeer(const QVariantMap &event);
   void sExtensionStatusEvent(const QVariantMap &event);
   void sDndStatusEvent(const QVariantMap &event);
