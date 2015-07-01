@@ -28,6 +28,7 @@ public:
   bool            getTextSupport()    {return _textSupport;}
   bool            getVideoSupport()   {return _videoSupport;}
   bool            getMyDevice()       {return _myDevice;}
+  const QVariant& getVmBox()          {return _vmBox;}
 
   void setDnd(bool isDndOn);
 
@@ -36,7 +37,6 @@ public slots:
   void sResponseShowSipPeer(const QVariantMap &event);
   void sExtensionStatusEvent(const QVariantMap &event);
   void sDndStatusEvent(const QVariantMap &event);
-
 
 protected:
 

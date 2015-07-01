@@ -52,6 +52,9 @@ public slots:
   void sDestroyingSipPeer(AstSipPeer *peer);
   void sDestroyingAdmExtensionWidget(AdmExtensionWidget *widget);
 
+  void sMySipPeerUpdated(AstSipPeer *peer);
+  void sMySipPeerExtStatusEvent(AstSipPeer *peer, const QVariantMap &event);
+  void sMySipPeerDndStatusEvent(AstSipPeer *peer, const QVariantMap &event, bool isDndOn);
 
 
 private:
@@ -66,6 +69,7 @@ private:
   QMap<QString, AdmCallWidget*>       * _callMap;
   QMap<QString, AdmExtensionWidget *> * _extensionMap;
   QMap<QString, AstSipPeer *>         * _sipPeerMap;
+  QMap<QString, AstSipPeer *>         * _mySipPeerMap;
 
 };
 

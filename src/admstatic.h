@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTime>
 #include <QTimer>
+#include <QNetworkAccessManager>
 
 class AdmStatic : public QObject
 {
@@ -14,8 +15,9 @@ public:
   static QString elapsedTimeToString(QTime *time);
 
   /* Public members */
-  QTimer* getTimer();
   ~AdmStatic();
+  QTimer* getTimer();
+  QNetworkAccessManager* getNetAccessMgr();
 
 public slots:
 
@@ -28,10 +30,12 @@ private:
 
   /* Private members */
   QTimer      *_timer;
+  QNetworkAccessManager *_nam;
 
   /* Private static members */
   static  bool        _instanceFlag;
   static  AdmStatic   *_instance;
+
 };
 
 

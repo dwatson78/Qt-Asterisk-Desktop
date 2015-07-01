@@ -7,6 +7,9 @@
 #include "confbridgeuser.h"
 #include "admcallwidget.h"
 
+#include "admvoicemailwidget.h"
+#include "restapiastvm.h"
+
 #include <QDebug>
 #include <QGroupBox>
 #include <QGridLayout>
@@ -25,6 +28,7 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
 
   _extensionMap = new QMap<QString, AdmExtensionWidget *>();
 
+  _mySipPeerMap = new QMap<QString, AstSipPeer*>();
   _sipPeerMap = new QMap<QString, AstSipPeer*>();
 
   _showSipPeerActionId = new QMap<QString, AstSipPeer*>();
@@ -161,14 +165,22 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     ui->_layoutPrograms->addWidget(peerWidget);
     connect(peerWidget,           SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
             ui->_scrollPrograms,  SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
-  } else if(_showSipPeerActionId->count() > 0 && _showSipPeerActionId->contains(arg3))
-  {
+  } else if(_showSipPeerActionId->count() > 0 && _showSipPeerActionId->contains(arg3)) {
     qDebug() << ":::showSipPeerActionId:::";
     AstSipPeer *peer = _showSipPeerActionId->value(arg3);
     _showSipPeerActionId->remove(arg3);
     if(arg1 == AsteriskManager::Success)
     {
       peer->sResponseShowSipPeer(arg2);
+      if(_mySipPeerMap->contains(peer->getObjectName().toString()))
+      {
+        if(!peer->getVmBox().isNull())
+        {
+          AdmVoiceMailWidget *w = new AdmVoiceMailWidget(peer->getVmBox().toString());
+          ui->_voiceMailTabWidget->addVoiceMailWidget(w);
+
+        }
+      }
     }
   }
 }
@@ -213,6 +225,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     if( iter.value().toString().contains("4004")
         || iter.value().toString().contains("4005")
         || iter.value().toString().contains("3004")
+        || iter.value().toString().contains("5000")
+        || iter.value().toString().contains("5004")
       )
     {
       catchMe = true;
@@ -521,13 +535,20 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     case AsteriskManager::PeerEntry:
     {
       AstSipPeer *peer = new AstSipPeer(arg2);
+      QMap<QString, AstSipPeer *> *sipPeerMap = NULL;
+      if(peer->getMyDevice())
+        sipPeerMap = _mySipPeerMap;
+      else
+        sipPeerMap = _sipPeerMap;
 
-      if(!peer->getMyDevice())
+      sipPeerMap->insert(peer->getObjectName().toString(),peer);
+      _ami->actionDBGet("CustomDevstate",QString("DEVDND%1").arg(peer->getObjectName().toString()));
+
+      connect(peer, SIGNAL(destroying(AstSipPeer*)),
+              this, SLOT(sDestroyingSipPeer(AstSipPeer*)));
+
+      if(sipPeerMap == _sipPeerMap)
       {
-        _sipPeerMap->insert(peer->getObjectName().toString(),peer);
-        _ami->actionDBGet("CustomDevstate",QString("DEVDND%1").arg(peer->getObjectName().toString()));
-        connect(peer, SIGNAL(destroying(AstSipPeer*)),
-                this, SLOT(sDestroyingSipPeer(AstSipPeer*)));
         AdmExtensionWidget *peerWidget = new AdmExtensionWidget();
         _extensionMap->insert(peer->getObjectName().toString(), peerWidget);
         connect(peerWidget,             SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
@@ -539,37 +560,40 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         peerWidget->setPixmap(QPixmap(":/icons/status-avail.png"));
         peerWidget->setSipPeer(peer);
         ui->_layoutSipPeersAvail->addWidget(peerWidget);
-        QString actionId = _ami->actionSIPshowpeer(peer->getObjectName().toString());
-        _showSipPeerActionId->insert(actionId,peer);
+      } else if (sipPeerMap == _mySipPeerMap) {
+        connect(peer, SIGNAL(sUpdated(AstSipPeer*)),
+                this, SLOT(sMySipPeerUpdated(AstSipPeer*)));
+        connect(peer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
+                this, SLOT(sMySipPeerExtStatusEvent(AstSipPeer*,QVariantMap)));
+        connect(peer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
+                this, SLOT(sMySipPeerDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
       }
+
+      QString actionId = _ami->actionSIPshowpeer(peer->getObjectName().toString());
+      _showSipPeerActionId->insert(actionId,peer);
       break;
     }
     case AsteriskManager::PeerStatus:
     {
       if(arg2.contains("Peer"))
       {
-        QString peer = arg2.value("Peer").toString();
+        QString peerName = arg2.value("Peer").toString();
         if(arg2.contains("ChannelType"))
         {
           QString chanType = arg2.value("ChannelType").toString();
           if(chanType == "SIP")
           {
-            if(peer.startsWith("SIP/"))
-              peer = peer.replace(0,4,"");
+            if(peerName.startsWith("SIP/"))
+              peerName = peerName.replace(0,4,"");
 
-            bool isPeerLoaded = _sipPeerMap->contains(peer);
-            if(arg2.contains("PeerStatus"))
-            {
-              QString peerStatus = arg2.value("PeerStatus").toString();
-              if(peerStatus == "Registered" || peerStatus == "Reachable")
-              {
-                if(isPeerLoaded)
-                  _sipPeerMap->value(peer)->sPeerStatusEvent(arg2);
-              } else if(peerStatus == "Unregistered" || peerStatus == "Unreachable") {
-                if(isPeerLoaded)
-                  _sipPeerMap->value(peer)->sPeerStatusEvent(arg2);
-              }
-            }
+            AstSipPeer *peer = NULL;
+            if(_sipPeerMap->contains(peerName))
+              peer = _sipPeerMap->value(peerName);
+            if(_mySipPeerMap->contains(peerName))
+              peer = _mySipPeerMap->value(peerName);
+
+            if(NULL != peer)
+              peer->sPeerStatusEvent(arg2);
           }
         }
       }
@@ -618,7 +642,6 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
       }
       break;
     }
-
     default:
       if(arg2.contains("Event"))
       {
@@ -974,8 +997,21 @@ void QtAsteriskDesktopMain::sDestroyingCall(AdmCallWidget *call)
 }
 void QtAsteriskDesktopMain::sDestroyingSipPeer(AstSipPeer *peer)
 {
+  disconnect( peer, SIGNAL(destroying(AstSipPeer*)),
+              this, SLOT(sDestroyingSipPeer(AstSipPeer*)));
+
   if(_sipPeerMap->contains(peer->getObjectName().toString()))
     _sipPeerMap->remove(peer->getObjectName().toString());
+  else if(_mySipPeerMap->contains(peer->getObjectName().toString()))
+  {
+    disconnect( peer, SIGNAL(sUpdated(AstSipPeer*)),
+                this, SLOT(sMySipPeerUpdated(AstSipPeer*)));
+    disconnect( peer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
+                this, SLOT(sMySipPeerExtStatusEvent(AstSipPeer*,QVariantMap)));
+    disconnect( peer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
+                this, SLOT(sMySipPeerDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+    _mySipPeerMap->remove(peer->getObjectName().toString());
+  }
 }
 
 void QtAsteriskDesktopMain::sDestroyingAdmExtensionWidget(AdmExtensionWidget *widget)
@@ -983,3 +1019,24 @@ void QtAsteriskDesktopMain::sDestroyingAdmExtensionWidget(AdmExtensionWidget *wi
   if(_extensionMap->contains(widget->getExten()))
     _extensionMap->remove(widget->getExten());
 }
+
+
+void QtAsteriskDesktopMain::sMySipPeerUpdated(AstSipPeer *peer)
+{
+  Q_UNUSED(peer)
+  qDebug() << "";
+}
+
+void QtAsteriskDesktopMain::sMySipPeerExtStatusEvent(AstSipPeer *peer, const QVariantMap &event)
+{
+  Q_UNUSED(peer)
+  Q_UNUSED(event)
+}
+
+void QtAsteriskDesktopMain::sMySipPeerDndStatusEvent(AstSipPeer *peer, const QVariantMap &event, bool isDndOn)
+{
+  Q_UNUSED(peer)
+  Q_UNUSED(event)
+  Q_UNUSED(isDndOn)
+}
+

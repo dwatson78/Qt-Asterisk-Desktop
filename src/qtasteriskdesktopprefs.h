@@ -23,6 +23,20 @@ public:
   }
 };
 
+class RestApiPref : public QObject
+{
+  Q_OBJECT
+  Q_ENUMS(prefs)
+public:
+  enum prefs {baseUrl};
+  static QString getName(prefs pref){
+    const QMetaObject &mo = RestApiPref::staticMetaObject;
+    int index = mo.indexOfEnumerator("prefs");
+    QMetaEnum me = mo.enumerator(index);
+    return QString(me.valueToKey(pref));
+  }
+};
+
 class QtAsteriskDesktopPrefs : public QDialog
 {
   Q_OBJECT

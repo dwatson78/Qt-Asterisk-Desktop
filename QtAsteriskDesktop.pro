@@ -8,6 +8,12 @@ greaterThan(QT_MAJOR_VERSION, 4) {
  QT +=  widgets
 }
 
+INCLUDEPATH += \
+    "/usr/include/qjson"
+
+LIBS += \
+    "/usr/lib/libqjson.so.0.7.1"
+
 TARGET = QtAsteriskDesktop
 
 QMAKE_CXXFLAGS += \
@@ -29,7 +35,10 @@ SOURCES +=   \
     src/astsippeer.cpp \
     src/draggabletoolbutton.cpp \
     src/admtoolboxsmoothdrag.cpp \
-    src/admextensionwidget.cpp
+    src/admextensionwidget.cpp \
+    src/admvoicemailtabwidget.cpp \
+    src/admvoicemailwidget.cpp \
+    src/restapiastvm.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -46,7 +55,10 @@ HEADERS +=   \
     src/astsippeer.h \
     src/draggabletoolbutton.h \
     src/admtoolboxsmoothdrag.h \
-    src/admextensionwidget.h
+    src/admextensionwidget.h \
+    src/admvoicemailtabwidget.h \
+    src/admvoicemailwidget.h \
+    src/restapiastvm.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -55,7 +67,9 @@ FORMS +=     \
     src/ui/admicontext.ui \
     src/ui/admcallwidget.ui \
     src/ui/admchanwidget.ui \
-    src/ui/admextensionwidget.ui
+    src/ui/admextensionwidget.ui \
+    src/ui/admvoicemailtabwidget.ui \
+    src/ui/admvoicemailwidget.ui
 
 RESOURCES += \
     resources.qrc
