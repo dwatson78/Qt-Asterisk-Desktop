@@ -12,7 +12,7 @@ INCLUDEPATH += \
     "/usr/include/qjson"
 
 LIBS += \
-    "/usr/lib/libqjson.so.0.7.1"
+    -lqjson
 
 TARGET = QtAsteriskDesktop
 

@@ -19,14 +19,17 @@ public slots:
 
 protected:
   QString _actionId;
+  bool _isDataStream;
   void _getRequest(const QString &api, const QVariantMap &headers);
   virtual void setRequest(const QNetworkRequest &req);
   virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
+  virtual void setReady(const QNetworkRequest &req, const QByteArray &data);
   virtual void setError(const QNetworkRequest &req, QNetworkReply::NetworkError err);
 
 signals:
   void destroying(RestApiAstVm *obj);
   void sigReady(const QVariantMap &data);
+  void sigReady(const QByteArray &data);
   void sigError(QNetworkReply::NetworkError err);
 
 private:
@@ -81,6 +84,29 @@ private:
   QString _vmFolder;
   QNetworkRequest _req;
 
+};
+
+class RestApiAstVmGetMsgSoundFile : public RestApiAstVm
+{
+  Q_OBJECT
+public:
+  explicit RestApiAstVmGetMsgSoundFile(QObject *parent = 0);
+  ~RestApiAstVmGetMsgSoundFile();
+
+  void set(const QVariantMap &values, bool *ok);
+  void start();
+
+protected:
+  void setRequest(const QNetworkRequest &req);
+
+  virtual void setReady(const QNetworkRequest &req, const QByteArray &data);
+  virtual void setError(const QNetworkRequest &req, QNetworkReply::NetworkError err);
+
+private:
+  QString _vmBox;
+  QString _vmFolder;
+  QString _vmFile;
+  QNetworkRequest _req;
 };
 
 #endif // RESTAPIASTVM_H

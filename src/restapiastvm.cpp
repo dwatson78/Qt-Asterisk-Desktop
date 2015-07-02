@@ -31,6 +31,7 @@ RestApiAstVm::RestApiAstVm(QObject *parent) :
   set.endGroup();
 
   _actionId = QUuid::createUuid().toString();
+  _isDataStream = false;
 }
 RestApiAstVm::~RestApiAstVm()
 {
@@ -58,15 +59,22 @@ void RestApiAstVm::parseNetworkResponse(QNetworkReply *reply)
   }
 
   QByteArray data = reply->readAll();
-  QJson::Parser prsr;
-  bool ok;
-  QVariantMap dataMap = prsr.parse(data, &ok).toMap();
-  if(ok)
+
+  if(!_isDataStream)
   {
-    setReady(reply->request(), dataMap);
+    QJson::Parser prsr;
+    bool ok;
+    QVariantMap dataMap = prsr.parse(data, &ok).toMap();
+    if(ok)
+    {
+      setReady(reply->request(), dataMap);
+    } else {
+      setError(reply->request(), QNetworkReply::UnknownContentError);
+    }
   } else {
-    setError(reply->request(), QNetworkReply::UnknownContentError);
+    setReady(reply->request(), data);
   }
+
 }
 
 void RestApiAstVm::set(const QVariantMap &values, bool *ok)
@@ -88,6 +96,12 @@ void RestApiAstVm::setRequest(const QNetworkRequest &req)
 
 }
 void RestApiAstVm::setReady(const QNetworkRequest &req, const QVariantMap &data)
+{
+  Q_UNUSED(req)
+  Q_UNUSED(data)
+  // Implemented by derived class...
+}
+void RestApiAstVm::setReady(const QNetworkRequest &req, const QByteArray &data)
 {
   Q_UNUSED(req)
   Q_UNUSED(data)
@@ -214,6 +228,74 @@ void RestApiAstVmMsgDetails::setReady(const QNetworkRequest &req, const QVariant
 }
 
 void RestApiAstVmMsgDetails::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
+{
+  if(req == _req)
+  {
+    emit sigError(err);
+    deleteLater();
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+RestApiAstVmGetMsgSoundFile::RestApiAstVmGetMsgSoundFile(QObject *parent) :
+  RestApiAstVm(parent)
+{
+  _isDataStream = true;
+  _vmBox = QString();
+  _vmFolder = QString();
+  _vmFile = QString();
+}
+RestApiAstVmGetMsgSoundFile::~RestApiAstVmGetMsgSoundFile()
+{
+
+}
+
+void RestApiAstVmGetMsgSoundFile::set(const QVariantMap &values, bool *ok)
+{
+  *ok = false;
+  if(   values.contains("vmBox")
+     && values.contains("vmFolder")
+     && values.contains("vmFile"))
+  {
+    _vmBox = values.value("vmBox").toString();
+    _vmFolder = values.value("vmFolder").toString();
+    _vmFile = values.value("vmFile").toString();
+    if(!_vmBox.isNull() && !_vmFolder.isNull() && !_vmFile.isNull())
+      *ok = true;
+  }
+}
+
+void RestApiAstVmGetMsgSoundFile::start()
+{
+  QString api = "vm.php";
+  QVariantMap headers;
+  headers["action"]   = "getVmMsgSoundFile";
+  headers["actionid"] = _actionId;
+  headers["vmbox"]    = _vmBox;
+  headers["vmfolder"] = _vmFolder;
+  headers["vmfile"] = _vmFile;
+  _getRequest(api, headers);
+}
+void RestApiAstVmGetMsgSoundFile::setRequest(const QNetworkRequest &req)
+{
+  _req = req;
+}
+
+void RestApiAstVmGetMsgSoundFile::setReady(const QNetworkRequest &req, const QByteArray &data)
+{
+  if(req == _req)
+  {
+    emit sigReady(data);
+    deleteLater();
+  }
+}
+
+void RestApiAstVmGetMsgSoundFile::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
 {
   if(req == _req)
   {

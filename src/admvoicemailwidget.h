@@ -6,6 +6,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QListWidgetItem>
+#include <QTableWidgetItem>
 
 namespace Ui {
 class AdmVoiceMailWidget;
@@ -29,6 +30,11 @@ public slots:
   void sVmMsgDetailsError(QNetworkReply::NetworkError err);
 
   void sFolderItemActivated(QListWidgetItem *current, QListWidgetItem * previous);
+
+  void sMessagesItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous);
+
+  void sPlayMsgClicked();
+  void sSoundFileReady(const QByteArray &data);
 
 private:
   Ui::AdmVoiceMailWidget *ui;

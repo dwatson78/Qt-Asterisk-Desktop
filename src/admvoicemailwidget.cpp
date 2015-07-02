@@ -4,6 +4,10 @@
 
 #include <QDebug>
 #include <QStringList>
+#include <QVariant>
+#include <QBuffer>
+#include <QFile>
+#include <QSound>
 
 AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
   QWidget(parent),
@@ -15,9 +19,14 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
   // Setup the table
   ui->_messages->setColumnCount(1);
   QStringList headers;
-  headers.append("#");
+  headers.append("Date");
+  headers.append("Call-Id");
+  ui->_messages->setColumnCount(headers.count());
   ui->_messages->setHorizontalHeaderLabels(headers);
   ui->_messages->setStyleSheet("QTableWidget::item{padding:0px;}");
+  connect(ui->_messages,  SIGNAL(currentItemChanged(QTableWidgetItem*,QTableWidgetItem*)),
+          this,           SLOT(sMessagesItemChanged(QTableWidgetItem*,QTableWidgetItem*))
+  );
 
   // Get the intial voicemail counts
   RestApiAstVmMsgCounts *rest = new RestApiAstVmMsgCounts();
@@ -36,6 +45,10 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
 
   connect(ui->_folders, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),
           this,         SLOT(sFolderItemActivated(QListWidgetItem*,QListWidgetItem*)));
+
+  connect(ui->_playMsg, SIGNAL(clicked()),
+          this,         SLOT(sPlayMsgClicked()));
+
 }
 
 AdmVoiceMailWidget::~AdmVoiceMailWidget()
@@ -122,13 +135,23 @@ void AdmVoiceMailWidget::sVmMsgDetailsReady(const QVariantMap &data)
     if(!msgs.isEmpty())
     {
       int row = -1;
+      QVariant msgData;
+      QVariantMap msgDataMap;
       QTableWidgetItem *cell = NULL;
+
       for(QList<QVariant>::const_iterator i = msgs.begin(); i != msgs.end(); ++i)
       {
+        msgData = *i;
+        msgDataMap = msgData.toMap();
         row++;
         ui->_messages->insertRow(row);
-        cell = new QTableWidgetItem(QString::number(0));
+
+        cell = new QTableWidgetItem(msgDataMap["origdate"].toString());
         ui->_messages->setItem(row,0,cell);
+        cell->setData(Qt::UserRole, msgData);
+        
+        cell = new QTableWidgetItem(msgDataMap["callerid"].toString());
+        ui->_messages->setItem(row,1,cell);
       }
     }
   }
@@ -138,4 +161,52 @@ void AdmVoiceMailWidget::sVmMsgDetailsError(QNetworkReply::NetworkError err)
 {
   Q_UNUSED(err)
   qDebug() << err;
+}
+
+void AdmVoiceMailWidget::sMessagesItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous)
+{
+  Q_UNUSED(current)
+  Q_UNUSED(previous)
+  qDebug() << QString("AdmVoiceMailWidget::sMessagesItemChanged: Previous Null: %1").arg(previous == NULL);
+  qDebug() << QString("AdmVoiceMailWidget::sMessagesItemChanged: Current Null: %1").arg(current == NULL);
+}
+
+void AdmVoiceMailWidget::sPlayMsgClicked()
+{
+
+  qDebug() << QString("Selected row: %1").arg(ui->_messages->selectedItems().at(0)->row());
+  QVariant data = ui->_messages->item(ui->_messages->selectedItems().at(0)->row(),0)->data(Qt::UserRole);
+  QVariantMap dataMap = data.toMap();
+  qDebug() << dataMap.value("sndfile");
+  RestApiAstVmGetMsgSoundFile *r = new RestApiAstVmGetMsgSoundFile();
+  bool ok = false;
+  QVariantMap params;
+  params["vmBox"] = _vmBox;
+  QString folder = ui->_folders->currentItem()->text();
+  QRegExp re("^(.*)\\ \\([0-9]+\\)");
+  if(re.exactMatch(folder))
+  {
+    params["vmFolder"] = re.cap(1);
+  }
+  params["vmFile"] = dataMap.value("sndfile");
+
+  r->set(params, &ok);
+  if(ok)
+  {
+    connect(r,SIGNAL(sigReady(QByteArray)),this,SLOT(sSoundFileReady(QByteArray)));
+    r->start();
+  }
+}
+
+void AdmVoiceMailWidget::sSoundFileReady(const QByteArray &data)
+{
+  qDebug() << data.length();
+  QFile file("/tmp/msg.wav");
+  file.open(QIODevice::WriteOnly);
+  file.write(data);
+  file.close();
+  QSound *snd = new QSound("/tmp/msg.wav");
+  qDebug() << "Start";
+  snd->play();
+  qDebug() << "Done";
 }
