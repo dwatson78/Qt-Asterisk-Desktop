@@ -3,6 +3,7 @@
 #include "restapiastvm.h"
 
 #include <QDebug>
+#include <QDir>
 #include <QStringList>
 #include <QVariant>
 #include <QFile>
@@ -76,6 +77,7 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
 AdmVoiceMailWidget::~AdmVoiceMailWidget()
 {
   delete ui;
+  delete _mFile;
 }
 void AdmVoiceMailWidget::sVmCountReady(const QVariantMap &data)
 {
@@ -194,7 +196,8 @@ void AdmVoiceMailWidget::sMessagesItemChanged(QTableWidgetItem *current, QTableW
   _mObj->clear();
   if(NULL != _mFile)
   {
-    _mFile->deleteLater();
+    //_mFile->remove();
+    delete _mFile;
     _mFile = NULL;
   }
   ui->_frameSelectedMessage->setEnabled(NULL != current);
@@ -266,9 +269,10 @@ void AdmVoiceMailWidget::sSoundFileReady(const QByteArray &data)
   _mSrc = Phonon::MediaSource(buf);
   _mObj->setCurrentSource(_mSrc);
   //_mObj->play();*/
-  _mFile = new QTemporaryFile("msg.wav.XXXXXX");
+  _mFile = new QTemporaryFile(QString("%1/msg.wav.XXXXXX").arg(QDir::tempPath()));
   if(_mFile->open())
   {
+    qDebug() << QString("_mFile->fileName(): %1").arg(_mFile->fileName());
     _mFile->write(data);
     _mFile->close();
     _mObj->setCurrentSource(QUrl(QString("file://%1").arg(_mFile->fileName())));
