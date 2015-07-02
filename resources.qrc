@@ -15,5 +15,15 @@
         <file>icons/status-dnd.png</file>
         <file>icons/status-onhold.png</file>
         <file>icons/status-ring.png</file>
+        <file>icons/media-eject.png</file>
+        <file>icons/media-playback-pause.png</file>
+        <file>icons/media-playback-start.png</file>
+        <file>icons/media-playback-stop.png</file>
+        <file>icons/media-record.png</file>
+        <file>icons/media-seek-backward.png</file>
+        <file>icons/media-seek-forward.png</file>
+        <file>icons/media-skip-backward.png</file>
+        <file>icons/media-skip-forward.png</file>
+        <file>icons/speaker.png</file>
     </qresource>
 </RCC>

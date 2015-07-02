@@ -2,11 +2,24 @@
 #define ADMVOICEMAILWIDGET_H
 
 #include <QWidget>
+#include <QByteArray>
+#include <QBuffer>
 #include <QVariantMap>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QListWidgetItem>
 #include <QTableWidgetItem>
+#include <QTime>
+#include <QTemporaryFile>
+
+#include <Phonon/MediaObject>
+#include <Phonon/MediaSource>
+#include <Phonon/AudioOutput>
+
+
+//#include <phonon/mediaobject.h>
+//#include <phonon/mediasource.h>
+//#include <phonon/videowidget.h>
 
 namespace Ui {
 class AdmVoiceMailWidget;
@@ -34,11 +47,23 @@ public slots:
   void sMessagesItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous);
 
   void sPlayMsgClicked();
+  void sMsgSeekBackClick();
+  void sMsgSeekForwardClick();
   void sSoundFileReady(const QByteArray &data);
+  
+  void sMediaObjectTick(qint64 time);
+  void sMediaObjectStateChanged(Phonon::State newState, Phonon::State oldState);
+  void sMediaObjectSourceChanged(Phonon::MediaSource);
+  void sMediaObjectAboutToFinish();
 
 private:
   Ui::AdmVoiceMailWidget *ui;
   QString _vmBox;
+  Phonon::MediaObject *_mObj;
+  Phonon::MediaSource _mSrc;
+  Phonon::AudioOutput *_mOut;
+  QTemporaryFile *_mFile;
 };
+
 
 #endif // ADMVOICEMAILWIDGET_H
