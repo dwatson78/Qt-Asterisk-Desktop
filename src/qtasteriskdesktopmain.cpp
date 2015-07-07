@@ -177,8 +177,9 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
         if(!peer->getVmBox().isNull())
         {
           AdmVoiceMailWidget *w = new AdmVoiceMailWidget(peer->getVmBox().toString());
+          connect(w,    SIGNAL(sigPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)),
+                  this, SLOT(sPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)));
           ui->_voiceMailTabWidget->addVoiceMailWidget(w);
-
         }
       }
     }
@@ -1040,3 +1041,32 @@ void QtAsteriskDesktopMain::sMySipPeerDndStatusEvent(AstSipPeer *peer, const QVa
   Q_UNUSED(isDndOn)
 }
 
+void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVariantMap &data)
+{
+  QSettings set;
+  if(set.contains("DEVICES/default"))
+  {
+    if(data.contains("sndfile") && data.contains("vmFolder"))
+    {
+      QString sndFile = data.value("sndfile").toString();
+      sndFile = sndFile.mid(0,sndFile.length()-4);
+      //TODO: Get sndFile from Rest API using the msg_id value...
+      qDebug() << sndFile;
+      QString vmFolderFile = data.value("vmFolder").toString();
+      _ami->actionOriginate(
+              set.value("DEVICES/default").toString(),
+              QString(),
+              QString(),
+              0,
+              "Playback",
+              QString("/var/spool/asterisk/voicemail/default/%1/%2/%3")
+                      .arg(obj->getVmBox())
+                      .arg(vmFolderFile)
+                      .arg(sndFile),
+              10000, // 10 second timeout
+              QString("VM: %1").arg(data.value("callerid").toString())
+                      
+      );
+    }
+  }
+}

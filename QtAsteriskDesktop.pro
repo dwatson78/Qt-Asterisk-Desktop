@@ -10,10 +10,11 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 INCLUDEPATH += \
-    "/usr/include/qjson"
+    "/usr/include/qjson" \
+    "/usr/include/qt4/phonon"
 
 LIBS += \
-    -lqjson
+    -lqjson -lphonon
 
 TARGET = QtAsteriskDesktop
 

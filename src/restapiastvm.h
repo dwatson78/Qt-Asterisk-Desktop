@@ -8,12 +8,16 @@ class RestApiAstVm : public QObject
 {
   Q_OBJECT
 public:
+  static const int ROLE_FOLDER_NAME      = 1;
+  static const int ROLE_FOLDER_MSG_COUNT = 2;
+
   explicit RestApiAstVm(QObject *parent = 0);
   ~RestApiAstVm();
   
   const QString& getActionId(){return _actionId;}
   virtual void set(const QVariantMap &values, bool *ok);
   virtual void start();
+
 
 public slots:
 
@@ -105,7 +109,78 @@ protected:
 private:
   QString _vmBox;
   QString _vmFolder;
-  QString _vmFile;
+  QString _vmMsgId;
+  QNetworkRequest _req;
+};
+
+class RestApiAstVmMoveMessage : public RestApiAstVm
+{
+  Q_OBJECT
+public:
+  explicit RestApiAstVmMoveMessage(QObject *parent = 0);
+  ~RestApiAstVmMoveMessage();
+
+  void set(const QVariantMap &values, bool *ok);
+  void start();
+
+protected:
+  void setRequest(const QNetworkRequest &req);
+
+  virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
+  virtual void setError(const QNetworkRequest &req, QNetworkReply::NetworkError err);
+
+private:
+  QString _vmBox;
+  QString _vmFolderSrc;
+  QString _vmFolderDst;
+  QString _vmMsgId;
+  QNetworkRequest _req;
+};
+
+class RestApiAstVmForwardMessage : public RestApiAstVm
+{
+  Q_OBJECT
+public:
+  explicit RestApiAstVmForwardMessage(QObject *parent = 0);
+  ~RestApiAstVmForwardMessage();
+
+  void set(const QVariantMap &values, bool *ok);
+  void start();
+
+protected:
+  void setRequest(const QNetworkRequest &req);
+
+  virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
+  virtual void setError(const QNetworkRequest &req, QNetworkReply::NetworkError err);
+
+private:
+  QString _vmBox;
+  QString _vmFolder;
+  QString _vmMsgId;
+  QString _vmDestBox;
+  QNetworkRequest _req;
+};
+
+class RestApiAstVmDeleteMessage : public RestApiAstVm
+{
+  Q_OBJECT
+public:
+  explicit RestApiAstVmDeleteMessage(QObject *parent = 0);
+  ~RestApiAstVmDeleteMessage();
+
+  void set(const QVariantMap &values, bool *ok);
+  void start();
+
+protected:
+  void setRequest(const QNetworkRequest &req);
+
+  virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
+  virtual void setError(const QNetworkRequest &req, QNetworkReply::NetworkError err);
+
+private:
+  QString _vmBox;
+  QString _vmFolder;
+  QString _vmMsgId;
   QNetworkRequest _req;
 };
 

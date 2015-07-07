@@ -248,7 +248,7 @@ RestApiAstVmGetMsgSoundFile::RestApiAstVmGetMsgSoundFile(QObject *parent) :
   _isDataStream = true;
   _vmBox = QString();
   _vmFolder = QString();
-  _vmFile = QString();
+  _vmMsgId = QString();
 }
 RestApiAstVmGetMsgSoundFile::~RestApiAstVmGetMsgSoundFile()
 {
@@ -260,12 +260,12 @@ void RestApiAstVmGetMsgSoundFile::set(const QVariantMap &values, bool *ok)
   *ok = false;
   if(   values.contains("vmBox")
      && values.contains("vmFolder")
-     && values.contains("vmFile"))
+     && values.contains("vmMsgId"))
   {
     _vmBox = values.value("vmBox").toString();
     _vmFolder = values.value("vmFolder").toString();
-    _vmFile = values.value("vmFile").toString();
-    if(!_vmBox.isNull() && !_vmFolder.isNull() && !_vmFile.isNull())
+    _vmMsgId = values.value("vmMsgId").toString();
+    if(!_vmBox.isNull() && !_vmFolder.isNull() && !_vmMsgId.isNull())
       *ok = true;
   }
 }
@@ -278,7 +278,7 @@ void RestApiAstVmGetMsgSoundFile::start()
   headers["actionid"] = _actionId;
   headers["vmbox"]    = _vmBox;
   headers["vmfolder"] = _vmFolder;
-  headers["vmfile"] = _vmFile;
+  headers["vmmsgid"] = _vmMsgId;
   _getRequest(api, headers);
 }
 void RestApiAstVmGetMsgSoundFile::setRequest(const QNetworkRequest &req)
@@ -296,6 +296,220 @@ void RestApiAstVmGetMsgSoundFile::setReady(const QNetworkRequest &req, const QBy
 }
 
 void RestApiAstVmGetMsgSoundFile::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
+{
+  if(req == _req)
+  {
+    emit sigError(err);
+    deleteLater();
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+RestApiAstVmMoveMessage::RestApiAstVmMoveMessage(QObject *parent) :
+  RestApiAstVm(parent)
+{
+  _vmBox = QString();
+  _vmFolderSrc = QString();
+  _vmFolderDst = QString();
+  _vmMsgId = QString();
+}
+RestApiAstVmMoveMessage::~RestApiAstVmMoveMessage()
+{
+
+}
+
+void RestApiAstVmMoveMessage::set(const QVariantMap &values, bool *ok)
+{
+  *ok = false;
+  if(values.contains("vmBox")
+     && values.contains("vmFolderSrc")
+     && values.contains("vmFolderDst")
+     && values.contains("vmMsgId"))
+  {
+    _vmBox = values.value("vmBox").toString();
+    _vmFolderSrc = values.value("vmFolderSrc").toString();
+    _vmFolderDst = values.value("vmFolderDst").toString();
+    _vmMsgId = values.value("vmMsgId").toString();
+    if(!_vmBox.isNull() && !_vmFolderSrc.isNull()
+       && !_vmFolderDst.isNull() && !_vmMsgId.isNull())
+      *ok = true;
+  }
+}
+
+void RestApiAstVmMoveMessage::start()
+{
+  QString api = "vm.php";
+  QVariantMap headers;
+  headers["action"]       = "moveVmMsg";
+  headers["actionid"]     = _actionId;
+  headers["vmbox"]        = _vmBox;
+  headers["vmfoldersrc"]  = _vmFolderSrc;
+  headers["vmfolderdst"]  = _vmFolderDst;
+  headers["vmmsgid"]       = _vmMsgId;
+  _getRequest(api, headers);
+}
+void RestApiAstVmMoveMessage::setRequest(const QNetworkRequest &req)
+{
+  _req = req;
+}
+
+void RestApiAstVmMoveMessage::setReady(const QNetworkRequest &req, const QVariantMap &data)
+{
+  if(req == _req)
+  {
+    emit sigReady(data);
+    deleteLater();
+  }
+}
+
+void RestApiAstVmMoveMessage::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
+{
+  if(req == _req)
+  {
+    emit sigError(err);
+    deleteLater();
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+RestApiAstVmDeleteMessage::RestApiAstVmDeleteMessage(QObject *parent) :
+  RestApiAstVm(parent)
+{
+  _vmBox = QString();
+  _vmFolder = QString();
+  _vmMsgId = QString();
+}
+RestApiAstVmDeleteMessage::~RestApiAstVmDeleteMessage()
+{
+
+}
+
+void RestApiAstVmDeleteMessage::set(const QVariantMap &values, bool *ok)
+{
+  *ok = false;
+  if(values.contains("vmBox")
+     && values.contains("vmFolder")
+     && values.contains("vmMsgId"))
+  {
+    _vmBox = values.value("vmBox").toString();
+    _vmFolder = values.value("vmFolder").toString();
+    _vmMsgId = values.value("vmMsgId").toString();
+    if(   !_vmBox.isNull()
+       && !_vmFolder.isNull()
+       && !_vmMsgId.isNull()
+      )
+      *ok = true;
+  }
+}
+
+void RestApiAstVmDeleteMessage::start()
+{
+  QString api = "vm.php";
+  QVariantMap headers;
+  headers["action"]   = "rmVmMsg";
+  headers["actionid"] = _actionId;
+  headers["vmbox"]    = _vmBox;
+  headers["vmfolder"] = _vmFolder;
+  headers["vmmsgid"]  = _vmMsgId;
+  _getRequest(api, headers);
+}
+void RestApiAstVmDeleteMessage::setRequest(const QNetworkRequest &req)
+{
+  _req = req;
+}
+
+void RestApiAstVmDeleteMessage::setReady(const QNetworkRequest &req, const QVariantMap &data)
+{
+  if(req == _req)
+  {
+    emit sigReady(data);
+    deleteLater();
+  }
+}
+
+void RestApiAstVmDeleteMessage::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
+{
+  if(req == _req)
+  {
+    emit sigError(err);
+    deleteLater();
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
+RestApiAstVmForwardMessage::RestApiAstVmForwardMessage(QObject *parent) :
+  RestApiAstVm(parent)
+{
+  _vmBox = QString();
+  _vmFolder = QString();
+  _vmMsgId = QString();
+  _vmDestBox = QString();
+}
+RestApiAstVmForwardMessage::~RestApiAstVmForwardMessage()
+{
+
+}
+
+void RestApiAstVmForwardMessage::set(const QVariantMap &values, bool *ok)
+{
+  *ok = false;
+  if(   values.contains("vmBox")
+     && values.contains("vmFolder")
+     && values.contains("vmMsgId")
+     && values.contains("vmDestBox"))
+  {
+    _vmBox = values.value("vmBox").toString();
+    _vmFolder = values.value("vmFolder").toString();
+    _vmMsgId = values.value("vmMsgId").toString();
+    _vmDestBox = values.value("vmDestBox").toString();
+    if(   !_vmBox.isNull()    && !_vmFolder.isNull()
+       && !_vmMsgId.isNull()  && !_vmDestBox.isNull())
+      *ok = true;
+  }
+}
+
+void RestApiAstVmForwardMessage::start()
+{
+  QString api = "vm.php";
+  QVariantMap headers;
+  headers["action"]   = "fwdVmMsg";
+  headers["actionid"] = _actionId;
+  headers["vmbox"]    = _vmBox;
+  headers["vmfolder"] = _vmFolder;
+  headers["vmmsgid"]  = _vmMsgId;
+  headers["vmdestbox"]  = _vmDestBox;
+  _getRequest(api, headers);
+}
+void RestApiAstVmForwardMessage::setRequest(const QNetworkRequest &req)
+{
+  _req = req;
+}
+
+void RestApiAstVmForwardMessage::setReady(const QNetworkRequest &req, const QVariantMap &data)
+{
+  if(req == _req)
+  {
+    emit sigReady(data);
+    deleteLater();
+  }
+}
+
+void RestApiAstVmForwardMessage::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
 {
   if(req == _req)
   {
