@@ -57,6 +57,34 @@ QtAsteriskDesktopPrefs::QtAsteriskDesktopPrefs(QWidget *parent) :
   if(settings.contains(setting))
     ui->_restApiBaseUrl->setText(settings.value(setting).toString());
   settings.endGroup();
+  
+  settings.beginGroup("XMPP");
+
+  setting = XmppPref::getName(XmppPref::host);
+  if(settings.contains(setting))
+    ui->_xmppHost->setText(settings.value(setting).toString());
+
+  setting = XmppPref::getName(XmppPref::port);
+  if(settings.contains(setting))
+    ui->_xmppPort->setText(settings.value(setting).toString());
+
+  setting = XmppPref::getName(XmppPref::allowAutoSubscribe);
+  if(settings.contains(setting))
+    ui->_xmppAllowAutoSubscribe->setChecked(settings.value(setting).toBool());
+    
+  setting = XmppPref::getName(XmppPref::userName);
+  if(settings.contains(setting))
+    ui->_xmppUserName->setText(settings.value(setting).toString());
+
+  setting = XmppPref::getName(XmppPref::realm);
+  if(settings.contains(setting))
+    ui->_xmppRealm->setText(settings.value(setting).toString());
+
+  setting = XmppPref::getName(XmppPref::secPass);
+  if(settings.contains(setting))
+    ui->_xmppPassword->setText(settings.value(setting).toString());
+
+  settings.endGroup();
 }
 
 QtAsteriskDesktopPrefs::~QtAsteriskDesktopPrefs()
@@ -82,5 +110,14 @@ void QtAsteriskDesktopPrefs::sAccepted()
 
     settings.beginGroup("RESTAPI");
     settings.setValue(RestApiPref::getName(RestApiPref::baseUrl),ui->_restApiBaseUrl->text());
+    settings.endGroup();
+    
+    settings.beginGroup("XMPP");
+    settings.setValue(XmppPref::getName(XmppPref::host),ui->_xmppHost->text());
+    settings.setValue(XmppPref::getName(XmppPref::port),ui->_xmppPort->text());
+    settings.setValue(XmppPref::getName(XmppPref::allowAutoSubscribe),ui->_xmppAllowAutoSubscribe->isChecked());
+    settings.setValue(XmppPref::getName(XmppPref::userName),ui->_xmppUserName->text());
+    settings.setValue(XmppPref::getName(XmppPref::realm),ui->_xmppRealm->text());
+    settings.setValue(XmppPref::getName(XmppPref::secPass),ui->_xmppPassword->text());
     settings.endGroup();
 }

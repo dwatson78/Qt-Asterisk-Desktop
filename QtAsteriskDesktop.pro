@@ -11,10 +11,11 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 
 INCLUDEPATH += \
     "/usr/include/qjson" \
-    "/usr/include/qt4/phonon"
+    "/usr/include/qt4/phonon" \
+    "/usr/include/gloox"
 
 LIBS += \
-    -lqjson -lphonon
+    -lqjson -lphonon -lgloox -lpthread
 
 TARGET = QtAsteriskDesktop
 
@@ -40,7 +41,8 @@ SOURCES +=   \
     src/admextensionwidget.cpp \
     src/admvoicemailtabwidget.cpp \
     src/admvoicemailwidget.cpp \
-    src/restapiastvm.cpp
+    src/restapiastvm.cpp \
+    src/glooxmsghandler.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -60,7 +62,8 @@ HEADERS +=   \
     src/admextensionwidget.h \
     src/admvoicemailtabwidget.h \
     src/admvoicemailwidget.h \
-    src/restapiastvm.h
+    src/restapiastvm.h \
+    src/glooxmsghandler.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
