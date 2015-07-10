@@ -2,6 +2,7 @@
 #define ADMXMPPBUDDYWIDGET_H
 
 #include <QFrame>
+#include <QListWidgetItem>
 #include <gloox/rosteritem.h>
 #include <gloox/presence.h>
 
@@ -20,7 +21,7 @@ public:
   void setPresence(const RosterItem &item, const QString &resource, Presence::PresenceType presence, const QString &msg);
   const JID& getJid();
 public slots:
-
+  void sChatHistCurrentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 protected:
 
 signals:

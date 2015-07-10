@@ -18,7 +18,7 @@ AdmXmppBuddyWidget::~AdmXmppBuddyWidget()
 void AdmXmppBuddyWidget::setPresence(const RosterItem &item, const QString &resource, Presence::PresenceType presence, const QString &msg)
 {
   Q_UNUSED(resource)
-  ui->_buddyName->setText(QString::fromStdString(item.name()));
+  ui->_buddyName->setText(QString::fromUtf8(item.name().data()));
   ui->_buddyStatusMsg->setText(msg);
   _rosterItem = new RosterItem(item);
   _jid = item.jidJID();
@@ -75,4 +75,12 @@ void AdmXmppBuddyWidget::setPresence(const RosterItem &item, const QString &reso
 const JID& AdmXmppBuddyWidget::getJid()
 {
   return _jid;
+}
+
+void AdmXmppBuddyWidget::sChatHistCurrentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
+{
+  Q_UNUSED(current)
+  Q_UNUSED(previous)
+
+  // TODO: Do something about selection colors...
 }

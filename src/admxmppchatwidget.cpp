@@ -1,6 +1,8 @@
 #include "admxmppchatwidget.h"
 #include "ui_admxmppchatwidget.h"
 
+#include "admxmppchatblockwidget.h"
+
 #include <QDebug>
 
 AdmXmppChatWidget::AdmXmppChatWidget(MessageSession *session, QWidget *parent) :
@@ -87,20 +89,20 @@ bool AdmXmppChatWidget::eventFilter(QObject *obj, QEvent *event)
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
     if(keyEvent)
     {
-
-      qDebug() << keyEvent->key();
       if(keyEvent->key() == Qt::Key_Enter || keyEvent->key() == Qt::Key_Return)
       {
-        qDebug() << "Return pressed";
         if(keyEvent->modifiers().testFlag(Qt::ShiftModifier))
         {
-          qDebug() << "Shift was also pressed!";
           if(ui->_newChat->toPlainText().trimmed().isEmpty())
           {
             return true; //Consume the event
           }
         } else {
-          qDebug() << ui->_newChat->toPlainText();
+		  if(!ui->_newChat->toPlainText().trimmed().isEmpty())
+          {
+            std::string msg = ui->_newChat->toPlainText().toStdString();
+            _session->send(msg);
+          }
           ui->_newChat->clear();
           return true; //Consume the event
         }
@@ -114,16 +116,25 @@ void AdmXmppChatWidget::handleMessage(const Message &msg, MessageSession *sessio
 {
   if(msg.body().empty())
     return;
-  qDebug() << QString::fromStdString(session->threadID())
-           << QString::fromStdString(msg.from().username())
-           << QString::fromStdString(msg.body());
-  ui->_chatHistory->addItem(QString("<html><span style='color:blue'>%1</span><span>%2</span></html>")
-                            .arg(QString::fromUtf8(msg.from().username().data()))
-                            .arg(QString::fromUtf8(msg.body().data()))
-  );
+  qDebug() << QString::fromUtf8(session->threadID().data())
+           << QString::fromUtf8(msg.from().username().data())
+           << QString::fromUtf8(msg.body().data());
+  
+  AdmXmppChatBlockWidget *w = new AdmXmppChatBlockWidget(ui->_chatHistory);
+  w->setName(QString::fromUtf8(msg.from().username().data()));
+  w->setText(QString::fromUtf8(msg.body().data()));
+  // TODO: get the delayed delivery time if it exists!!
+  QDateTime time = QDateTime::currentDateTime();
+  w->setTime(time);
+  QListWidgetItem * item = new QListWidgetItem(ui->_chatHistory);
+  
+  ui->_chatHistory->addItem(item);
+  //ui->_chatHistory->setItemWidget(item, lbl);
+  ui->_chatHistory->setItemWidget(item, w);
+  item->setSizeHint(w->sizeHint());
+                            
   qDebug() << session;
   qDebug() << _session;
-  session->send("This is a test message");
 }
 
 void AdmXmppChatWidget::handleMessageEvent(const JID &from, MessageEventType event)
@@ -137,23 +148,3 @@ void AdmXmppChatWidget::handleChatState(const JID &from, ChatStateType state)
   qDebug() << "AdmXmppChatWidget::handleChatState";
   qDebug() << QString::fromUtf8(from.username().data()) << state;
 }
-
-/*void AdmXmppChatWidget::attachTo(MessageSession *session)
-{
-  qDebug() << "AdmXmppChatWidget::attachTo";
-  qDebug() << QString::fromUtf8(session->threadID().data());
-  MessageFilter::attachTo(session);
-}
-
-void AdmXmppChatWidget::decorate(Message &msg)
-{
-  qDebug() << "AdmXmppChatWidget::decorate";
-  qDebug() << QString::fromUtf8(msg.body().data());
-}
-
-void AdmXmppChatWidget::filter(Message &msg)
-{
-  qDebug() << "AdmXmppChatWidget::filter";
-  qDebug() << QString::fromUtf8(msg.body().data());
-}
-*/

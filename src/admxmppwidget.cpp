@@ -139,9 +139,9 @@ void AdmXmppWidget::onDisconnect(ConnectionError e)
           break;
       }
       if(!_client->streamErrorText().empty())
-        errMsg.append(QString("\nText: %1").arg(QString::fromStdString(_client->streamErrorText())));
+        errMsg.append(QString("\nText: %1").arg(QString::fromUtf8(_client->streamErrorText().data())));
       if(!_client->streamErrorCData().empty())
-        errMsg.append(QString("\nCData: %1").arg(QString::fromStdString(_client->streamErrorCData())));
+        errMsg.append(QString("\nCData: %1").arg(QString::fromUtf8(_client->streamErrorCData().data())));
       break;
     case ConnStreamVersionError:         /**< The incoming stream's version is not supported */
       errMsg = "Incoming stream version not supported";
@@ -288,31 +288,31 @@ void AdmXmppWidget::handleItemAdded (const JID &jid)
 {
   Q_UNUSED(jid)
   qDebug() << QString("GlooxRosterListener::handleItemAdded: %1")
-              .arg(QString::fromStdString(jid.full()));
+              .arg(QString::fromUtf8(jid.full().data()));
 }
 void AdmXmppWidget::handleItemSubscribed (const JID &jid)
 {
   Q_UNUSED(jid)
   qDebug() << QString("GlooxRosterListener::handleItemSubscribed: %1")
-              .arg(QString::fromStdString(jid.full()));
+              .arg(QString::fromUtf8(jid.full().data()));
 }
 void AdmXmppWidget::handleItemRemoved (const JID &jid)
 {
   Q_UNUSED(jid)
   qDebug() << QString("GlooxRosterListener::handleItemRemoved: %1")
-              .arg(QString::fromStdString(jid.full()));
+              .arg(QString::fromUtf8(jid.full().data()));
 }
 void AdmXmppWidget::handleItemUpdated (const JID &jid)
 {
   Q_UNUSED(jid)
   qDebug() << QString("GlooxRosterListener::handleItemUpdated: %1")
-              .arg(QString::fromStdString(jid.full()));
+              .arg(QString::fromUtf8(jid.full().data()));
 }
 void AdmXmppWidget::handleItemUnsubscribed (const JID &jid)
 {
   Q_UNUSED(jid)
   qDebug() << QString("GlooxRosterListener::handleItemUnsubscribed: %1")
-              .arg(QString::fromStdString(jid.full()));
+              .arg(QString::fromUtf8(jid.full().data()));
 }
 void AdmXmppWidget::handleRoster (const Roster &roster)
 {
@@ -325,7 +325,7 @@ void AdmXmppWidget::handleRoster (const Roster &roster)
   AdmXmppBuddyWidget *widget = NULL;
   for(it = roster.begin(); it != roster.end(); ++it)
   {
-    qDebug() << QString::fromStdString(it->first);
+    qDebug() << QString::fromUtf8(it->first.data());
     qDebug() << QString("Online? %1").arg(it->second->online());
     item = new QListWidgetItem(ui->_buddyList);
     widget = new AdmXmppBuddyWidget(ui->_buddyList);
@@ -349,10 +349,10 @@ void AdmXmppWidget::handleRosterPresence (const RosterItem &item, const std::str
   Q_UNUSED(presence)
   Q_UNUSED(msg)
   qDebug() <<   QString("GlooxRosterListener::handleRosterPresence: %1 %2 %4 (%5)")
-                .arg(QString::fromStdString(resource))
-                .arg(QString::fromStdString(item.jidJID().username()))
+                .arg(QString::fromUtf8(resource.data()))
+                .arg(QString::fromUtf8(item.jidJID().username().data()))
                 .arg(presence)
-                .arg(QString::fromStdString(msg));
+                .arg(QString::fromUtf8(msg.data()));
   AdmXmppBuddyWidget *buddy = NULL;
   if(_mapBuddies->contains(item.jidJID()))
   {
@@ -365,7 +365,7 @@ void AdmXmppWidget::handleRosterPresence (const RosterItem &item, const std::str
 
     //ui->_layoutBuddies->addWidget(buddy);
   }
-  buddy->setPresence(item, QString::fromStdString(resource), presence, QString::fromStdString(msg));
+  buddy->setPresence(item, QString::fromUtf8(resource.data()), presence, QString::fromUtf8(msg.data()));
 }
 void AdmXmppWidget::handleSelfPresence (const RosterItem &item, const std::string &resource, Presence::PresenceType presence, const std::string &msg)
 {
@@ -374,7 +374,7 @@ void AdmXmppWidget::handleSelfPresence (const RosterItem &item, const std::strin
   Q_UNUSED(presence)
   Q_UNUSED(msg)
   qDebug() << QString("GlooxRosterListener::handleSelfPresence: %1")
-              .arg(QString::fromStdString(msg));
+              .arg(QString::fromUtf8(msg.data()));
   ui->_status->blockSignals(true);
   switch(presence)
   {
@@ -435,9 +435,9 @@ void AdmXmppWidget::handleNonrosterPresence (const Presence &presence)
 {
   Q_UNUSED(presence)
   qDebug() << QString("GlooxRosterListener::handleNonrosterPresence : %1:  %2 (%3)")
-              .arg(QString::fromStdString(presence.from().username()))
+              .arg(QString::fromUtf8(presence.from().username().data()))
               .arg(presence.presence())
-              .arg(QString::fromStdString(presence.status()));
+              .arg(QString::fromUtf8(presence.status().data()));
 }
 void AdmXmppWidget::handleRosterError (const IQ &iq)
 {
@@ -447,11 +447,11 @@ void AdmXmppWidget::handleRosterError (const IQ &iq)
 
 void AdmXmppWidget::handleMessageSession(MessageSession *session)
 {
-  if(!_mapSessions->contains(QString::fromStdString(session->threadID())))
+  if(!_mapSessions->contains(QString::fromUtf8(session->threadID().data())))
   {
-    _mapSessions->insert(QString::fromStdString(session->threadID()),session);
+    _mapSessions->insert(QString::fromUtf8(session->threadID().data()),session);
     AdmXmppChatWidget *w = new AdmXmppChatWidget(session,this);
-    _mapChats->insert(QString::fromStdString(session->threadID()),w);
+    _mapChats->insert(QString::fromUtf8(session->threadID().data()),w);
     connect(w,    SIGNAL(destroying(AdmXmppChatWidget*)),
             this, SLOT(sDestroyingChatWidget(AdmXmppChatWidget*)));
     ui->_conversations->addTab(w,
@@ -563,7 +563,7 @@ void AdmXmppWidget::sBuddyActivated(const QModelIndex &index)
   {
     //AdmXmppChatWidget *w = new AdmXmppChatWidget(this);
 
-    //ui->_conversations->addTab(w,QIcon(),QString::fromStdString(b->getJid().username()));
+    //ui->_conversations->addTab(w,QIcon(),QString::fromUtf8(b->getJid().username().data()));
   }
 }
 

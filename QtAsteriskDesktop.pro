@@ -45,11 +45,10 @@ SOURCES +=   \
     src/admvoicemailtabwidget.cpp \
     src/admvoicemailwidget.cpp \
     src/restapiastvm.cpp \
-    src/glooxmsghandler.cpp \
     src/admxmppwidget.cpp \
     src/admxmppbuddywidget.cpp \
-    src/admbuddytreeview.cpp \
-    src/admxmppchatwidget.cpp
+    src/admxmppchatwidget.cpp \
+    src/admxmppchatblockwidget.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -70,11 +69,10 @@ HEADERS +=   \
     src/admvoicemailtabwidget.h \
     src/admvoicemailwidget.h \
     src/restapiastvm.h \
-    src/glooxmsghandler.h \
     src/admxmppwidget.h \
     src/admxmppbuddywidget.h \
-    src/admbuddytreeview.h \
-    src/admxmppchatwidget.h
+    src/admxmppchatwidget.h \
+    src/admxmppchatblockwidget.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -88,7 +86,8 @@ FORMS +=     \
     src/ui/admvoicemailwidget.ui \
     src/ui/admxmppwidget.ui \
     src/ui/admxmppbuddywidget.ui \
-    src/ui/admxmppchatwidget.ui
+    src/ui/admxmppchatwidget.ui \
+    src/ui/admxmppchatblockwidget.ui
 
 RESOURCES += \
     resources.qrc

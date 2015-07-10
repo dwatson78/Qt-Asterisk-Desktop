@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>160</width>
-    <height>328</height>
+    <width>130</width>
+    <height>155</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -55,7 +55,23 @@
     </layout>
    </item>
    <item row="1" column="0">
-    <widget class="QListWidget" name="_chatHistory"/>
+    <widget class="QListWidget" name="_chatHistory">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
+     </property>
+     <property name="verticalScrollMode">
+      <enum>QAbstractItemView::ScrollPerPixel</enum>
+     </property>
+     <property name="horizontalScrollMode">
+      <enum>QAbstractItemView::ScrollPerPixel</enum>
+     </property>
+     <property name="spacing">
+      <number>4</number>
+     </property>
+    </widget>
    </item>
    <item row="2" column="0">
     <widget class="QPlainTextEdit" name="_newChat">
