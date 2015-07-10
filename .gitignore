@@ -42,3 +42,5 @@ Makefile*
 #bin
 bin
 tmp
+
+3rdparty/lib/*

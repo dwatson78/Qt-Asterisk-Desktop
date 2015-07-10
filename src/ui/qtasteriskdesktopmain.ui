@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="_tabs">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="_tabMyDevice">
        <attribute name="title">
@@ -62,8 +62,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>146</width>
-             <height>223</height>
+             <width>148</width>
+             <height>207</height>
             </rect>
            </property>
            <attribute name="label">
@@ -86,8 +86,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>142</width>
-                 <height>219</height>
+                 <width>146</width>
+                 <height>205</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -128,8 +128,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>96</width>
-             <height>61</height>
+             <width>98</width>
+             <height>84</height>
             </rect>
            </property>
            <attribute name="label">
@@ -152,8 +152,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>96</width>
-                 <height>26</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -194,8 +194,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>96</width>
-             <height>61</height>
+             <width>98</width>
+             <height>84</height>
             </rect>
            </property>
            <attribute name="label">
@@ -218,8 +218,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>96</width>
-                 <height>26</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -494,26 +494,9 @@
        <attribute name="title">
         <string>Chat</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <layout class="QHBoxLayout" name="_layoutTabChat">
         <item>
-         <layout class="QVBoxLayout" name="_layoutChat">
-          <property name="spacing">
-           <number>3</number>
-          </property>
-         </layout>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_5">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>563</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+         <widget class="AdmXmppWidget" name="_admXmppWidget"/>
         </item>
        </layout>
       </widget>
@@ -527,7 +510,7 @@
      <x>0</x>
      <y>0</y>
      <width>614</width>
-     <height>20</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -601,6 +584,12 @@
    <class>AdmVoiceMailTabWidget</class>
    <extends>QFrame</extends>
    <header>src/admvoicemailtabwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AdmXmppWidget</class>
+   <extends>QFrame</extends>
+   <header>src/admxmppwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

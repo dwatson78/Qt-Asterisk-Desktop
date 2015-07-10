@@ -10,8 +10,6 @@
 #include "admvoicemailwidget.h"
 #include "restapiastvm.h"
 
-#include "glooxmsghandler.h"
-
 #include <QDebug>
 #include <QGroupBox>
 #include <QGridLayout>
@@ -83,8 +81,6 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
     if(valid)
       ui->_dvcExt->setText(QString::number(dvcExt));
   }
-  
-  new GlooxMsgHandler();
 }
 
 QtAsteriskDesktopMain::~QtAsteriskDesktopMain()

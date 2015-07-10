@@ -25,5 +25,7 @@
         <file>icons/media-skip-backward.png</file>
         <file>icons/media-skip-forward.png</file>
         <file>icons/speaker.png</file>
+        <file>icons/status-other.png</file>
+        <file>icons/status-offline.png</file>
     </qresource>
 </RCC>

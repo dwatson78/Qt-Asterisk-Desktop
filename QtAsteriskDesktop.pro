@@ -9,13 +9,16 @@ greaterThan(QT_MAJOR_VERSION, 4) {
  QT +=  widgets
 }
 
+OTHER_INC = "$$_PRO_FILE_PWD_/3rdparty/include"
+OTHER_LIBS = "$$_PRO_FILE_PWD_/3rdparty/lib"
+
 INCLUDEPATH += \
     "/usr/include/qjson" \
     "/usr/include/qt4/phonon" \
-    "/usr/include/gloox"
+    $$OTHER_INC
 
 LIBS += \
-    -lqjson -lphonon -lgloox -lpthread
+    -lqjson -lphonon -L$$OTHER_LIBS -lgloox -lpthread
 
 TARGET = QtAsteriskDesktop
 
@@ -42,7 +45,11 @@ SOURCES +=   \
     src/admvoicemailtabwidget.cpp \
     src/admvoicemailwidget.cpp \
     src/restapiastvm.cpp \
-    src/glooxmsghandler.cpp
+    src/glooxmsghandler.cpp \
+    src/admxmppwidget.cpp \
+    src/admxmppbuddywidget.cpp \
+    src/admbuddytreeview.cpp \
+    src/admxmppchatwidget.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -63,7 +70,11 @@ HEADERS +=   \
     src/admvoicemailtabwidget.h \
     src/admvoicemailwidget.h \
     src/restapiastvm.h \
-    src/glooxmsghandler.h
+    src/glooxmsghandler.h \
+    src/admxmppwidget.h \
+    src/admxmppbuddywidget.h \
+    src/admbuddytreeview.h \
+    src/admxmppchatwidget.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -74,7 +85,10 @@ FORMS +=     \
     src/ui/admchanwidget.ui \
     src/ui/admextensionwidget.ui \
     src/ui/admvoicemailtabwidget.ui \
-    src/ui/admvoicemailwidget.ui
+    src/ui/admvoicemailwidget.ui \
+    src/ui/admxmppwidget.ui \
+    src/ui/admxmppbuddywidget.ui \
+    src/ui/admxmppchatwidget.ui
 
 RESOURCES += \
     resources.qrc
