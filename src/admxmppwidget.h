@@ -75,9 +75,17 @@ public slots:
   void sStatusIndexChanged(int index);
 
   void sDestroyingChatWidget(AdmXmppChatWidget* obj);
+  void sAttentionChatWidget(AdmXmppChatWidget* obj);
+  void sConversationsCurrentChanged(int index);
+  void sConversationsTabClosed(int index);
 
   void sBuddyActivated(const QModelIndex &index);
   void sDestroyingBuddy(AdmXmppBuddyWidget *buddy);
+
+protected:
+
+signals:
+
 private:
   Ui::AdmXmppWidget *ui;
 

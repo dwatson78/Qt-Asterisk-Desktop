@@ -34,6 +34,12 @@ AdmXmppWidget::AdmXmppWidget(QWidget *parent) :
   connect(ui->_buddyList, SIGNAL(activated(QModelIndex)),
           this,           SLOT(sBuddyActivated(QModelIndex)));
 
+  connect(ui->_conversations, SIGNAL(currentChanged(int)),
+          this,               SLOT(sConversationsCurrentChanged(int)));
+
+  connect(ui->_conversations, SIGNAL(tabCloseRequested(int)),
+          this,               SLOT(sConversationsTabClosed(int)));
+
   _connect();
 }
 
@@ -447,17 +453,23 @@ void AdmXmppWidget::handleRosterError (const IQ &iq)
 
 void AdmXmppWidget::handleMessageSession(MessageSession *session)
 {
-  if(!_mapSessions->contains(QString::fromUtf8(session->threadID().data())))
+  QString jid = QString::fromUtf8(session->target().bare().data());
+  if(!_mapSessions->contains(jid))
   {
-    _mapSessions->insert(QString::fromUtf8(session->threadID().data()),session);
+    _mapSessions->insert(jid,session);
     AdmXmppChatWidget *w = new AdmXmppChatWidget(session,this);
-    _mapChats->insert(QString::fromUtf8(session->threadID().data()),w);
+    w->setSelfJid(_client->jid());
+    w->setMessageSession(session);
+
+    _mapChats->insert(jid,w);
     connect(w,    SIGNAL(destroying(AdmXmppChatWidget*)),
             this, SLOT(sDestroyingChatWidget(AdmXmppChatWidget*)));
+    connect(w,    SIGNAL(attention(AdmXmppChatWidget*)),
+            this, SLOT(sAttentionChatWidget(AdmXmppChatWidget*)));
+
     ui->_conversations->addTab(w,
                                QIcon(),
                                QString::fromUtf8(session->target().username().data()));
-    w->setMessageSession(session);
   }
 }
 
@@ -559,11 +571,10 @@ void AdmXmppWidget::sBuddyActivated(const QModelIndex &index)
 
   QWidget *w = ui->_buddyList->itemWidget(ui->_buddyList->currentItem());
   AdmXmppBuddyWidget *b = qobject_cast<AdmXmppBuddyWidget*>(w);
-  if(b)
+  if(b && !_mapSessions->contains(QString::fromUtf8((b->getJid().bare().data()))))
   {
-    //AdmXmppChatWidget *w = new AdmXmppChatWidget(this);
-
-    //ui->_conversations->addTab(w,QIcon(),QString::fromUtf8(b->getJid().username().data()));
+    MessageSession *session = new MessageSession(_client, b->getJid());
+    handleMessageSession(session);
   }
 }
 
@@ -582,8 +593,46 @@ void AdmXmppWidget::sDestroyingChatWidget(AdmXmppChatWidget* obj)
   if(obj->messageSession())
   {
     index = _mapSessions->values().indexOf(obj->messageSession());
-      if(index != -1)
-        _mapSessions->remove(_mapSessions->keys().at(index));
+    if(index != -1)
+      _mapSessions->remove(_mapSessions->keys().at(index));
+
     _client->disposeMessageSession(obj->messageSession());
+  }
+}
+void AdmXmppWidget::sAttentionChatWidget(AdmXmppChatWidget* obj)
+{
+  Q_UNUSED(obj)
+  for(int i = 0; i < ui->_conversations->count(); ++i)
+  {
+    if(ui->_conversations->widget(i) == obj)
+    {
+      qDebug() << "Found him!";
+      if(ui->_conversations->tabIcon(i).isNull()){
+        ui->_conversations->setTabIcon(i,QIcon(QPixmap(":/icons/im-jabber.png")));
+      }
+      break;
+    }
+  }
+}
+
+void AdmXmppWidget::sConversationsCurrentChanged(int index)
+{
+  if(index == -1)
+    return;
+
+  if(!ui->_conversations->tabIcon(index).isNull())
+    ui->_conversations->setTabIcon(index, QIcon());
+
+  ui->_conversations->widget(index)->update();
+}
+
+void AdmXmppWidget::sConversationsTabClosed(int index)
+{
+  if(index == -1)
+    return;
+  AdmXmppChatWidget *cw = qobject_cast<AdmXmppChatWidget*>(ui->_conversations->widget(index));
+  if(cw)
+  {
+    cw->deleteLater();
   }
 }

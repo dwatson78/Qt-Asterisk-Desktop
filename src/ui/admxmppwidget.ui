@@ -119,7 +119,14 @@
     </layout>
    </item>
    <item row="1" column="0">
-    <widget class="QTabWidget" name="_conversations"/>
+    <widget class="QTabWidget" name="_conversations">
+     <property name="tabsClosable">
+      <bool>true</bool>
+     </property>
+     <property name="movable">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item row="0" column="1" rowspan="2">
     <widget class="QListWidget" name="_buddyList">

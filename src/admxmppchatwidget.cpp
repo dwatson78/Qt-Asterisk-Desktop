@@ -1,8 +1,6 @@
 #include "admxmppchatwidget.h"
 #include "ui_admxmppchatwidget.h"
 
-#include "admxmppchatblockwidget.h"
-
 #include <QDebug>
 
 AdmXmppChatWidget::AdmXmppChatWidget(MessageSession *session, QWidget *parent) :
@@ -11,9 +9,11 @@ AdmXmppChatWidget::AdmXmppChatWidget(MessageSession *session, QWidget *parent) :
   ui(new Ui::AdmXmppChatWidget)
 {
   ui->setupUi(this);
+  _selfJid = JID();
   _session = NULL;
   _chatStateFilter = NULL;
   _messageEventFilter = NULL;
+  _lastChatBlock = NULL;
   AdmXmppChatWidget::setHeight(ui->_newChat,3);
   ui->_newChat->installEventFilter(this);
   connect(ui->_newChat, SIGNAL(blockCountChanged(int)),
@@ -37,9 +37,17 @@ AdmXmppChatWidget::~AdmXmppChatWidget()
     _messageEventFilter->removeMessageEventHandler();
 
   if(_chatStateFilter)
+  {
+    _chatStateFilter->setChatState(ChatStateGone);
     _chatStateFilter->removeChatStateHandler();
+  }
 
   delete ui;
+}
+
+void AdmXmppChatWidget::setSelfJid(JID jid)
+{
+  _selfJid = jid;
 }
 
 MessageSession * AdmXmppChatWidget::messageSession()
@@ -98,10 +106,12 @@ bool AdmXmppChatWidget::eventFilter(QObject *obj, QEvent *event)
             return true; //Consume the event
           }
         } else {
-		  if(!ui->_newChat->toPlainText().trimmed().isEmpty())
+          if(!ui->_newChat->toPlainText().trimmed().isEmpty())
           {
-            std::string msg = ui->_newChat->toPlainText().toStdString();
-            _session->send(msg);
+            std::string body = ui->_newChat->toPlainText().toUtf8().data();
+            _session->send(body);
+            Message msg(Message::Chat,_session->target(),body);
+            addMsg(_selfJid, msg);
           }
           ui->_newChat->clear();
           return true; //Consume the event
@@ -120,18 +130,7 @@ void AdmXmppChatWidget::handleMessage(const Message &msg, MessageSession *sessio
            << QString::fromUtf8(msg.from().username().data())
            << QString::fromUtf8(msg.body().data());
   
-  AdmXmppChatBlockWidget *w = new AdmXmppChatBlockWidget(ui->_chatHistory);
-  w->setName(QString::fromUtf8(msg.from().username().data()));
-  w->setText(QString::fromUtf8(msg.body().data()));
-  // TODO: get the delayed delivery time if it exists!!
-  QDateTime time = QDateTime::currentDateTime();
-  w->setTime(time);
-  QListWidgetItem * item = new QListWidgetItem(ui->_chatHistory);
-  
-  ui->_chatHistory->addItem(item);
-  //ui->_chatHistory->setItemWidget(item, lbl);
-  ui->_chatHistory->setItemWidget(item, w);
-  item->setSizeHint(w->sizeHint());
+  addMsg(msg.from(),msg);
                             
   qDebug() << session;
   qDebug() << _session;
@@ -147,4 +146,87 @@ void AdmXmppChatWidget::handleChatState(const JID &from, ChatStateType state)
 {
   qDebug() << "AdmXmppChatWidget::handleChatState";
   qDebug() << QString::fromUtf8(from.username().data()) << state;
+}
+
+void AdmXmppChatWidget::addChatBlock(const JID & jid, const Message &msg)
+{
+  /*AdmXmppChatBlockWidget *w = new AdmXmppChatBlockWidget(ui->_chatHistory);
+
+  w->setName(QString::fromUtf8(jid.username().data()));
+  w->setText(QString::fromUtf8(msg.body().data()));
+  QDateTime time;
+  if(msg.when())
+  {
+    QString timeStamp = QString::fromUtf8(msg.when()->stamp().data());
+    qDebug() << timeStamp;
+    w->setEnabled(false);
+    time = QDateTime::fromString(timeStamp,Qt::ISODate);
+    if(!time.isValid())
+      time = QDateTime::currentDateTime();
+  } else {
+    time = QDateTime::currentDateTime();
+  }
+  w->setTime(time);
+  QListWidgetItem * item = new QListWidgetItem(ui->_chatHistory);
+  _lastChatBlock = item;
+
+  ui->_chatHistory->addItem(item);
+  ui->_chatHistory->setItemWidget(item, w);
+  item->setSizeHint(w->sizeHint());*/
+  QDateTime time;
+  if(msg.when())
+  {
+    QString timeStamp = QString::fromUtf8(msg.when()->stamp().data());
+    time = QDateTime::fromString(timeStamp,Qt::ISODate);
+    if(!time.isValid())
+      time = QDateTime::currentDateTime();
+  } else {
+    time = QDateTime::currentDateTime();
+  }
+  QString spanColor;
+  if(jid == _selfJid)
+    spanColor = "blue";
+  else
+    spanColor = "red";
+  ui->_chatHistory->appendHtml(QString("<span style='color:%1;'>(%2) <b>%3</b></span>: %4")
+                               .arg(spanColor)
+                               .arg(time.toString("ddd MM/dd hh:mm AP"))
+                               .arg(QString::fromUtf8(jid.username().data()))
+                               .arg(QString::fromUtf8(msg.body().data())));
+
+  qDebug() << "ActiveWindow: " << QApplication::activeWindow();
+}
+
+void AdmXmppChatWidget::addMsg(const JID &jid, const Message &msg)
+{
+  addChatBlock(jid,msg);
+  /*
+  if(NULL == _lastChatBlock || ui->_chatHistory->count() < 1)
+  {
+    _lastJid = jid;
+    addChatBlock(jid, msg);
+  } else if(_lastJid == jid) {
+    QWidget *w = ui->_chatHistory->itemWidget(_lastChatBlock);
+    AdmXmppChatBlockWidget *b = qobject_cast<AdmXmppChatBlockWidget*>(w);
+    if(b)
+    {
+      b->appendText(QString::fromUtf8(msg.body().data()));
+      _lastChatBlock->setSizeHint(b->sizeHint());
+    }
+  } else {
+    _lastJid = jid;
+    addChatBlock(jid, msg);
+  }
+  ui->_chatHistory->scrollToBottom();
+
+  if(jid != _selfJid && NULL == QApplication::activeWindow())
+  {
+    QApplication::alert(window());
+  }
+
+  if(jid != _selfJid && (isHidden() || !isVisibleTo(qobject_cast<QWidget*>(parent()))))
+  {
+    qDebug() << "We need to alert the user!!";
+    emit attention(this);
+  }*/
 }

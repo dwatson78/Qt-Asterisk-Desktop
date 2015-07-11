@@ -27,5 +27,6 @@
         <file>icons/speaker.png</file>
         <file>icons/status-other.png</file>
         <file>icons/status-offline.png</file>
+        <file>icons/im-jabber.png</file>
     </qresource>
 </RCC>
