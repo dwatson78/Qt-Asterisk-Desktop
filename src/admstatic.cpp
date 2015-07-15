@@ -81,4 +81,3 @@ QString AdmStatic::elapsedTimeToString(QTime *time)
   }
   return elapsStr;
 }
-

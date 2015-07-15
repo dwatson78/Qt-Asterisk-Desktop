@@ -18,7 +18,7 @@ INCLUDEPATH += \
     $$OTHER_INC
 
 LIBS += \
-    -lqjson -lphonon -L$$OTHER_LIBS -lgloox -lpthread -lqtnotify
+    -lqjson -lphonon -L$$OTHER_LIBS -lgloox -lpthread -lqt-wrap-libnotify
 
 TARGET = QtAsteriskDesktop
 
@@ -51,7 +51,8 @@ SOURCES +=   \
     src/admxmppchatblockwidget.cpp \
     src/admtabwidget.cpp \
     src/admtabbar.cpp \
-    src/admnotificationmanager.cpp
+    src/admnotificationmanager.cpp \
+    src/astchanparts.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -78,7 +79,8 @@ HEADERS +=   \
     src/admxmppchatblockwidget.h \
     src/admtabwidget.h \
     src/admtabbar.h \
-    src/admnotificationmanager.h
+    src/admnotificationmanager.h \
+    src/astchanparts.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \

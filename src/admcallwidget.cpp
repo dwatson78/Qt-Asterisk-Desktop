@@ -17,7 +17,6 @@ AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
 
   connect(  AdmStatic::getInstance()->getTimer(),
                             SIGNAL(timeout()),  this, SLOT(sTickTock())         );
-  connect(  ui->_tbXfer,    SIGNAL(clicked()),  this, SLOT(sStartCallXfer())    );
   connect(  ui->_tbPark,    SIGNAL(clicked()),  this, SLOT(sStartCallPark())    );
   connect(  ui->_tbHangup,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
 }
@@ -163,7 +162,7 @@ AstChannel * AdmCallWidget::getChannelForDevice(QString type, QString exten, boo
   QMap<QString, AstChannel *>::iterator i;
   for(i = _channels->begin(); i != _channels->end(); ++i)
   {
-    ChanPart *chanPart = i.value()->getChannelParts();
+    AstChanParts *chanPart = i.value()->getChannelParts();
     if(chanPart->getType() == type && chanPart->getExten() == exten)
       return i.value();
   }

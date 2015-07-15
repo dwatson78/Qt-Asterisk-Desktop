@@ -5,6 +5,7 @@
 #include <QRegExp>
 
 #include "asteriskmanager.h"
+#include "astchanparts.h"
 
 AstSipPeer::AstSipPeer(const QVariantMap &event, QObject *parent) :
   QObject(parent)
@@ -73,14 +74,8 @@ AstSipPeer::AstSipPeer(const QVariantMap &event, QObject *parent) :
   if(event.contains("VideoSupport"))
     _videoSupport = event.value("VideoSupport").toString().toLower() == "yes";
 
-  _myDevice = false;
-  QSettings s;
-  if(s.contains("DEVICES/default"))
-  {
-    QString peerDvc = QString("%1/%2").arg(_channelType).arg(_objectName.toString());
-    if(s.value("DEVICES/default").toString() == peerDvc)
-      _myDevice = true;
-  }
+  AstChanParts cp(QString("%1/%2").arg(_channelType).arg(_objectName.toString()));
+  _myDevice = cp.isMyDevice();
 
   _isDndOn = false;
 }

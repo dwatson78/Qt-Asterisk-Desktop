@@ -9,6 +9,7 @@
 
 #include "admvoicemailwidget.h"
 #include "restapiastvm.h"
+#include "admnotificationmanager.h"
 
 #include <QDebug>
 #include <QGroupBox>
@@ -81,12 +82,11 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
 
   if(settings.contains("DEVICES/default"))
   {
-    QString dvc = settings.value("DEVICES/default").toString();
-    QStringList parts = dvc.split("/");
-    bool *valid = new bool(false);
-    uint dvcExt = parts.at(1).toUInt(valid);
-    if(valid)
-      ui->_dvcExt->setText(QString::number(dvcExt));
+    AstChanParts cp(settings.value("DEVICES/default").toString());
+    if(cp.isValid())
+    {
+      ui->_dvcExt->setText(cp.getExten());
+    }
   }
 }
 
@@ -288,7 +288,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
                 );
           if(found)
           {
-            qDebug() << "Test Static: " << chanVarUuid.toString();
+            qDebug() << "catchMeIfYouCan: ChanVar Uuid: " << chanVarUuid.toString();
           }
         }
       }
@@ -800,10 +800,12 @@ void QtAsteriskDesktopMain::sDial()
   QSettings set;
   if(set.contains("DEVICES/default"))
   {
-    QString dvc = set.value("DEVICES/default").toString().replace("[]","");
-    QString dialStr = dvc.replace("[^0-9a-zA-Z]","");
-    //_ami->actionOriginate(dvc, ui->_dialNum->text(), "default", 1);
-    _ami->actionOriginate(dialStr, ui->_dialNum->text(), "default", 1, QString(), QString(),0,tr("Originate: %1").arg(ui->_dialNum->text()));
+    AstChanParts cp(set.value("DEVICES/default").toString());
+    if(cp.isValid())
+    {
+      QString dvc = cp.getType().append("/").append(cp.getExten());
+      _ami->actionOriginate(dvc, ui->_dialNum->text(), "default", 1, QString(), QString(),0,tr("Originate: %1").arg(ui->_dialNum->text()));
+    }
   }
 }
 
@@ -812,13 +814,10 @@ void QtAsteriskDesktopMain::sSetExtStatus(uint ext, AsteriskManager::ExtStatuses
   QSettings set;
   if(set.contains("DEVICES/default"))
   {
-    if(set.contains("DEVICES/default"))
+    AstChanParts cp(set.value("DEVICES/default").toString());
+    if(cp.isValid())
     {
-      QString dvc = set.value("DEVICES/default").toString();
-      QStringList parts = dvc.split("/");
-      bool *valid = new bool(false);
-      uint dvcExt = parts.at(1).toUInt(valid);
-      if(valid && ext == dvcExt)
+      if(cp.getExten().toUInt() == ext)
       {
         /*
           Removed     = -2,
@@ -869,17 +868,14 @@ void QtAsteriskDesktopMain::sCallXfer(AdmCallWidget * call, const QString & exte
     QSettings s;
     if(s.contains("DEVICES/default"))
     {
-      QString fullDvcStr = s.value("DEVICES/default").toString();
-      QStringList dvcParts = fullDvcStr.split("/");
-      if(dvcParts.count() == 2)
+      AstChanParts cp(s.value("DEVICES/default").toString());
+      if(cp.isValid())
       {
-        QString dvcType = dvcParts.at(0);
-        QString dvcExten = dvcParts.at(1);
         QMap<QString, AstChannel *>::iterator i;
         for(i = chans->begin(); i != chans->end(); ++i)
         {
-          ChanPart *cpart = i.value()->getChannelParts();
-          if(cpart->getType() == dvcType && cpart->getExten() == dvcExten)
+          AstChanParts *cpart = i.value()->getChannelParts();
+          if(cpart->getType() == cp.getType() && cpart->getExten() == cp.getExten())
             continue;
           qDebug() << tr("I'm about to transfer channel %1 to %2").arg(i.value()->getChannel()).arg(exten);
           _ami->actionRedirect(i.value()->getChannel(),exten,"default",1,QString(),QString(),QString(),0);
@@ -897,19 +893,16 @@ void QtAsteriskDesktopMain::sCallPark(AdmCallWidget * call)
     QSettings s;
     if(s.contains("DEVICES/default"))
     {
-      QString fullDvcStr = s.value("DEVICES/default").toString();
-      QStringList dvcParts = fullDvcStr.split("/");
-      if(dvcParts.count() == 2)
+      AstChanParts cp(s.value("DEVICES/default").toString());
+      if(cp.isValid())
       {
-        QString dvcType = dvcParts.at(0);
-        QString dvcExten = dvcParts.at(1);
         AstChannel *myChan = NULL;
         AstChannel *otherChan = NULL;
         QMap<QString, AstChannel *>::iterator i;
         for(i = chans->begin(); i != chans->end(); ++i)
         {
-          ChanPart *cpart = i.value()->getChannelParts();
-          if(cpart->getType() == dvcType && cpart->getExten() == dvcExten)
+          AstChanParts *cpart = i.value()->getChannelParts();
+          if(cpart->getType() == cp.getType() && cpart->getExten() == cp.getExten())
           {
             myChan = i.value();
           } else {
@@ -943,19 +936,16 @@ void QtAsteriskDesktopMain::sCallHangup(AdmCallWidget * call)
     QSettings s;
     if(s.contains("DEVICES/default"))
     {
-      QString fullDvcStr = s.value("DEVICES/default").toString();
-      QStringList dvcParts = fullDvcStr.split("/");
-      if(dvcParts.count() == 2)
+      AstChanParts cp(s.value("DEVICES/default").toString());
+      if(cp.isValid())
       {
-        QString dvcType = dvcParts.at(0);
-        QString dvcExten = dvcParts.at(1);
         QMap<QString, AstChannel *>::iterator i;
         for(i = chans->begin(); i != chans->end(); ++i)
         {
-          ChanPart *cpart = i.value()->getChannelParts();
-          if(cpart->getType() == dvcType && cpart->getExten() == dvcExten)
+          AstChanParts *cpart = i.value()->getChannelParts();
+          if(cpart->getType() == cp.getType() && cpart->getExten() == cp.getExten())
           {
-            _ami->actionHangup(i.value()->getChannel(),16);
+            _ami->actionHangup(i.value()->getChannel(),21);
             return;
           } else {
             continue;
@@ -978,16 +968,17 @@ void QtAsteriskDesktopMain::sPickUpParkedCall(AstParkedCall *parkedCall)
   QSettings set;
   if(set.contains("DEVICES/default"))
   {
-    //Can't pick up our own parked calls!
-    QString exten = set.value("DEVICES/default").toString().replace(QRegExp("^SIP/"),"");
-    if(parkedCall->getChannelParked()->getChannelParts()->getExten() != exten) // TODO: Get the SIP device object name instead!
+    AstChanParts cp(set.value("DEVICES/default").toString());
+    if(cp.isValid())
+    {
+      AstChanParts *parts = parkedCall->getChannelParked()->getChannelParts();
+      if(parts->getType() != cp.getType() || parts->getExten() != cp.getExten())
       {
         _ami->actionRedirect(parkedCall->getChannelParked()->getChannel(),
-                         exten, // The default device extension number
+                             cp.getExten(), // The default device extension number
                              "from-internal", // TODO: See if there is a dialplan that could be created for this
                              1);
-    } else {
-      qDebug() << "Can't pick up our own parked calls!";
+      }
     }
   }
 }
@@ -1053,27 +1044,30 @@ void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVari
   QSettings set;
   if(set.contains("DEVICES/default"))
   {
-    if(data.contains("sndfile") && data.contains("vmFolder"))
+    AstChanParts cp(set.value("DEVICES/default").toString());
+    if(cp.isValid())
     {
-      QString sndFile = data.value("sndfile").toString();
-      sndFile = sndFile.mid(0,sndFile.length()-4);
-      //TODO: Get sndFile from Rest API using the msg_id value...
-      qDebug() << sndFile;
-      QString vmFolderFile = data.value("vmFolder").toString();
-      _ami->actionOriginate(
-              set.value("DEVICES/default").toString(),
-              QString(),
-              QString(),
-              0,
-              "Playback",
-              QString("/var/spool/asterisk/voicemail/default/%1/%2/%3")
-                      .arg(obj->getVmBox())
-                      .arg(vmFolderFile)
-                      .arg(sndFile),
-              10000, // 10 second timeout
-              QString("VM: %1").arg(data.value("callerid").toString())
-                      
-      );
+      if(data.contains("sndfile") && data.contains("vmFolder"))
+      {
+        QString sndFile = data.value("sndfile").toString();
+        sndFile = sndFile.mid(0,sndFile.length()-4);
+        //TODO: Get sndFile from Rest API using the msg_id value...
+        qDebug() << sndFile;
+        QString vmFolderFile = data.value("vmFolder").toString();
+        _ami->actionOriginate(
+                cp.getType().append("/").append(cp.getExten()),
+                QString(),
+                QString(),
+                0,
+                "Playback",
+                QString("/var/spool/asterisk/voicemail/default/%1/%2/%3")
+                        .arg(obj->getVmBox())
+                        .arg(vmFolderFile)
+                        .arg(sndFile),
+                10000, // 10 second timeout
+                QString("VM: %1").arg(data.value("callerid").toString())
+        );
+      }
     }
   }
 }

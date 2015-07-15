@@ -243,7 +243,7 @@ void AdmXmppChatWidget::addMsg(const JID &jid, const Message &msg)
       notifBody = notifBody.replace(QChar((uint)169),"&copy;");
       
       qDebug() << notifBody;
-      AdmNotificationManager::showMsg(from, notifBody, 7500, this);
+      AdmNotificationManager::showMsg(from, notifBody, "mail-message-new", 7500, this);
     }
     if(isHidden() || !isVisibleTo(qobject_cast<QWidget*>(parent())))
     {

@@ -2,6 +2,8 @@
 
 #include <QTimer>
 
+#include "admstatic.h"
+
 AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
   QObject(parent)
 {
@@ -16,7 +18,7 @@ AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
   /*uint*/    this->_exten              = QVariant(QVariant::UInt);
   /*bool*/    //this->_isConnectedLineSet = false;
   /*QString*/ this->_connectedLineName  = QString();
-  /*uint*/    this->_connectedLineNum   = QVariant(QVariant::UInt);
+  /*QString*/ this->_connectedLineNum   = QString();
   /*bool*/    //this->_isHangupCauseSet   = false;
   /*uint*/    this->_hangupCauseNum     = QVariant(QVariant::UInt);
   /*QString*/ this->_hangupCauseDesc    = QString();
@@ -48,7 +50,7 @@ AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
     if(event.contains("Channel"))
     {
       this->_channel = event.value("Channel").toString();
-      ChanPart *chanPart = getChannelParts();
+      AstChanParts *chanPart = getChannelParts();
       if(chanPart->getPrefix() == "Parked")
         this->_isParked = true;
     }
@@ -89,6 +91,8 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
   {
     case AsteriskManager::Newstate:
     {
+      uint previousState = this->_chanState.toUInt();
+
       if(event.contains("CallerIDName"))
         this->_callIdName = event.value("CallerIDName").toString();
       if(event.contains("CallerIDNum"))
@@ -96,20 +100,16 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       if(event.contains("Channel"))
         this->_channel = event.value("Channel").toString();
       if(event.contains("ChannelState"))
-      {
         this->_chanState = event.value("ChannelState").toString() == ""
           ? QVariant(QVariant::UInt)
           : event.value("ChannelState").toUInt();
-      }
       if(event.contains("ChannelStateDesc"))
         this->_chanStateDesc = event.value("ChannelStateDesc").toString();
       if(event.contains("ConnectedLineName"))
         this->_connectedLineName = event.value("ConnectedLineName").toString();
       if(event.contains("ConnectedLineNum"))
       {
-        this->_connectedLineNum = event.value("ConnectedLineNum").toString() == ""
-          ? QVariant(QVariant::UInt)
-          : event.value("ConnectedLineNum").toUInt();
+        this->_connectedLineNum = event.value("ConnectedLineNum").toString();
       }
       qDebug() << tr("Newstate: Channel: '%1', State: '%2', CallId: '%3', Line: '%4'")
                   .arg(this->_channel)
@@ -118,6 +118,12 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
                   .arg(this->getConnectedLineStr())
                   ;
       emit updated(this);
+
+      uint currentState = this->_chanState.toUInt();
+      if(currentState == 5 && previousState != currentState && getChannelParts()->isMyDevice())
+      {
+        AdmStatic::getInstance()->getNotificationManager()->startCallNotification(this);
+      }
       break;
     }
     case AsteriskManager::NewCallerid:
@@ -227,7 +233,7 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       if(event.contains("ConnectedLineName"))
         this->_connectedLineName = event.value("ConnectedLineName").toString();
       if(event.contains("ConnectedLineNum"))
-        this->_connectedLineNum = event.value("ConnectedLineNum").toUInt();
+        this->_connectedLineNum = event.value("ConnectedLineNum").toString();
       qDebug() << tr("Newstate: Channel: '%1', State: '%2', CallId: '%3', Line: '%4', HangupCause: '%5', '%6'")
                   .arg(this->_channel)
                   .arg(this->_chanStateDesc)
@@ -261,18 +267,18 @@ QString AstChannel::getCallIdStr()
 QString AstChannel::getConnectedLineStr()
 {
   if(!this->_connectedLineName.isNull() && !this->_connectedLineNum.isNull())
-    return tr("%1 <%2>").arg(this->_connectedLineName).arg(this->_connectedLineNum.toString());
+    return tr("%1 <%2>").arg(this->_connectedLineName).arg(this->_connectedLineNum);
   else if(!this->_connectedLineName.isNull() && this->_connectedLineNum.isNull())
     return this->_connectedLineName;
   else if(this->_connectedLineName.isNull() && !this->_connectedLineNum.isNull())
-    return this->_connectedLineNum.toString();
+    return this->_connectedLineNum;
   else
     return "";
 }
 
-ChanPart * AstChannel::getChannelParts()
+AstChanParts * AstChannel::getChannelParts()
 {
-  return new ChanPart(this->getChannel());
+  return new AstChanParts(this->getChannel());
 }
 
 uint AstChannel::getChannelState(bool *valid)
@@ -326,7 +332,7 @@ uint    AstChannel::getHangupCauseNum(bool *valid)
   if(this->_hangupCauseNum.isNull())
   {
     *valid = false;
-    return 0;
+    return -1;
   } else {
     *valid = true;
     return _hangupCauseNum.toUInt(valid);
@@ -357,7 +363,6 @@ void AstChannel::sParkOn(QVariantMap event)
     catchMeIfYouCan: arg2:  "CallerIDName" :  QVariant(QString, "Daniel W Home PC")
     catchMeIfYouCan: arg2:  "CallerIDNum" :  QVariant(uint, 4005)
     catchMeIfYouCan: ChanVar:  "SIP/4005-0000023f" :  "CHANNEL(uniqueid)" :  QVariant(QString, "1434668609.692")
-    Test Static:  "1434668609.692"
     catchMeIfYouCan: arg2:  "Channel" :  QVariant(QString, "SIP/4005-0000023f")
     catchMeIfYouCan: arg2:  "ConnectedLineName" :  QVariant(QString, "Daniel W Work PC")
     catchMeIfYouCan: arg2:  "ConnectedLineNum" :  QVariant(uint, 4004)
@@ -434,13 +439,13 @@ void AstChannel::sMasqueradeChannel(QVariantMap event, AstChannel *clone)
   this->_chanStateDesc      = QString(clone->_chanStateDesc);
   this->_context            = QString(clone->_context);
   this->_connectedLineName  = QString(clone->_connectedLineName);
+  this->_connectedLineNum =   QString(clone->_connectedLineNum);
   this->_hangupCauseDesc    = QString(clone->_hangupCauseDesc);
   this->_callIdPresDesc     = QString(clone->_callIdPresDesc);
 
   this->_callIdNum        = QString(clone->_callIdNum);
   this->_chanState        = QVariant(clone->_chanState);
   this->_exten            = QVariant(clone->_exten);
-  this->_connectedLineNum = QVariant(clone->_connectedLineNum);
   this->_hangupCauseNum   = QVariant(clone->_hangupCauseNum);
   this->_callIdPresNum    = QVariant(clone->_callIdPresNum);
 

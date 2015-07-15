@@ -2,7 +2,7 @@
 #define ADMNOTIFICATIONMANAGER_H
 
 #include <QObject>
-#include <qtnotify/qtnotify.h>
+#include "qt-wrap-libnotify/qtnotify.h"
 
 #include "astchannel.h"
 
@@ -12,15 +12,24 @@ class AdmNotificationManager : public QObject
 public:
   explicit AdmNotificationManager(QObject *parent = 0);
 
-  static void showMsg(const QString &subject, const QString &body, int timeout, QObject *parent);
+  static void showMsg(const QString &subject, const QString &body, const QString &icon, int timeout, QObject *parent);
+
+  void startCallNotification(AstChannel *chan);
+  void stopCallNotification(AstChannel *chan);
+
+  virtual void timerEvent(QTimerEvent *event);
 
 signals:
-  
+
 public slots:
   void sNotificationClosed(int reasonCode);
   void sNotificationAction(const QString &actionName);
+  void sChannelDestroying(AstChannel *chan);
+  void sChannelUpdated(AstChannel *chan);
 
 private:
+  QMap<AstChannel *, QtNotify::QtNotification *> m_call_notifications;
+  QMap<int, QtNotify::QtNotification *> m_timers;
 
 };
 

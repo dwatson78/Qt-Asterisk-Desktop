@@ -13,13 +13,13 @@ class AdmStatic : public QObject
   Q_OBJECT
 public:
   /* Public static members */
-  static AdmStatic *getInstance();
-  static QString elapsedTimeToString(QTime *time);
+  static AdmStatic* getInstance();
+  static QString    elapsedTimeToString(QTime *time);
 
   /* Public members */
   ~AdmStatic();
   QTimer* getTimer();
-  QNetworkAccessManager* getNetAccessMgr();
+  QNetworkAccessManager*  getNetAccessMgr();
   AdmNotificationManager* getNotificationManager();
 
 public slots:
@@ -32,13 +32,13 @@ private:
   explicit AdmStatic(QObject *parent = 0);
 
   /* Private members */
-  QTimer      		     *_timer;
-  QNetworkAccessManager  *_nam;
-  AdmNotificationManager *_notifMgr;
+  QTimer                  * _timer;
+  QNetworkAccessManager   * _nam;
+  AdmNotificationManager  * _notifMgr;
 
   /* Private static members */
   static  bool        _instanceFlag;
-  static  AdmStatic   *_instance;
+  static  AdmStatic * _instance;
 
 };
 
