@@ -19,12 +19,18 @@ QTimer* AdmStatic::getTimer()
 {
   return this->_timer;
 }
+QNetworkAccessManager* AdmStatic::getNetAccessMgr()
+{
+  return this->_nam;
+}
 
 AdmStatic::AdmStatic(QObject *parent) :
   QObject(parent)
 {
   _timer = new QTimer();
   _timer->start(500);
+
+  _nam = new QNetworkAccessManager();
 }
 AdmStatic::~AdmStatic()
 {

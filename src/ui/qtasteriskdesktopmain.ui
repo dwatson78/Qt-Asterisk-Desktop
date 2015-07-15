@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="_tabs">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="_tabMyDevice">
        <attribute name="title">
@@ -128,8 +128,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>148</width>
-             <height>190</height>
+             <width>98</width>
+             <height>84</height>
             </rect>
            </property>
            <attribute name="label">
@@ -152,8 +152,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>146</width>
-                 <height>188</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -194,8 +194,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>148</width>
-             <height>190</height>
+             <width>98</width>
+             <height>84</height>
             </rect>
            </property>
            <attribute name="label">
@@ -218,8 +218,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>146</width>
-                 <height>188</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -428,6 +428,16 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="_tabVoiceMail">
+       <attribute name="title">
+        <string>Voice Mail</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="AdmVoiceMailTabWidget" name="_voiceMailTabWidget" />
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="_tabParked">
        <attribute name="title">
         <string>Parked Calls</string>
@@ -560,6 +570,13 @@
    <header>src/admtoolboxsmoothdrag.h</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>AdmVoiceMailTabWidget</class>
+   <extends>QFrame</extends>
+   <header>src/admvoicemailtabwidget.h</header>
+   <container>1</container>
+  </customwidget>
+
  </customwidgets>
  <resources/>
  <connections/>

@@ -51,6 +51,12 @@ QtAsteriskDesktopPrefs::QtAsteriskDesktopPrefs(QWidget *parent) :
   if(settings.contains("default"))
     ui->_device->setText(settings.value("default").toString());
   settings.endGroup();
+
+  settings.beginGroup("RESTAPI");
+  setting = RestApiPref::getName(RestApiPref::baseUrl);
+  if(settings.contains(setting))
+    ui->_restApiBaseUrl->setText(settings.value(setting).toString());
+  settings.endGroup();
 }
 
 QtAsteriskDesktopPrefs::~QtAsteriskDesktopPrefs()
@@ -71,8 +77,10 @@ void QtAsteriskDesktopPrefs::sAccepted()
 	  settings.endGroup();
 
 	  settings.beginGroup("DEVICES");
-	  
 	  settings.setValue("default",ui->_device->text());
-	  
 	  settings.endGroup();
+
+    settings.beginGroup("RESTAPI");
+    settings.setValue(RestApiPref::getName(RestApiPref::baseUrl),ui->_restApiBaseUrl->text());
+    settings.endGroup();
 }

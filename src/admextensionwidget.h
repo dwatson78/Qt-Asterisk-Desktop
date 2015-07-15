@@ -69,6 +69,7 @@ private:
   bool                      _isDndOn;
 
   void _updateStatusIcon();
+  void _updateStatusFromSipPeerStatus(const QString &status);
 };
 
 #endif // ADMEXTENSIONWIDGET_H

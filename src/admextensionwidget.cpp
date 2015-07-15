@@ -146,27 +146,36 @@ void AdmExtensionWidget::dropEvent(QDropEvent *event)
 
 void AdmExtensionWidget::setSipPeer(AstSipPeer *peer)
 {
+  // If it's the same peer, let's get out of here.
+  if(peer == _sipPeer)
+    return;
+
   if(NULL != _sipPeer)
   {
-    disconnect(_sipPeer, SIGNAL(destroying(AstSipPeer*)),
-            this,     SLOT(sSipPeerDestroying(AstSipPeer*)));
-    disconnect(_sipPeer, SIGNAL(sUpdated(AstSipPeer*)),
-            this,     SLOT(sSipPeerUpdated(AstSipPeer*)));
-    disconnect(_sipPeer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
-            this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
-    disconnect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
-            this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+    disconnect( _sipPeer, SIGNAL(destroying(AstSipPeer*)),
+                this,     SLOT(sSipPeerDestroying(AstSipPeer*)));
+    disconnect( _sipPeer, SIGNAL(sUpdated(AstSipPeer*)),
+                this,     SLOT(sSipPeerUpdated(AstSipPeer*)));
+    disconnect( _sipPeer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
+                this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
+    disconnect( _sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
+                this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
     _sipPeer = NULL;
   }
-  _sipPeer = peer;
-  connect(_sipPeer, SIGNAL(destroying(AstSipPeer*)),
-          this,     SLOT(sSipPeerDestroying(AstSipPeer*)));
-  connect(_sipPeer, SIGNAL(sUpdated(AstSipPeer*)),
-          this,     SLOT(sSipPeerUpdated(AstSipPeer*)));
-  connect(_sipPeer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
-          this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
-  connect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
-          this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+
+  if(NULL != peer)
+  {
+    _sipPeer = peer;
+    connect(_sipPeer, SIGNAL(destroying(AstSipPeer*)),
+            this,     SLOT(sSipPeerDestroying(AstSipPeer*)));
+    connect(_sipPeer, SIGNAL(sUpdated(AstSipPeer*)),
+            this,     SLOT(sSipPeerUpdated(AstSipPeer*)));
+    connect(_sipPeer, SIGNAL(sigExtensionStatusEvent(AstSipPeer*,QVariantMap)),
+            this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
+    connect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
+            this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+    _updateStatusFromSipPeerStatus(peer->getStatus());
+  }
 }
 
 AstSipPeer *AdmExtensionWidget::getSipPeer()
@@ -191,14 +200,19 @@ void AdmExtensionWidget::sSipPeerDestroying(AstSipPeer *peer)
 void AdmExtensionWidget::sSipPeerUpdated(AstSipPeer *peer)
 {
   ui->_desc->setText(peer->getDescription());
-  if(peer->getStatus() == "Registered" || peer->getStatus() == "Reachable")
-  {
+  _updateStatusFromSipPeerStatus(peer->getStatus());
+}
+
+void AdmExtensionWidget::_updateStatusFromSipPeerStatus(const QString &status)
+{
+  if(   status.startsWith("OK")
+     || status == "Registered"
+     || status == "Reachable")
     _statusNum = AsteriskManager::NotInUse;
-    _updateStatusIcon();
-  } else if(peer->getStatus() == "Unregistered" || peer->getStatus() == "Unreachable") {
+  else
     _statusNum = AsteriskManager::Unavailable;
-    _updateStatusIcon();
-  }
+
+  _updateStatusIcon();
 }
 
 void AdmExtensionWidget::sExtensionStatusEvent(const QVariantMap &event)

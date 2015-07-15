@@ -27,7 +27,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="_tabPrefs">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="_tabAmi">
       <attribute name="title">
@@ -127,6 +127,23 @@ interval:</string>
           </size>
          </property>
         </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="_tabRestApi">
+      <attribute name="title">
+       <string>Rest Api</string>
+      </attribute>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="_restApiBaseUrlLit">
+         <property name="text">
+          <string>Base Url:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="_restApiBaseUrl"/>
        </item>
       </layout>
      </widget>
