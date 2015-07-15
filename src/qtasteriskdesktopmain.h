@@ -58,6 +58,8 @@ public slots:
   void sMySipPeerDndStatusEvent(AstSipPeer *peer, const QVariantMap &event, bool isDndOn);
 
   void sPlayMsgOnPhone(AdmVoiceMailWidget* obj, const QVariantMap &data);
+  
+  static QtAsteriskDesktopMain* getInstance(){return _instance;}
 
 private:
   Ui::QtAsteriskDesktopMain *ui;
@@ -72,7 +74,7 @@ private:
   QMap<QString, AdmExtensionWidget *> * _extensionMap;
   QMap<QString, AstSipPeer *>         * _sipPeerMap;
   QMap<QString, AstSipPeer *>         * _mySipPeerMap;
-
+  static QtAsteriskDesktopMain        * _instance;
 };
 
 #endif // QTASTERISKDESKTOPMAIN_H

@@ -1,6 +1,8 @@
 #include "admxmppchatwidget.h"
 #include "ui_admxmppchatwidget.h"
 
+#include "admstatic.h"
+
 #include <QDebug>
 
 AdmXmppChatWidget::AdmXmppChatWidget(MessageSession *session, QWidget *parent) :
@@ -14,10 +16,18 @@ AdmXmppChatWidget::AdmXmppChatWidget(MessageSession *session, QWidget *parent) :
   _chatStateFilter = NULL;
   _messageEventFilter = NULL;
   _lastChatBlock = NULL;
+  _time = NULL;
+  _lastChatState = ChatStateInvalid;
+
   AdmXmppChatWidget::setHeight(ui->_newChat,3);
+
   ui->_newChat->installEventFilter(this);
+
   connect(ui->_newChat, SIGNAL(blockCountChanged(int)),
           this,         SLOT(sNewChatBlockCountChanged(int)));
+  connect(ui->_newChat->document(), SIGNAL(contentsChanged()),
+          this, SLOT(sNewChatContentsChanged()));
+
   if(NULL != session)
   {
     setMessageSession(session);
@@ -36,9 +46,18 @@ AdmXmppChatWidget::~AdmXmppChatWidget()
   if(_messageEventFilter)
     _messageEventFilter->removeMessageEventHandler();
 
+  if(_time)
+  {
+    disconnect(AdmStatic::getInstance()->getTimer(),  SIGNAL(timeout()),
+                this,                                   SLOT(sTickTock()));
+    delete _time;
+    _time = NULL;
+  }
+  
   if(_chatStateFilter)
   {
-    _chatStateFilter->setChatState(ChatStateGone);
+    qDebug() << "AdmXmppChatWidget::~AdmXmppChatWidget: _session" << _session;
+    setChatState(ChatStateGone);
     _chatStateFilter->removeChatStateHandler();
   }
 
@@ -68,6 +87,8 @@ void AdmXmppChatWidget::setMessageSession(MessageSession *session)
 
   _chatStateFilter = new ChatStateFilter(_session);
   _chatStateFilter->registerChatStateHandler(this);
+  
+  setChatState(ChatStateActive);
 }
 
 void AdmXmppChatWidget::setHeight (QPlainTextEdit *edit, int nRows)
@@ -110,16 +131,30 @@ bool AdmXmppChatWidget::eventFilter(QObject *obj, QEvent *event)
           {
             std::string body = ui->_newChat->toPlainText().toUtf8().data();
             _session->send(body);
+            setChatStateComposing(false, true);
             Message msg(Message::Chat,_session->target(),body);
             addMsg(_selfJid, msg);
           }
+          ui->_newChat->document()->blockSignals(true);
           ui->_newChat->clear();
+          ui->_newChat->document()->blockSignals(false);
           return true; //Consume the event
         }
       }
     }
   }
   return QObject::eventFilter(obj, event);
+}
+
+void AdmXmppChatWidget::sNewChatContentsChanged()
+{
+  qDebug() << "AdmXmppChatWidget::sNewChatContentsChanged";
+  if(ui->_newChat->document()->isEmpty())
+  {
+    setChatStateComposing(false);
+  }
+  else
+    setChatStateComposing(true);
 }
 
 void AdmXmppChatWidget::handleMessage(const Message &msg, MessageSession *session)
@@ -146,33 +181,23 @@ void AdmXmppChatWidget::handleChatState(const JID &from, ChatStateType state)
 {
   qDebug() << "AdmXmppChatWidget::handleChatState";
   qDebug() << QString::fromUtf8(from.username().data()) << state;
+  
+  switch(state)
+  {
+    case ChatStateComposing:
+      ui->_buddyMsgStatus->setPixmap(QPixmap(":/icons/message-typing.png"));
+      break;
+    case ChatStatePaused:
+      ui->_buddyMsgStatus->setPixmap(QPixmap(":/icons/message-typed.png"));
+      break;
+    default:
+      ui->_buddyMsgStatus->setPixmap(QPixmap());
+      break;
+  }
 }
 
 void AdmXmppChatWidget::addChatBlock(const JID & jid, const Message &msg)
 {
-  /*AdmXmppChatBlockWidget *w = new AdmXmppChatBlockWidget(ui->_chatHistory);
-
-  w->setName(QString::fromUtf8(jid.username().data()));
-  w->setText(QString::fromUtf8(msg.body().data()));
-  QDateTime time;
-  if(msg.when())
-  {
-    QString timeStamp = QString::fromUtf8(msg.when()->stamp().data());
-    qDebug() << timeStamp;
-    w->setEnabled(false);
-    time = QDateTime::fromString(timeStamp,Qt::ISODate);
-    if(!time.isValid())
-      time = QDateTime::currentDateTime();
-  } else {
-    time = QDateTime::currentDateTime();
-  }
-  w->setTime(time);
-  QListWidgetItem * item = new QListWidgetItem(ui->_chatHistory);
-  _lastChatBlock = item;
-
-  ui->_chatHistory->addItem(item);
-  ui->_chatHistory->setItemWidget(item, w);
-  item->setSizeHint(w->sizeHint());*/
   QDateTime time;
   if(msg.when())
   {
@@ -188,45 +213,125 @@ void AdmXmppChatWidget::addChatBlock(const JID & jid, const Message &msg)
     spanColor = "blue";
   else
     spanColor = "red";
-  ui->_chatHistory->appendHtml(QString("<span style='color:%1;'>(%2) <b>%3</b></span>: %4")
+    
+  QString msgBody = Qt::escape(QString::fromUtf8(msg.body().data()));
+  msgBody = msgBody.replace('\n',"<br/>");
+  msgBody = msgBody.replace(' ',"&nbsp;");
+  msgBody = msgBody.replace('\t',"&emsp;");
+
+  ui->_chatHistory->append(QString("<span style='color:%1;'>(%2) <b>%3</b></span>: %4")
                                .arg(spanColor)
                                .arg(time.toString("ddd MM/dd hh:mm AP"))
                                .arg(QString::fromUtf8(jid.username().data()))
-                               .arg(QString::fromUtf8(msg.body().data())));
-
-  qDebug() << "ActiveWindow: " << QApplication::activeWindow();
+                               .arg(msgBody));
 }
 
 void AdmXmppChatWidget::addMsg(const JID &jid, const Message &msg)
 {
-  addChatBlock(jid,msg);
-  /*
-  if(NULL == _lastChatBlock || ui->_chatHistory->count() < 1)
+  bool isActive = NULL != QApplication::activeWindow();
+  if(jid != _selfJid)
   {
-    _lastJid = jid;
-    addChatBlock(jid, msg);
-  } else if(_lastJid == jid) {
-    QWidget *w = ui->_chatHistory->itemWidget(_lastChatBlock);
-    AdmXmppChatBlockWidget *b = qobject_cast<AdmXmppChatBlockWidget*>(w);
-    if(b)
+    if(!isActive)
     {
-      b->appendText(QString::fromUtf8(msg.body().data()));
-      _lastChatBlock->setSizeHint(b->sizeHint());
+      QApplication::alert(window());
+      QString from = Qt::escape(QString::fromUtf8(jid.username().data()));
+      QString notifBody = QString::fromUtf8(msg.body().data());
+      if(notifBody.length() > 80)
+        notifBody = notifBody.left(77).append("...");
+      notifBody = notifBody.replace('"',"\\\"");
+      notifBody = Qt::escape(notifBody);
+      notifBody = notifBody.replace(QChar((uint)169),"&copy;");
+      
+      qDebug() << notifBody;
+      AdmNotificationManager::showMsg(from, notifBody, 7500, this);
+    }
+    if(isHidden() || !isVisibleTo(qobject_cast<QWidget*>(parent())))
+    {
+      qDebug() << "We need to alert the user!!";
+      emit attention(this);
+    }
+  }
+  addChatBlock(jid,msg);
+}
+
+void AdmXmppChatWidget::focusChatText()
+{
+   ui->_newChat->setFocus();
+}
+
+void AdmXmppChatWidget::setChatStateComposing(bool composing, bool afterSending)
+{
+  if(NULL == _chatStateFilter)
+    return;
+
+  if(composing)
+  {
+    if(NULL != _time)
+    {
+      _time->restart();
+    } else {
+      qDebug() << "AdmXmppChatWidget::setChatStateComposing: setChatState: " << ChatStateComposing;
+      setChatState(ChatStateComposing);
+
+      _time = new QTime();
+      _time->start();
+      connect(AdmStatic::getInstance()->getTimer(), SIGNAL(timeout()),
+              this,                                 SLOT(sTickTock()));
     }
   } else {
-    _lastJid = jid;
-    addChatBlock(jid, msg);
+    if(!afterSending)
+    {
+      ChatStateType chatState = ui->_newChat->toPlainText().isEmpty() ? ChatStateActive : ChatStatePaused;
+      qDebug() << "AdmXmppChatWidget::setChatStateComposing: setChatState: " << chatState;
+      setChatState(chatState);
+    } else {
+      qDebug() << "AdmXmppChatWidget::setChatStateComposing: setChatState: " << ChatStateActive;
+      setChatState(ChatStateActive);
+    }
+    if(NULL != _time)
+    {
+      disconnect(AdmStatic::getInstance()->getTimer(),  SIGNAL(timeout()),
+                  this,                                   SLOT(sTickTock()));
+      delete _time;
+      _time = NULL;
+    }
   }
-  ui->_chatHistory->scrollToBottom();
+}
 
-  if(jid != _selfJid && NULL == QApplication::activeWindow())
+void AdmXmppChatWidget::setChatState(ChatStateType chatState)
+{
+  if(chatState != _lastChatState)
   {
-    QApplication::alert(window());
+    _chatStateFilter->setChatState(chatState);
+    _lastChatState = chatState;
+  } else {
+    qDebug() << "Blocked repeated chatState: " << chatState;
   }
+}
 
-  if(jid != _selfJid && (isHidden() || !isVisibleTo(qobject_cast<QWidget*>(parent()))))
+void AdmXmppChatWidget::sTickTock()
+{
+  if(NULL == _chatStateFilter)
+    return;
+    
+  if(NULL != _time)
   {
-    qDebug() << "We need to alert the user!!";
-    emit attention(this);
-  }*/
+    if(_time->elapsed() >= 6500) //6.5 seconds
+    {
+      // Set the chat state
+      ChatStateType chatState = ui->_newChat->toPlainText().isEmpty() ? ChatStateActive : ChatStatePaused;
+      qDebug() << "AdmXmppChatWidget::sTickTock: setChatState: " << chatState;
+      setChatState(chatState);
+      
+      disconnect(AdmStatic::getInstance()->getTimer(),  SIGNAL(timeout()),
+                this,                                   SLOT(sTickTock()));
+
+      qDebug () << _time;
+      delete _time;
+      qDebug () << _time;
+      _time = NULL;
+      qDebug () << _time;
+      
+    }
+  }
 }

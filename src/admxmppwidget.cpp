@@ -26,7 +26,7 @@ AdmXmppWidget::AdmXmppWidget(QWidget *parent) :
   _mapBuddies = new QMap<JID,AdmXmppBuddyWidget*>();
   _mapSessions = new QMap<QString,MessageSession*>();
   _mapChats = new QMap<QString,AdmXmppChatWidget*>();
-
+  
   connect(ui->_status,  SIGNAL(currentIndexChanged(int)),
           this,         SLOT(sStatusIndexChanged(int))
   );
@@ -39,14 +39,24 @@ AdmXmppWidget::AdmXmppWidget(QWidget *parent) :
 
   connect(ui->_conversations, SIGNAL(tabCloseRequested(int)),
           this,               SLOT(sConversationsTabClosed(int)));
+          
+  // Customize colors
+  ui->_buddyList->setStyleSheet("QListWidget::item:selected {background: palette(button);}");
 
+  // Connect to XMPP
   _connect();
 }
 
 AdmXmppWidget::~AdmXmppWidget()
 {
-  delete _client;
+  //Remove the conversations so they can set their chat state as gone
+  delete ui->_conversations;
+
+  // delete the user interface
   delete ui;
+  
+  //delete the XMPP client
+  delete _client;
 }
 
 void AdmXmppWidget::onConnect()
@@ -344,9 +354,6 @@ void AdmXmppWidget::handleRoster (const Roster &roster)
     item = NULL;
     widget = NULL;
   }
-  //TODO: Add all roster elements now!
-
-
 }
 void AdmXmppWidget::handleRosterPresence (const RosterItem &item, const std::string &resource, Presence::PresenceType presence, const std::string &msg)
 {
@@ -571,10 +578,23 @@ void AdmXmppWidget::sBuddyActivated(const QModelIndex &index)
 
   QWidget *w = ui->_buddyList->itemWidget(ui->_buddyList->currentItem());
   AdmXmppBuddyWidget *b = qobject_cast<AdmXmppBuddyWidget*>(w);
-  if(b && !_mapSessions->contains(QString::fromUtf8((b->getJid().bare().data()))))
+  if(b)
   {
-    MessageSession *session = new MessageSession(_client, b->getJid());
-    handleMessageSession(session);
+    QString jidStr = QString::fromUtf8(b->getJid().bare().data());
+    AdmXmppChatWidget *wchat = NULL;
+    if(_mapSessions->contains(jidStr) )
+    { 
+      wchat = _mapChats->value(jidStr);
+    } else {
+      MessageSession *session = new MessageSession(_client, b->getJid());
+      handleMessageSession(session);
+      wchat = _mapChats->value(jidStr);
+    }
+    if(NULL != wchat)
+    {
+      ui->_conversations->setCurrentWidget(wchat);
+      wchat->focusChatText();
+    }
   }
 }
 
@@ -609,6 +629,7 @@ void AdmXmppWidget::sAttentionChatWidget(AdmXmppChatWidget* obj)
       qDebug() << "Found him!";
       if(ui->_conversations->tabIcon(i).isNull()){
         ui->_conversations->setTabIcon(i,QIcon(QPixmap(":/icons/im-jabber.png")));
+        ui->_conversations->setTabNeedAttention(i,true);
       }
       break;
     }
@@ -621,7 +642,10 @@ void AdmXmppWidget::sConversationsCurrentChanged(int index)
     return;
 
   if(!ui->_conversations->tabIcon(index).isNull())
+  {
     ui->_conversations->setTabIcon(index, QIcon());
+    ui->_conversations->setTabNeedAttention(index,false);
+  }
 
   ui->_conversations->widget(index)->update();
 }

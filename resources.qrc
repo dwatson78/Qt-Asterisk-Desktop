@@ -28,5 +28,59 @@
         <file>icons/status-other.png</file>
         <file>icons/status-offline.png</file>
         <file>icons/im-jabber.png</file>
+        <file>icons/message-typing.png</file>
+        <file>icons/message-typed.png</file>
+        <file>icons/emotes/drink-beer.png</file>
+        <file>icons/emotes/drink-martini.png</file>
+        <file>icons/emotes/face-angel.png</file>
+        <file>icons/emotes/face-angry.png</file>
+        <file>icons/emotes/face-clown.png</file>
+        <file>icons/emotes/face-confused.png</file>
+        <file>icons/emotes/face-cool.png</file>
+        <file>icons/emotes/face-crying.png</file>
+        <file>icons/emotes/face-devilish.png</file>
+        <file>icons/emotes/face-embarrassed.png</file>
+        <file>icons/emotes/face-foot-in-mouth.png</file>
+        <file>icons/emotes/face-glasses.png</file>
+        <file>icons/emotes/face-hug-left.png</file>
+        <file>icons/emotes/face-hug-right.png</file>
+        <file>icons/emotes/face-in-love.png</file>
+        <file>icons/emotes/face-kiss.png</file>
+        <file>icons/emotes/face-laughing.png</file>
+        <file>icons/emotes/face-laugh.png</file>
+        <file>icons/emotes/face-ninja.png</file>
+        <file>icons/emotes/face-pirate.png</file>
+        <file>icons/emotes/face-plain.png</file>
+        <file>icons/emotes/face-quiet.png</file>
+        <file>icons/emotes/face-raspberry.png</file>
+        <file>icons/emotes/face-sad.png</file>
+        <file>icons/emotes/face-sick.png</file>
+        <file>icons/emotes/face-sleeping.png</file>
+        <file>icons/emotes/face-sleep.png</file>
+        <file>icons/emotes/face-smile-big.png</file>
+        <file>icons/emotes/face-smile-gearhead-female.png</file>
+        <file>icons/emotes/face-smile-gearhead-male.png</file>
+        <file>icons/emotes/face-smile-grin.png</file>
+        <file>icons/emotes/face-smile.png</file>
+        <file>icons/emotes/face-smirk.png</file>
+        <file>icons/emotes/face-star.png</file>
+        <file>icons/emotes/face-surprise.png</file>
+        <file>icons/emotes/face-uncertain.png</file>
+        <file>icons/emotes/face-wink.png</file>
+        <file>icons/emotes/face-worried.png</file>
+        <file>icons/emotes/face-yawn.png</file>
+        <file>icons/emotes/food-cake.png</file>
+        <file>icons/emotes/food-pizza.png</file>
+        <file>icons/emotes/food.png</file>
+        <file>icons/emotes/gift.png</file>
+        <file>icons/emotes/heart-broken.png</file>
+        <file>icons/emotes/heart.png</file>
+        <file>icons/emotes/opinion-agree.png</file>
+        <file>icons/emotes/opinion-disagree.png</file>
+        <file>icons/emotes/opinion-no.png</file>
+        <file>icons/emotes/opinion-okay.png</file>
+        <file>icons/emotes/rose.png</file>
+        <file>icons/emotes/rose-wilted.png</file>
+        <file>icons/emotes/waiting.png</file>
     </qresource>
 </RCC>

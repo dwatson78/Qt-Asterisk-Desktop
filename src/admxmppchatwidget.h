@@ -22,12 +22,12 @@ class AdmXmppChatWidget;
 
 using namespace gloox;
 
-class AdmXmppChatWidget : public QFrame
+class AdmXmppChatWidget : 	public QFrame
                           , public MessageHandler
-                          //, public MessageFilter
                           , public MessageEventHandler
                           , public ChatStateHandler
 {
+  
   Q_OBJECT
   
 public:
@@ -39,21 +39,22 @@ public:
   MessageSession *messageSession();
   void setMessageSession(MessageSession *session);
 
-
   void handleMessage(const Message &msg, MessageSession *session);
   void handleMessageEvent(const JID &from, MessageEventType event);
   void handleChatState(const JID &from, ChatStateType state);
-  //void attachTo(MessageSession *session);
-  //void decorate(Message &msg);
-  //void filter(Message &msg);
-
+  
   static void setHeight (QPlainTextEdit *edit, int nRows);
+  
+  void focusChatText();
 
 public slots:
   void sNewChatBlockCountChanged(int);
-protected:
+  void sNewChatContentsChanged();
+  void sTickTock();
 
+protected:
   bool eventFilter(QObject *obj, QEvent *event);
+
 signals:
   void destroying(AdmXmppChatWidget *obj);
   void attention(AdmXmppChatWidget *obj);
@@ -63,12 +64,17 @@ private:
   MessageSession      * _session;
   MessageEventFilter  * _messageEventFilter;
   ChatStateFilter     * _chatStateFilter;
-  QListWidgetItem     *_lastChatBlock;
+  QListWidgetItem     * _lastChatBlock;
   JID                   _selfJid;
   JID                   _lastJid;
+  QTime               * _time;
+  ChatStateType         _lastChatState;
 
   void addMsg(const JID &jid, const Message &msg);
   void addChatBlock(const JID &jid, const Message &msg);
+  
+  void setChatStateComposing(bool composing, bool afterSending = false);
+  void setChatState(ChatStateType chatState);
 };
 
 #endif // ADMXMPPCHATWIDGET_H

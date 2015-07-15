@@ -13,12 +13,12 @@ OTHER_INC = "$$_PRO_FILE_PWD_/3rdparty/include"
 OTHER_LIBS = "$$_PRO_FILE_PWD_/3rdparty/lib"
 
 INCLUDEPATH += \
-    "/usr/include/qjson" \
-    "/usr/include/qt4/phonon" \
+    /usr/include/qjson \
+    /usr/include/qt4/phonon \
     $$OTHER_INC
 
 LIBS += \
-    -lqjson -lphonon -L$$OTHER_LIBS -lgloox -lpthread
+    -lqjson -lphonon -L$$OTHER_LIBS -lgloox -lpthread -lqtnotify
 
 TARGET = QtAsteriskDesktop
 
@@ -48,7 +48,10 @@ SOURCES +=   \
     src/admxmppwidget.cpp \
     src/admxmppbuddywidget.cpp \
     src/admxmppchatwidget.cpp \
-    src/admxmppchatblockwidget.cpp
+    src/admxmppchatblockwidget.cpp \
+    src/admtabwidget.cpp \
+    src/admtabbar.cpp \
+    src/admnotificationmanager.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -72,7 +75,10 @@ HEADERS +=   \
     src/admxmppwidget.h \
     src/admxmppbuddywidget.h \
     src/admxmppchatwidget.h \
-    src/admxmppchatblockwidget.h
+    src/admxmppchatblockwidget.h \
+    src/admtabwidget.h \
+    src/admtabbar.h \
+    src/admnotificationmanager.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
