@@ -9,12 +9,16 @@ greaterThan(QT_MAJOR_VERSION, 4) {
  QT +=  widgets
 }
 
+OTHER_INC = "$$_PRO_FILE_PWD_/3rdparty/include"
+OTHER_LIBS = "$$_PRO_FILE_PWD_/3rdparty/lib"
+
 INCLUDEPATH += \
-    "/usr/include/qjson" \
-    "/usr/include/qt4/phonon"
+    /usr/include/qjson \
+    /usr/include/qt4/phonon \
+    $$OTHER_INC
 
 LIBS += \
-    -lqjson -lphonon
+    -lqjson -lphonon -L$$OTHER_LIBS -lgloox -lpthread -lqtnotify
 
 TARGET = QtAsteriskDesktop
 
@@ -40,7 +44,14 @@ SOURCES +=   \
     src/admextensionwidget.cpp \
     src/admvoicemailtabwidget.cpp \
     src/admvoicemailwidget.cpp \
-    src/restapiastvm.cpp
+    src/restapiastvm.cpp \
+    src/admxmppwidget.cpp \
+    src/admxmppbuddywidget.cpp \
+    src/admxmppchatwidget.cpp \
+    src/admxmppchatblockwidget.cpp \
+    src/admtabwidget.cpp \
+    src/admtabbar.cpp \
+    src/admnotificationmanager.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -60,7 +71,14 @@ HEADERS +=   \
     src/admextensionwidget.h \
     src/admvoicemailtabwidget.h \
     src/admvoicemailwidget.h \
-    src/restapiastvm.h
+    src/restapiastvm.h \
+    src/admxmppwidget.h \
+    src/admxmppbuddywidget.h \
+    src/admxmppchatwidget.h \
+    src/admxmppchatblockwidget.h \
+    src/admtabwidget.h \
+    src/admtabbar.h \
+    src/admnotificationmanager.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -71,7 +89,11 @@ FORMS +=     \
     src/ui/admchanwidget.ui \
     src/ui/admextensionwidget.ui \
     src/ui/admvoicemailtabwidget.ui \
-    src/ui/admvoicemailwidget.ui
+    src/ui/admvoicemailwidget.ui \
+    src/ui/admxmppwidget.ui \
+    src/ui/admxmppbuddywidget.ui \
+    src/ui/admxmppchatwidget.ui \
+    src/ui/admxmppchatblockwidget.ui
 
 RESOURCES += \
     resources.qrc

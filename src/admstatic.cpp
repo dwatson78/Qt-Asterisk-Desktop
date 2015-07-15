@@ -1,5 +1,11 @@
 #include "admstatic.h"
 
+#include "qtasteriskdesktopmain.h"
+
+#include <QDebug>
+
+QtAsteriskDesktopMain* QtAsteriskDesktopMain::_instance;
+
 bool AdmStatic::_instanceFlag = false;
 AdmStatic *AdmStatic::_instance = NULL;
 
@@ -23,6 +29,10 @@ QNetworkAccessManager* AdmStatic::getNetAccessMgr()
 {
   return this->_nam;
 }
+AdmNotificationManager* AdmStatic::getNotificationManager()
+{
+  return this->_notifMgr;
+}
 
 AdmStatic::AdmStatic(QObject *parent) :
   QObject(parent)
@@ -31,6 +41,8 @@ AdmStatic::AdmStatic(QObject *parent) :
   _timer->start(500);
 
   _nam = new QNetworkAccessManager();
+
+  _notifMgr = new AdmNotificationManager(this);
 }
 AdmStatic::~AdmStatic()
 {
@@ -38,6 +50,11 @@ AdmStatic::~AdmStatic()
   _timer->stop();
   _timer->deleteLater();
   _timer = NULL;
+
+   delete _nam;
+
+   delete _notifMgr;
+
   _instanceFlag = false;
 }
 
@@ -64,3 +81,4 @@ QString AdmStatic::elapsedTimeToString(QTime *time)
   }
   return elapsStr;
 }
+

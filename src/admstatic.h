@@ -6,6 +6,8 @@
 #include <QTimer>
 #include <QNetworkAccessManager>
 
+#include "admnotificationmanager.h"
+
 class AdmStatic : public QObject
 {
   Q_OBJECT
@@ -18,6 +20,7 @@ public:
   ~AdmStatic();
   QTimer* getTimer();
   QNetworkAccessManager* getNetAccessMgr();
+  AdmNotificationManager* getNotificationManager();
 
 public slots:
 
@@ -29,15 +32,14 @@ private:
   explicit AdmStatic(QObject *parent = 0);
 
   /* Private members */
-  QTimer      *_timer;
-  QNetworkAccessManager *_nam;
+  QTimer      		     *_timer;
+  QNetworkAccessManager  *_nam;
+  AdmNotificationManager *_notifMgr;
 
   /* Private static members */
   static  bool        _instanceFlag;
   static  AdmStatic   *_instance;
 
 };
-
-
 
 #endif // ADMSTATIC_H

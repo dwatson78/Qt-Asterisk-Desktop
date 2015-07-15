@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>524</width>
-    <height>403</height>
+    <width>614</width>
+    <height>420</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="_tabs">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="_tabMyDevice">
        <attribute name="title">
@@ -63,7 +63,7 @@
              <x>0</x>
              <y>0</y>
              <width>148</width>
-             <height>190</height>
+             <height>207</height>
             </rect>
            </property>
            <attribute name="label">
@@ -87,7 +87,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>146</width>
-                 <height>188</height>
+                 <height>205</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -434,7 +434,7 @@
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="AdmVoiceMailTabWidget" name="_voiceMailTabWidget" />
+         <widget class="AdmVoiceMailTabWidget" name="_voiceMailTabWidget"/>
         </item>
        </layout>
       </widget>
@@ -490,6 +490,16 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="_tabChat">
+       <attribute name="title">
+        <string>Chat</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="_layoutTabChat">
+        <item>
+         <widget class="AdmXmppWidget" name="_admXmppWidget"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -499,7 +509,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>524</width>
+     <width>614</width>
      <height>23</height>
     </rect>
    </property>
@@ -576,7 +586,12 @@
    <header>src/admvoicemailtabwidget.h</header>
    <container>1</container>
   </customwidget>
-
+  <customwidget>
+   <class>AdmXmppWidget</class>
+   <extends>QFrame</extends>
+   <header>src/admxmppwidget.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections/>

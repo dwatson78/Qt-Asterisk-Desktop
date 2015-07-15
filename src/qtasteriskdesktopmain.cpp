@@ -17,11 +17,16 @@
 #include <QSettings>
 #include <QStringList>
 
+QtAsteriskDesktopMain *_instance;
+
 QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::QtAsteriskDesktopMain)
 {
+  _instance = this;
+
   ui->setupUi(this);
+
   _chanMap = new QMap<QString, AstChannel*>();
   _parkedMap = new QMap<QString, AstParkedCall*>();
   _callMap = new QMap<QString, AdmCallWidget*>();
@@ -71,7 +76,9 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   }
   else
     asteriskDisconnected();
+
   settings.endGroup();
+
   if(settings.contains("DEVICES/default"))
   {
     QString dvc = settings.value("DEVICES/default").toString();
@@ -814,15 +821,15 @@ void QtAsteriskDesktopMain::sSetExtStatus(uint ext, AsteriskManager::ExtStatuses
       if(valid && ext == dvcExt)
       {
         /*
-    Removed     = -2,
-    Deactivated = -1,
-    NotInUse    = 0,
-    InUse       = 1 << 0,
-    Busy        = 1 << 1,
-    Unavailable = 1 << 2,
-    Ringing     = 1 << 3,
-    OnHold      = 1 << 4
-*/
+          Removed     = -2,
+          Deactivated = -1,
+          NotInUse    = 0,
+          InUse       = 1 << 0,
+          Busy        = 1 << 1,
+          Unavailable = 1 << 2,
+          Ringing     = 1 << 3,
+          OnHold      = 1 << 4
+        */
         QString status;
         if(statuses.testFlag(AsteriskManager::Removed))
           status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
@@ -974,11 +981,11 @@ void QtAsteriskDesktopMain::sPickUpParkedCall(AstParkedCall *parkedCall)
     //Can't pick up our own parked calls!
     QString exten = set.value("DEVICES/default").toString().replace(QRegExp("^SIP/"),"");
     if(parkedCall->getChannelParked()->getChannelParts()->getExten() != exten) // TODO: Get the SIP device object name instead!
-    {
-      _ami->actionRedirect(parkedCall->getChannelParked()->getChannel(),
+      {
+        _ami->actionRedirect(parkedCall->getChannelParked()->getChannel(),
                          exten, // The default device extension number
-                         "from-internal", // TODO: See if there is a dialplan that could be created for this
-                         1);
+                             "from-internal", // TODO: See if there is a dialplan that could be created for this
+                             1);
     } else {
       qDebug() << "Can't pick up our own parked calls!";
     }
