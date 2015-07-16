@@ -3,6 +3,7 @@
 #include "qtasteriskdesktopmain.h"
 
 #include <QCoreApplication>
+#include <QTextDocument>
 #include <QDebug>
 
 AdmNotificationManager::AdmNotificationManager(QObject *parent) :
@@ -46,7 +47,7 @@ void AdmNotificationManager::startCallNotification(AstChannel *chan)
     connect(chan, SIGNAL(updated(AstChannel*)),
             this, SLOT(sChannelUpdated(AstChannel*)));
 
-    n->doNotify(QCoreApplication::applicationName(),"Incoming Call",chan->getConnectedLineStr(),"call-start",5000);
+    n->doNotify(QCoreApplication::applicationName(),"Incoming Call",Qt::escape(chan->getConnectedLineStr()),"call-start",5000);
   }
 }
 
@@ -114,13 +115,13 @@ void AdmNotificationManager::sChannelUpdated(AstChannel *chan)
           case 6: // line is up
           {
             subject = "Call Handled";
-            body = chan->getConnectedLineStr();
+            body = Qt::escape(chan->getConnectedLineStr());
             icon = "dialog-information";
             break;
           }
           case 7: // line is busy
             subject = "Call Busy";
-            body = chan->getConnectedLineStr();
+            body = Qt::escape(chan->getConnectedLineStr());
             icon = "dialog-error";
           default:
           {
