@@ -18,7 +18,7 @@ public:
   explicit AstParkedCall(AstChannel *chanParked, AstChannel *chanFrom, QVariantMap event, QWidget *parent = 0);
   ~AstParkedCall();
 
-  QString getUuid(){return QString(_uuid->toLatin1());}
+  QString getUuid(){return _uuid;}
 
   AstChannel * getChannelParked(){return _chanParked;}
   bool getIsParked(){return _isParked;}
@@ -53,7 +53,7 @@ private:
   AstChannel *_chanParked;
   AstChannel *_chanFrom;
 
-  const QString* _uuid;
+  QString   _uuid;
   bool      _isParked;
   QVariant  _parkedExten;
   QString   _parkedFromName;

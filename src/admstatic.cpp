@@ -56,6 +56,7 @@ AdmStatic::~AdmStatic()
    delete _notifMgr;
 
   _instanceFlag = false;
+  _instance = NULL;
 }
 
 QString AdmStatic::elapsedTimeToString(QTime *time)
@@ -80,4 +81,35 @@ QString AdmStatic::elapsedTimeToString(QTime *time)
         ;
   }
   return elapsStr;
+}
+
+QString extStatusToString(uint extStatusNum)
+{
+  AsteriskManager::ExtStatuses statuses(extStatusNum);
+  QString status;
+  if(statuses.testFlag(AsteriskManager::Removed))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Removed");
+  if(statuses.testFlag(AsteriskManager::Deactivated))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Deactivated");
+  if(statuses.testFlag(AsteriskManager::NotInUse))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("NotInUse");
+  if(statuses.testFlag(AsteriskManager::InUse))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("InUse");
+  if(statuses.testFlag(AsteriskManager::Busy))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Busy");
+  if(statuses.testFlag(AsteriskManager::Unavailable))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Unavailable");
+  if(statuses.testFlag(AsteriskManager::Ringing))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("Ringing");
+  if(statuses.testFlag(AsteriskManager::OnHold))
+    status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
+        .arg("OnHold");
+  return status;
 }

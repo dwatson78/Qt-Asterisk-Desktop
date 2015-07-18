@@ -14,22 +14,11 @@ AstChanParts::AstChanParts(QString channel, QObject *parent)
   QRegExp re ("^([^/]+/)?([^/]+)/([^-]+)([-])?([^<]+)?<?([^>]+)?>?$");
   if(re.exactMatch(channel) && re.captureCount() == 6)
   {
-    /*for(int i = 0; i <= re.captureCount(); ++i)
-    {
-      qDebug() << i << ": " << re.cap(i);
-    }*/
     this->setPrefix(re.cap(1));
     this->setType(re.cap(2));
     this->setExten(re.cap(3));
     this->setExtra(re.cap(5));
     this->setSpecial(re.cap(6));
-    /*qDebug() << tr("ChannelParts: Type: '%1', Exten: '%2', Extra: '%3', Prefix: '%4', Special: '%5'")
-                .arg(this->getType())
-                .arg(this->getExten())
-                .arg(this->getExtra())
-                .arg(this->getPrefix())
-                .arg(this->getSpecial())
-    ;*/
     if(!_type.isNull() && !_type.isEmpty() && !_exten.isNull() && !_exten.isEmpty())
       _isValid = true;
   }

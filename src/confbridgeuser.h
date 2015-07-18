@@ -9,6 +9,8 @@
 #include <QLabel>
 #include <QPoint>
 
+
+// TODO: Clean this up!!
 class ConfBridgeUser : public QWidget
 {
   Q_OBJECT

@@ -20,8 +20,6 @@ QtAsteriskDesktopPrefs::QtAsteriskDesktopPrefs(QWidget *parent) :
            this,           SLOT(sAccepted())
   );
 
-  qDebug() << tr("host: '%1'").arg(AmiPref::getName(AmiPref::host));
-
   QSettings settings;
   settings.beginGroup("AMI");
 

@@ -66,10 +66,10 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   settings.beginGroup("AMI");
   if(settings.contains(AmiPref::getName(AmiPref::host)) && settings.contains(AmiPref::getName(AmiPref::port)))
   {
-    bool *valid = new bool(false);
+    bool valid = false;
     
     QString host = settings.value(AmiPref::getName(AmiPref::host)).toString();
-    uint port = settings.value(AmiPref::getName(AmiPref::port)).toUInt(valid);
+    uint port = settings.value(AmiPref::getName(AmiPref::port)).toUInt(&valid);
     if(valid)
       _ami->connectToHost(host, port);
     else
@@ -93,11 +93,36 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
 QtAsteriskDesktopMain::~QtAsteriskDesktopMain()
 {
   delete ui;
+  delete _statusIcon;
+  delete _parkedMap;
+  delete _callMap;
+  delete _extensionMap;
+
+  QList<AstSipPeer*> peers = _sipPeerMap->values();
+  for(int i = 0; i < peers.count(); ++i)
+  {
+    peers.at(i)->blockSignals(true);
+    delete peers.at(i);
+  }
+  delete _sipPeerMap;
+
+
+  peers = _mySipPeerMap->values();
+  for(int i = 0; i < peers.count(); ++i)
+  {
+    peers.at(i)->blockSignals(true);
+    delete peers.at(i);
+  }
+  delete _mySipPeerMap;
+
+  delete _chanMap;
+  delete _showSipPeerActionId;
+  delete _ami;
+  _instance = NULL;
 }
 
 void QtAsteriskDesktopMain::asteriskConnected()
 {
-  qDebug() << "Connected!";
   _statusIcon->setConnected(true);
   QSettings settings;
   settings.beginGroup("AMI");
@@ -109,86 +134,91 @@ void QtAsteriskDesktopMain::asteriskConnected()
 
 void QtAsteriskDesktopMain::asteriskConnected(QString arg1)
 {
-  qDebug() << "Connected!";
-  qDebug() << "arg1: " << arg1;
+  Q_UNUSED(arg1)
+
   _statusIcon->setConnected(true);
 }
 
 void QtAsteriskDesktopMain::asteriskDisconnected()
 {
-  qDebug() << "Disonnected!";
-  // _statusIcon->setConnected(false);
+  qWarning() << "QtAsteriskDesktopMain::asteriskDisconnected: Asterisk Disconnected!";
 }
 
 void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1, QVariantMap arg2, QString arg3)
 {
-  QString response;
   switch(arg1)
   {
     case (AsteriskManager::Success):
-      response = "Success";
-      break;
-    case (AsteriskManager::Error):
-      response = "Error";
-      break;
-    case (AsteriskManager::Follows):
-      response = "Follows";
-      break;
-  }
-  qDebug() << "arg1: " << response;
-  for(QVariantMap::const_iterator iter = arg2.begin();
-      iter != arg2.end();
-      ++iter)
-  {
-    qDebug() << "arg2: " << iter.key() << ": " << iter.value();
-  }
-  qDebug() << "arg3: " << arg3;
-  if(_loginActionId.isNull() == false && arg3 == _loginActionId)
-  {
-    qDebug() << "This is our login result!!!!\n\n";
-    _statusIcon->setLoggedIn(arg1 == AsteriskManager::Success, arg2.value("Message").toString());
-    ui->_buttonDial->setEnabled(arg1 == AsteriskManager::Success);
-    if(arg1 == AsteriskManager::Success)
     {
-      connect(ui->_buttonDial, SIGNAL(clicked()),
-              this,            SLOT(sDial())
-      );
-    } else {
-      disconnect(ui->_buttonDial, SIGNAL(clicked()),
-                 this,            SLOT(sDial())
-      );
-    }
-    _loginActionId = QString();
-    _sipPeersActionId = _ami->actionSIPpeers();
-  } else if(_sipPeersActionId.isNull() == false && arg3 == _sipPeersActionId) {
-    _sipPeersActionId = QString();
-
-    // Setup the extensions programs
-    AdmExtensionWidget *peerWidget;
-    peerWidget = new AdmExtensionWidget();
-    peerWidget->setExten(QString("730"));
-    peerWidget->setText("Tracking #");
-    peerWidget->setPixmap(QPixmap(":/icons/status-ring.png"));
-    ui->_layoutPrograms->addWidget(peerWidget);
-    connect(peerWidget,           SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
-            ui->_scrollPrograms,  SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
-  } else if(_showSipPeerActionId->count() > 0 && _showSipPeerActionId->contains(arg3)) {
-    qDebug() << ":::showSipPeerActionId:::";
-    AstSipPeer *peer = _showSipPeerActionId->value(arg3);
-    _showSipPeerActionId->remove(arg3);
-    if(arg1 == AsteriskManager::Success)
-    {
-      peer->sResponseShowSipPeer(arg2);
-      if(_mySipPeerMap->contains(peer->getObjectName().toString()))
+      if(_loginActionId.isNull() == false && arg3 == _loginActionId)
       {
-        if(!peer->getVmBox().isNull())
+        _statusIcon->setLoggedIn(arg1 == AsteriskManager::Success, arg2.value("Message").toString());
+        ui->_buttonDial->setEnabled(arg1 == AsteriskManager::Success);
+        if(arg1 == AsteriskManager::Success)
         {
-          AdmVoiceMailWidget *w = new AdmVoiceMailWidget(peer->getVmBox().toString());
-          connect(w,    SIGNAL(sigPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)),
-                  this, SLOT(sPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)));
-          ui->_voiceMailTabWidget->addVoiceMailWidget(w);
+          connect(ui->_buttonDial, SIGNAL(clicked()),
+                  this,            SLOT(sDial())
+          );
+        } else {
+          disconnect(ui->_buttonDial, SIGNAL(clicked()),
+                     this,            SLOT(sDial())
+          );
+        }
+        _loginActionId = QString();
+        _sipPeersActionId = _ami->actionSIPpeers();
+      } else if(_sipPeersActionId.isNull() == false && arg3 == _sipPeersActionId) {
+        _sipPeersActionId = QString();
+
+        // Setup the extensions programs
+        AdmExtensionWidget *peerWidget;
+        peerWidget = new AdmExtensionWidget();
+        peerWidget->setExten(QString("730"));
+        peerWidget->setText("Tracking #");
+        peerWidget->setPixmap(QPixmap(":/icons/status-ring.png"));
+        ui->_layoutPrograms->addWidget(peerWidget);
+        connect(peerWidget,           SIGNAL(sigDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)),
+                ui->_scrollPrograms,  SLOT(sDragEnterEvent(AdmExtensionWidget*,QDragEnterEvent*)));
+      } else if(_showSipPeerActionId->count() > 0 && _showSipPeerActionId->contains(arg3)) {
+        AstSipPeer *peer = _showSipPeerActionId->value(arg3);
+        _showSipPeerActionId->remove(arg3);
+        if(arg1 == AsteriskManager::Success)
+        {
+          peer->sResponseShowSipPeer(arg2);
+          if(_mySipPeerMap->contains(peer->getObjectName().toString()))
+          {
+            if(!peer->getVmBox().isNull())
+            {
+              AdmVoiceMailWidget *w = new AdmVoiceMailWidget(peer->getVmBox().toString());
+              connect(w,    SIGNAL(sigPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)),
+                      this, SLOT(sPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)));
+              ui->_voiceMailTabWidget->addVoiceMailWidget(w);
+            }
+          }
         }
       }
+      break;
+    }
+    case (AsteriskManager::Error):
+    {
+      qCritical() << QString("QtAsteriskDesktopMain::asteriskResponseSent: ERROR: actionId: %1").arg(arg3);
+      for(QVariantMap::const_iterator iter = arg2.begin();
+          iter != arg2.end();
+          ++iter)
+      {
+        qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent: " << iter.key() << ": " << iter.value();
+      }
+      return;
+    }
+    case (AsteriskManager::Follows):
+    {
+      qCritical() << QString("QtAsteriskDesktopMain::asteriskResponseSent: Status UNHANDLED: [AsteriskManager::Follows]: actionId: %1");
+      for(QVariantMap::const_iterator iter = arg2.begin();
+          iter != arg2.end();
+          ++iter)
+      {
+        qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent: " << iter.key() << ": " << iter.value();
+      }
+      return;
     }
   }
 }
@@ -201,110 +231,6 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     case AsteriskManager::VarSet:
     case AsteriskManager::Newexten:
       return;
-    default:
-      break;
-  }
-
-  switch(arg1)
-  {
-    case AsteriskManager::ConfbridgeEnd:
-    case AsteriskManager::ConfbridgeJoin:
-    case AsteriskManager::ConfbridgeLeave:
-    case AsteriskManager::ConfbridgeStart:
-    case AsteriskManager::ConfbridgeTalking:
-      //qDebug() << "Begin Event Info";
-      for(QVariantMap::const_iterator iter = arg2.begin();
-          iter != arg2.end();
-          ++iter)
-      {
-        //qDebug() << "arg2: " << iter.key() << ": " << iter.value();
-      }
-      //qDebug() << "End Event Info\n\n";
-      break;
-    default:
-      break;
-  }
-
-  bool catchMe = false;
-  for(QVariantMap::const_iterator iter = arg2.begin();
-      iter != arg2.end();
-      ++iter)
-  {
-    if( iter.value().toString().contains("4004")
-        || iter.value().toString().contains("4005")
-        || iter.value().toString().contains("3004")
-        || iter.value().toString().contains("5000")
-        || iter.value().toString().contains("5004")
-      )
-    {
-      catchMe = true;
-      break;
-    }
-  }
-  if(catchMe)
-  {
-    const QMetaObject &mo = AsteriskManager::staticMetaObject;
-    int index = mo.indexOfEnumerator("Event");
-    QMetaEnum me = mo.enumerator(index);
-    qDebug() << "\ncatchMeIfYouCan: Begin Caught Event Info";
-    qDebug() << "catchMeIfYouCan: arg1: Event: " << me.valueToKey(arg1);
-    for(QVariantMap::const_iterator iter = arg2.begin();
-        iter != arg2.end();
-        ++iter)
-    {
-
-      if(QString(iter.key()) != "ChanVars")
-      {
-        qDebug() << "catchMeIfYouCan: arg2: " << iter.key() << ": " << iter.value();
-      } else {
-        QVariantMap chanVars = iter.value().toMap();
-        for(QVariantMap::const_iterator iter2 = chanVars.begin();
-            iter2 != chanVars.end();
-            ++iter2)
-        {
-          QVariantMap chanVarVals = iter2.value().toMap();
-          for(QVariantMap::const_iterator iter3 = chanVarVals.begin();
-              iter3 != chanVarVals.end();
-              ++iter3)
-          {
-            qDebug() << "catchMeIfYouCan: ChanVar: "
-                     << iter2.key()
-                     << ": "
-                     << iter3.key()
-                     << ": "
-                     << iter3.value()
-            ;
-          }
-        }
-        if(arg2.contains("Channel"))
-        {
-          bool found = false;
-
-          QVariant chanVarUuid = AstChannel::getChanVar(
-                arg2,
-                arg2.value("Channel").toString(),
-                "CHANNEL(uniqueid)",
-                &found
-                );
-          if(found)
-          {
-            qDebug() << "catchMeIfYouCan: ChanVar Uuid: " << chanVarUuid.toString();
-          }
-        }
-      }
-    }
-    if(arg1 == AsteriskManager::ExtensionStatus)
-    {
-      uint status = arg2.value("Status").toUInt();
-      AsteriskManager::ExtStatuses f1(status);
-      sSetExtStatus(arg2.value("Exten").toUInt(), f1);
-
-    }
-    qDebug() << "catchMeIfYouCan: End Caught Event Info\n\n";
-  }
-
-  switch(arg1)
-  {
     case AsteriskManager::ConfbridgeStart:
       this->showConferenceRoom(arg2);
       break;
@@ -322,11 +248,14 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
       break;
     case AsteriskManager::Newchannel:
     {
-      AstChannel *chan = new AstChannel(arg2, this);
-      connect(chan, SIGNAL(destroying(AstChannel*)),
-              this, SLOT(sDestroyingChannel(AstChannel*))
-      );
-      _chanMap->insert(chan->getUuid(), chan);
+      if(arg2.contains("Uniqueid") && !arg2.value("Uniqueid").toString().trimmed().isEmpty())
+      {
+        AstChannel *chan = new AstChannel(arg2.value("Uniqueid").toString(), arg2, this);
+        connect(chan, SIGNAL(destroying(AstChannel*)),
+                this, SLOT(sDestroyingChannel(AstChannel*))
+        );
+        _chanMap->insert(chan->getUuid(), chan);
+      }
       break;
     }
     case AsteriskManager::Masquerade:
@@ -455,7 +384,9 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         AstChannel *chan = _chanMap->value(uuid,0);
         chan->sChannelEvent(arg1, arg2);
       } else {
-        qDebug() << "Could not match event to uuid: " << uuid << arg2;
+        qWarning() << QString("QtAsteriskDesktopMain::asteriskEventGenerated: Could not find channel for: uuid: %1, event: %2")
+                      .arg(uuid)
+                      .arg(arg2.contains("Event") ? arg2.value("Event").toString() : QString::number(arg1));
       }
       break;
     }
@@ -622,7 +553,6 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         if(re.exactMatch(hint) && re.captureCount() == 1)
         {
           sipPeerName = re.cap(1);
-          qDebug() << QString("sipPeerName: %1").arg(sipPeerName);
           if(_sipPeerMap->contains(sipPeerName))
             peer = _sipPeerMap->value(sipPeerName);
         }
@@ -789,7 +719,6 @@ void QtAsteriskDesktopMain::confBridgeTalking(QVariantMap arg1)
 
 void QtAsteriskDesktopMain::sPreferences()
 {
-  qDebug() << "sPreferences";
   QtAsteriskDesktopPrefs * prefs = new QtAsteriskDesktopPrefs(this);
   prefs->exec();
 }
@@ -877,7 +806,6 @@ void QtAsteriskDesktopMain::sCallXfer(AdmCallWidget * call, const QString & exte
           AstChanParts *cpart = i.value()->getChannelParts();
           if(cpart->getType() == cp.getType() && cpart->getExten() == cp.getExten())
             continue;
-          qDebug() << tr("I'm about to transfer channel %1 to %2").arg(i.value()->getChannel()).arg(exten);
           _ami->actionRedirect(i.value()->getChannel(),exten,"default",1,QString(),QString(),QString(),0);
         }
       }
@@ -915,10 +843,6 @@ void QtAsteriskDesktopMain::sCallPark(AdmCallWidget * call)
         }
         if(NULL != myChan && NULL != otherChan)
         {
-          qDebug() << QString("I'm about to park channel '%1' from channel '%2'")
-                      .arg(otherChan->getChannel())
-                      .arg(myChan->getChannel())
-          ;
           int timeout = 45000; // 45 seconds
           _ami->actionPark(otherChan->getChannel(),myChan->getChannel(),timeout);
         }
@@ -1023,13 +947,17 @@ void QtAsteriskDesktopMain::sDestroyingAdmExtensionWidget(AdmExtensionWidget *wi
 void QtAsteriskDesktopMain::sMySipPeerUpdated(AstSipPeer *peer)
 {
   Q_UNUSED(peer)
-  qDebug() << "";
+  qWarning() << QString("QtAsteriskDesktopMain::sMySipPeerUpdated: UNHANDLED: peer: %1")
+                .arg(peer->getObjectName().toString());
 }
 
 void QtAsteriskDesktopMain::sMySipPeerExtStatusEvent(AstSipPeer *peer, const QVariantMap &event)
 {
   Q_UNUSED(peer)
   Q_UNUSED(event)
+  qWarning() << QString("QtAsteriskDesktopMain::sMySipPeerExtStatusEvent: UNHANDLED: peer: %1")
+                .arg(peer->getObjectName().toString());
+
 }
 
 void QtAsteriskDesktopMain::sMySipPeerDndStatusEvent(AstSipPeer *peer, const QVariantMap &event, bool isDndOn)
@@ -1037,6 +965,9 @@ void QtAsteriskDesktopMain::sMySipPeerDndStatusEvent(AstSipPeer *peer, const QVa
   Q_UNUSED(peer)
   Q_UNUSED(event)
   Q_UNUSED(isDndOn)
+  qWarning() << QString("QtAsteriskDesktopMain::sMySipPeerDndStatusEvent: UNHANDLED: peer: %1")
+                .arg(peer->getObjectName().toString());
+
 }
 
 void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVariantMap &data)
@@ -1052,7 +983,6 @@ void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVari
         QString sndFile = data.value("sndfile").toString();
         sndFile = sndFile.mid(0,sndFile.length()-4);
         //TODO: Get sndFile from Rest API using the msg_id value...
-        qDebug() << sndFile;
         QString vmFolderFile = data.value("vmFolder").toString();
         _ami->actionOriginate(
                 cp.getType().append("/").append(cp.getExten()),

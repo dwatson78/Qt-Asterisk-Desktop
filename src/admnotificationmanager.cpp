@@ -10,15 +10,20 @@ AdmNotificationManager::AdmNotificationManager(QObject *parent) :
   QObject(parent)
 {
 }
+AdmNotificationManager::~AdmNotificationManager()
+{
+}
 
 void AdmNotificationManager::sNotificationClosed(int reasonCode)
 {
-  qDebug() << "AdmStatic::sTestNotifyClosed" << reasonCode;
+  Q_UNUSED(reasonCode)
+
+  qWarning() << "AdmNotificationManager::sNotificationClosed: UNHANDLED";
 }
 
 void AdmNotificationManager::sNotificationAction(const QString &actionName)
 {
-  qDebug() << "AdmStatic::sTestNotifyAction" << actionName;
+  qWarning() << "AdmNotificationManager::sNotificationAction: UNHANDLED";
 
   if(actionName == "Show")
   {
@@ -47,7 +52,7 @@ void AdmNotificationManager::startCallNotification(AstChannel *chan)
     connect(chan, SIGNAL(updated(AstChannel*)),
             this, SLOT(sChannelUpdated(AstChannel*)));
 
-    n->doNotify(QCoreApplication::applicationName(),"Incoming Call",Qt::escape(chan->getConnectedLineStr()),"call-start",5000);
+    n->doNotify(QCoreApplication::applicationName(),"Incoming Call",Qt::escape(chan->getConnectedLineStr()),"call-start",7500);
   }
 }
 
@@ -83,17 +88,14 @@ void AdmNotificationManager::sChannelUpdated(AstChannel *chan)
     chan->getHangupCauseNum(&ok);
     if(ok)
     {
-       qDebug() << "AdmNotificationManager::sChannelUpdated: Hangup: " << chan->getHangupCauseStr();
        subject = "Call Ended";
-       body = chan->getConnectedLineStr()
+       body = Qt::escape(chan->getConnectedLineStr()
                 .append("\n\n")
-                .append(chan->getHangupCauseDesc());
+                .append(chan->getHangupCauseDesc()));
        icon = "call-stop";
     } else {
       //Find out the nature of the channel status
-      qDebug() << "AdmNotificationManager::sChannelUpdated: Channel State: " << chan->getChannelStateStr();
       uint chanState = chan->getChannelState(&ok);
-
       if(ok)
       {
         switch(chanState)
@@ -143,14 +145,16 @@ void AdmNotificationManager::sChannelUpdated(AstChannel *chan)
       QtNotify::QtNotification *n = m_call_notifications.value(chan);
       if(n)
       {
-        bool updated = n->updateNotify(subject,body,icon);
-        qDebug() << "AdmNotificationManager::sChannelUpdated" << updated;
-        if(updated)
+        // Make sure we don't send a duplicate final notification
+        if(m_timers.values().indexOf(n) == -1)
         {
-          // Start a one second timer to close the notification after updating
-          qDebug() << "Closing the notification in 2 seconds...";
-          int timer = startTimer(2000);
-          m_timers.insert(timer,n);
+          bool updated = n->updateNotify(subject,body,icon);
+          if(updated)
+          {
+            // Start a one second timer to close the notification after updating
+            int timer = startTimer(2500);
+            m_timers.insert(timer,n);
+          }
         }
       }
     }

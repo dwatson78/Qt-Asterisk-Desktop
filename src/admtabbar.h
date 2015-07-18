@@ -16,8 +16,9 @@ class AdmTabBar : public QTabBar
   Q_OBJECT
 public:
   explicit AdmTabBar(QWidget *parent = 0);
-  
-    void setTabNeedAttention(int tabIndex, bool needAttention);
+  ~AdmTabBar();
+
+  void setTabNeedAttention(int tabIndex, bool needAttention);
 
 public slots:
   void sTickTock();

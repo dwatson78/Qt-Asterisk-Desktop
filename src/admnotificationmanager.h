@@ -11,6 +11,7 @@ class AdmNotificationManager : public QObject
   Q_OBJECT
 public:
   explicit AdmNotificationManager(QObject *parent = 0);
+  ~AdmNotificationManager();
 
   static void showMsg(const QString &subject, const QString &body, const QString &icon, int timeout, QObject *parent);
 

@@ -4,14 +4,19 @@
 #include <QLabel>
 #include <QPushButton>
 
-
-
 AdmTabBar::AdmTabBar(QWidget *parent) :
   QTabBar(parent)
 {
   m_time = NULL;
   m_timer = NULL;
   m_blinkStatus = false;
+}
+AdmTabBar::~AdmTabBar()
+{
+  if(m_time != NULL)
+    delete m_time;
+  if(m_timer != NULL)
+    delete m_timer;
 }
 
 void AdmTabBar::addBlinkingTab(int tabIndex)
@@ -61,8 +66,6 @@ void AdmTabBar::sTickTock()
         setTabTextColor(m_blinkTabs.at(i),palette().color(QPalette::Link));
       else
         setTabTextColor(m_blinkTabs.at(i),palette().color(QPalette::WindowText));
-        
-      qDebug() << "setTabColor(...)";
     }
     m_blinkStatus = !m_blinkStatus;
     m_time->restart();

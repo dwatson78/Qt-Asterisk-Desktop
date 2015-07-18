@@ -20,8 +20,9 @@ public:
   
   void setPresence(const RosterItem &item, const QString &resource, Presence::PresenceType presence, const QString &msg);
   const JID& getJid();
+
 public slots:
-  void sChatHistCurrentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+
 protected:
 
 signals:
@@ -29,7 +30,6 @@ signals:
 
 private:
   Ui::AdmXmppBuddyWidget *ui;
-  RosterItem *_rosterItem;
   JID _jid;
 };
 

@@ -48,7 +48,6 @@ SOURCES +=   \
     src/admxmppwidget.cpp \
     src/admxmppbuddywidget.cpp \
     src/admxmppchatwidget.cpp \
-    src/admxmppchatblockwidget.cpp \
     src/admtabwidget.cpp \
     src/admtabbar.cpp \
     src/admnotificationmanager.cpp \
@@ -76,7 +75,6 @@ HEADERS +=   \
     src/admxmppwidget.h \
     src/admxmppbuddywidget.h \
     src/admxmppchatwidget.h \
-    src/admxmppchatblockwidget.h \
     src/admtabwidget.h \
     src/admtabbar.h \
     src/admnotificationmanager.h \

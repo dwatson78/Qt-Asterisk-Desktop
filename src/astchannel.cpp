@@ -4,8 +4,9 @@
 
 #include "admstatic.h"
 
-AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
-  QObject(parent)
+AstChannel::AstChannel(const QString &uuid, QVariantMap &event, QObject *parent) :
+  QObject(parent),
+  _uuid(uuid)
 {
   /*QString*/ this->_accountCode        = QString();
   /*bool*/    //this->_isCallIdSet        = false;
@@ -38,51 +39,47 @@ AstChannel::AstChannel(QVariantMap &event, QObject *parent) :
   this->_isMusicOn              = false;
   this->_masq                   = NULL;
 
-  if(event.contains("Uniqueid"))
+  if(event.contains("AccountCode"))
+    this->_accountCode = event.value("AccountCode").toString();
+  if(event.contains("CallerIDName"))
+    this->_callIdName = event.value("CallerIDName").toString();
+  if(event.contains("CallerIDNum"))
+    this->_callIdNum = event.value("CallerIDNum").toString();
+  if(event.contains("Channel"))
   {
-    this->_uuid = new QString(event.value("Uniqueid").toString());
-    if(event.contains("AccountCode"))
-      this->_accountCode = event.value("AccountCode").toString();
-    if(event.contains("CallerIDName"))
-      this->_callIdName = event.value("CallerIDName").toString();
-    if(event.contains("CallerIDNum"))
-      this->_callIdNum = event.value("CallerIDNum").toString();
-    if(event.contains("Channel"))
-    {
-      this->_channel = event.value("Channel").toString();
-      AstChanParts *chanPart = getChannelParts();
-      if(chanPart->getPrefix() == "Parked")
-        this->_isParked = true;
-    }
-    if(event.contains("ChannelState"))
-    {
-      this->_chanState = event.value("ChannelState").toString() == ""
-        ? QVariant(QVariant::UInt)
-        : event.value("ChannelState").toUInt();
-    }
-    if(event.contains("ChannelStateDesc"))
-      this->_chanStateDesc = event.value("ChannelStateDesc").toString();
-    if(event.contains("Context"))
-      this->_context = event.value("Context").toString();
-    if(event.contains("Exten"))
-    {
-      this->_exten = event.value("Exten").toString() == ""
-        ? QVariant(QVariant::UInt)
-        : event.value("Exten").toUInt();
-    }
-    qDebug() << "New Channel: '" << this->_channel << "', Uniqueid: '" << QString(this->_uuid->toLatin1()) << "'";
-    if(_isParked)
-    {
-      emit updated(this);
-      emit parkOn(this, event);
-    }
+    this->_channel = event.value("Channel").toString();
+    AstChanParts *chanPart = getChannelParts();
+    if(chanPart->getPrefix() == "Parked")
+      this->_isParked = true;
   }
-  else
-    this->deleteLater();
+  if(event.contains("ChannelState"))
+  {
+    this->_chanState = event.value("ChannelState").toString() == ""
+      ? QVariant(QVariant::UInt)
+      : event.value("ChannelState").toUInt();
+  }
+  if(event.contains("ChannelStateDesc"))
+    this->_chanStateDesc = event.value("ChannelStateDesc").toString();
+  if(event.contains("Context"))
+    this->_context = event.value("Context").toString();
+  if(event.contains("Exten"))
+  {
+    this->_exten = event.value("Exten").toString() == ""
+      ? QVariant(QVariant::UInt)
+      : event.value("Exten").toUInt();
+  }
+  if(_isParked)
+  {
+    emit updated(this);
+    emit parkOn(this, event);
+  }
+
 }
 AstChannel::~AstChannel()
 {
   emit destroying(this);
+  if(_time != NULL)
+    delete _time;
 }
 
 void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap event)
@@ -111,12 +108,7 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       {
         this->_connectedLineNum = event.value("ConnectedLineNum").toString();
       }
-      qDebug() << tr("Newstate: Channel: '%1', State: '%2', CallId: '%3', Line: '%4'")
-                  .arg(this->_channel)
-                  .arg(this->_chanStateDesc)
-                  .arg(this->getCallIdStr())
-                  .arg(this->getConnectedLineStr())
-                  ;
+
       emit updated(this);
 
       uint currentState = this->_chanState.toUInt();
@@ -149,13 +141,8 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
     }
     case AsteriskManager::Rename:
     {
-      qDebug() << "AstChannel::sChannelEvent: Rename";
       if(event.contains("Newname"))
       {
-        qDebug() << tr("Rename '%1' to '%2")
-                    .arg(this->_channel)
-                    .arg(event.value("Newname").toString())
-        ;
         this->_channel = event.value("Newname").toString();
         emit updated(this);
       }
@@ -163,9 +150,6 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
     }
     case AsteriskManager::ParkedCall:
     {
-      qDebug() << tr("AstChannel::sChannelEvent: ParkedCall: Channel: '%1', uuid: '%2'")
-                  .arg(this->_channel)
-                  .arg(QString(this->_uuid->toLatin1()));
       this->sParkOn(event);
       if(NULL != _masq)
       {
@@ -177,9 +161,6 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
     case AsteriskManager::ParkedCallGiveUp:
     case AsteriskManager::ParkedCallTimeOut:
     {
-      qDebug() << tr("AstChannel::sChannelEvent: UnParkedCall: Channel: '%1', uuid: '%2'")
-                  .arg(this->_channel)
-                  .arg(QString(this->_uuid->toLatin1()));
       this->sMusicOff(event);
       this->sParkOff(event);
       if(NULL != _masq)
@@ -191,13 +172,6 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
     }
     case AsteriskManager::MusicOnHold:
     {
-      qDebug() << tr("AstChannel::sChannelEvent: MusicOnHold: Channel: '%1', uuid: '%2', State: '%3'")
-                  .arg(this->_channel)
-                  .arg(QString(this->_uuid->toLatin1()))
-                  .arg(event.contains("State")
-                       ? event.value("State").toString()
-                       : "")
-      ;
       if(event.contains("State"))
       {
         if(event.value("State").toString() == "Start")
@@ -234,14 +208,6 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
         this->_connectedLineName = event.value("ConnectedLineName").toString();
       if(event.contains("ConnectedLineNum"))
         this->_connectedLineNum = event.value("ConnectedLineNum").toString();
-      qDebug() << tr("Newstate: Channel: '%1', State: '%2', CallId: '%3', Line: '%4', HangupCause: '%5', '%6'")
-                  .arg(this->_channel)
-                  .arg(this->_chanStateDesc)
-                  .arg(this->getCallIdStr())
-                  .arg(this->getConnectedLineStr())
-                  .arg(this->_hangupCauseDesc)
-                  .arg(this->_hangupCauseNum.isNull() ? "" : this->_hangupCauseNum.toString())
-                  ;
       emit updated(this);
       emit hangup(this);
       QTimer::singleShot(5000, this, SLOT(deleteLater()));
@@ -432,22 +398,21 @@ QVariant AstChannel::getChanVar(QVariantMap event, QString channel, QString vari
 
 void AstChannel::sMasqueradeChannel(QVariantMap event, AstChannel *clone)
 {
-  qDebug() << event.value("Event").toString();
+  Q_UNUSED(event)
+
   this->_accountCode        = QString(clone->_accountCode);
   this->_callIdName         = QString(clone->_callIdName);
-  //this->_channel            = QString(clone->_channel);
   this->_chanStateDesc      = QString(clone->_chanStateDesc);
   this->_context            = QString(clone->_context);
   this->_connectedLineName  = QString(clone->_connectedLineName);
-  this->_connectedLineNum =   QString(clone->_connectedLineNum);
+  this->_connectedLineNum   = QString(clone->_connectedLineNum);
   this->_hangupCauseDesc    = QString(clone->_hangupCauseDesc);
   this->_callIdPresDesc     = QString(clone->_callIdPresDesc);
-
-  this->_callIdNum        = QString(clone->_callIdNum);
-  this->_chanState        = QVariant(clone->_chanState);
-  this->_exten            = QVariant(clone->_exten);
-  this->_hangupCauseNum   = QVariant(clone->_hangupCauseNum);
-  this->_callIdPresNum    = QVariant(clone->_callIdPresNum);
+  this->_callIdNum          = QString(clone->_callIdNum);
+  this->_chanState          = QVariant(clone->_chanState);
+  this->_exten              = QVariant(clone->_exten);
+  this->_hangupCauseNum     = QVariant(clone->_hangupCauseNum);
+  this->_callIdPresNum      = QVariant(clone->_callIdPresNum);
 
   this->_isMusicOn = clone->_isMusicOn;
   _masq = clone;
@@ -462,13 +427,10 @@ void AstChannel::sDestroyingMasq(AstChannel *masq)
 {
   if(_masq == NULL)
     return;
-  else
+  else if(masq == _masq)
     _masq = NULL;
-  qDebug() << tr("Removed masq: uuid: '%1', channel: '%2'")
-            .arg(masq->getUuid())
-           .arg(masq->getChannel())
-  ;
 }
+
 uint AstChannel::getParkedExten(bool *valid)
 {
   if(!this->_parkedExten.isNull())

@@ -82,7 +82,10 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
 AdmVoiceMailWidget::~AdmVoiceMailWidget()
 {
   delete ui;
-  delete _mFile;
+  if(_mFile != NULL)
+    delete _mFile;
+  delete _mOut;
+  delete _mObj;
 }
 void AdmVoiceMailWidget::sVmCountReady(const QVariantMap &data)
 {
@@ -149,9 +152,9 @@ void AdmVoiceMailWidget::_setFolderItemName(QListWidgetItem *item)
   }
 }
 
-void AdmVoiceMailWidget::sVmCountError(QNetworkReply::NetworkError err)
+void AdmVoiceMailWidget::sVmCountError(QNetworkReply::NetworkError err, const QString &errString)
 {
-  Q_UNUSED(err)
+  showNetworkErrorMsg("sVmCountError", err, errString);
 }
 
 void AdmVoiceMailWidget::sFolderItemActivated(QListWidgetItem *current, QListWidgetItem *previous)
@@ -174,8 +177,8 @@ void AdmVoiceMailWidget::sLoadFolder(const QString &folder)
   {
     connect(dets, SIGNAL(sigReady(QVariantMap)),
             this, SLOT(sVmMsgDetailsReady(QVariantMap)));
-    connect(dets, SIGNAL(sigError(QNetworkReply::NetworkError)),
-            this, SLOT(sVmMsgDetailsError(QNetworkReply::NetworkError)));
+    connect(dets, SIGNAL(sigError(QNetworkReply::NetworkError, QString)),
+            this, SLOT(sVmMsgDetailsError(QNetworkReply::NetworkError, QString)));
     dets->start();
   }
 }
@@ -230,22 +233,18 @@ void AdmVoiceMailWidget::sVmMsgDetailsReady(const QVariantMap &data)
   }
 }
 
-void AdmVoiceMailWidget::sVmMsgDetailsError(QNetworkReply::NetworkError err)
+void AdmVoiceMailWidget::sVmMsgDetailsError(QNetworkReply::NetworkError err, const QString &errString)
 {
-  Q_UNUSED(err)
-  qDebug() << err;
+  showNetworkErrorMsg("sVmMsgDetailsError", err, errString);
 }
 
 void AdmVoiceMailWidget::sMessagesItemChanged(QTableWidgetItem *current, QTableWidgetItem *previous)
 {
-  Q_UNUSED(current)
   Q_UNUSED(previous)
-  qDebug() << QString("AdmVoiceMailWidget::sMessagesItemChanged: Previous Null: %1").arg(previous == NULL);
-  qDebug() << QString("AdmVoiceMailWidget::sMessagesItemChanged: Current Null: %1").arg(current == NULL);
+
   _mObj->clear();
   if(NULL != _mFile)
   {
-    //_mFile->remove();
     delete _mFile;
     _mFile = NULL;
   }
@@ -256,34 +255,34 @@ void AdmVoiceMailWidget::sMsgCustomContextMenuRequested(QPoint pos)
 {
   if(ui->_messages->currentRow() < 0)
     return;
-  QMenu *m = new QMenu();
-  QMenu *m2 = new QMenu();
-  m2 = m->addMenu("Move to");
+  QMenu m;
+  QMenu m2;
+  m2.setTitle("Move to");
+  m.addMenu(&m2);
   QString selectedFolder = ui->_folders->selectedItems().at(0)->data(RestApiAstVm::ROLE_FOLDER_NAME).toString();
   if(selectedFolder != "INBOX")
-    m2->addAction(new QAction("New",this));
+    m2.addAction(new QAction("New",this));
   if(selectedFolder != "Old")
-    m2->addAction(new QAction("Old",this));
+    m2.addAction(new QAction("Old",this));
   if(selectedFolder != "Urgent")
-    m2->addAction(new QAction("Urgent",this));
+    m2.addAction(new QAction("Urgent",this));
   if(selectedFolder != "Family")
-    m2->addAction(new QAction("Family",this));
+    m2.addAction(new QAction("Family",this));
   if(selectedFolder != "Friends")
-    m2->addAction(new QAction("Friends",this));
+    m2.addAction(new QAction("Friends",this));
   if(selectedFolder != "Work")
-    m2->addAction(new QAction("Work",this));
-  m->addAction(new QAction("Forward to...", this));
-  m->addSeparator();
+    m2.addAction(new QAction("Work",this));
+  m.addAction(new QAction("Forward to...", this));
+  m.addSeparator();
   if(selectedFolder != "Deleted")
-    m->addAction(new QAction("Archive",this));
-  m->addAction(new QAction("Delete",this));
+    m.addAction(new QAction("Archive",this));
+  m.addAction(new QAction("Delete",this));
 
-  connect(m,   SIGNAL(triggered(QAction*)),
+  connect(&m,   SIGNAL(triggered(QAction*)),
           this, SLOT(sMsgCustomContextAction(QAction*)));
-  connect(m2,   SIGNAL(triggered(QAction*)),
+  connect(&m2,   SIGNAL(triggered(QAction*)),
           this, SLOT(sMsgCustomContextMoveMsg(QAction*)));
-
-  m->popup(ui->_messages->viewport()->mapToGlobal(pos));
+  m.exec(ui->_messages->viewport()->mapToGlobal(pos));
 }
 void AdmVoiceMailWidget::sMsgCustomContextAction(QAction* action)
 {
@@ -304,7 +303,6 @@ void AdmVoiceMailWidget::sMsgCustomContextAction(QAction* action)
     QRegExp re("^[0-9]+$");
     if(re.exactMatch(destBox))
     {
-      qDebug() << destBox;
       QVariantMap params;
       params["vmBox"] = _vmBox;
       params["vmFolder"] = folder;
@@ -318,8 +316,8 @@ void AdmVoiceMailWidget::sMsgCustomContextAction(QAction* action)
         connect(fwd,  SIGNAL(sigReady(QVariantMap)),
                 this, SLOT(sVmForwardMessageReady(QVariantMap))
         );
-        connect(fwd,  SIGNAL(sigError(QNetworkReply::NetworkError)),
-                this, SLOT(sVmForwardMessageError(QNetworkReply::NetworkError))
+        connect(fwd,  SIGNAL(sigError(QNetworkReply::NetworkError, QString)),
+                this, SLOT(sVmForwardMessageError(QNetworkReply::NetworkError, QString))
         );
         fwd->start();
       }
@@ -344,8 +342,8 @@ void AdmVoiceMailWidget::sMsgCustomContextAction(QAction* action)
     {
       connect(r,    SIGNAL(sigReady(QVariantMap)),
               this, SLOT(sVmDeleteMessageReady(QVariantMap)));
-      connect(r,    SIGNAL(sigError(QNetworkReply::NetworkError)),
-              this, SLOT(sVmDeleteMessageError(QNetworkReply::NetworkError)));
+      connect(r,    SIGNAL(sigError(QNetworkReply::NetworkError, QString)),
+              this, SLOT(sVmDeleteMessageError(QNetworkReply::NetworkError, QString)));
       r->start();
     }
   }
@@ -355,11 +353,9 @@ void AdmVoiceMailWidget::sVmForwardMessageReady(const QVariantMap &data)
 {
   Q_UNUSED(data);
 }
-void AdmVoiceMailWidget::sVmForwardMessageError(QNetworkReply::NetworkError err)
+void AdmVoiceMailWidget::sVmForwardMessageError(QNetworkReply::NetworkError err, const QString &errString)
 {
-  Q_UNUSED(err);
-  qDebug() << QString("AdmVoiceMailWidget::sVmForwardMessageError: %1").arg(err);
-  
+  showNetworkErrorMsg("sVmForwardMessageError", err, errString);
 }
 
 void AdmVoiceMailWidget::sVmDeleteMessageReady(const QVariantMap &data)
@@ -367,10 +363,9 @@ void AdmVoiceMailWidget::sVmDeleteMessageReady(const QVariantMap &data)
   Q_UNUSED(data);
   sRefreshView();
 }
-void AdmVoiceMailWidget::sVmDeleteMessageError(QNetworkReply::NetworkError err)
+void AdmVoiceMailWidget::sVmDeleteMessageError(QNetworkReply::NetworkError err, const QString &errString)
 {
-  Q_UNUSED(err);
-  
+  showNetworkErrorMsg("sVmDeleteMessageError", err, errString);
 }
 
 void AdmVoiceMailWidget::sMsgCustomContextMoveMsg(QAction* action)
@@ -384,10 +379,6 @@ void AdmVoiceMailWidget::sMsgCustomContextMoveMsg(QAction* action)
 
     bool ok = false;
     QVariantMap params;
-    /*if(values.contains("vmBox")
-     && values.contains("vmFolderSrc")
-     && values.contains("vmFolderDst")
-     && values.contains("vmFile"))*/
     params["vmBox"] = _vmBox;
     params["vmFolderSrc"] = ui->_folders->currentItem()->data(RestApiAstVm::ROLE_FOLDER_NAME).toString();
     params["vmFolderDst"] = action->text() == "New" ? "INBOX" : action->text();
@@ -397,8 +388,8 @@ void AdmVoiceMailWidget::sMsgCustomContextMoveMsg(QAction* action)
     {
       connect(move, SIGNAL(sigReady(QVariantMap)),
               this, SLOT(sVmMoveMessageReady(QVariantMap)));
-      connect(move, SIGNAL(sigError(QNetworkReply::NetworkError)),
-              this, SLOT(sVmMoveMessageError(QNetworkReply::NetworkError)));
+      connect(move, SIGNAL(sigError(QNetworkReply::NetworkError, QString)),
+              this, SLOT(sVmMoveMessageError(QNetworkReply::NetworkError, QString)));
       move->start();
     }
   }
@@ -427,38 +418,30 @@ void AdmVoiceMailWidget::sRefreshView()
   {
     connect(rest, SIGNAL(sigReady(QVariantMap)),
             this, SLOT(sVmCountReady(QVariantMap)));
-    connect(rest, SIGNAL(sigError(QNetworkReply::NetworkError)),
-            this, SLOT(sVmCountError(QNetworkReply::NetworkError)));
+    connect(rest, SIGNAL(sigError(QNetworkReply::NetworkError, QString)),
+            this, SLOT(sVmCountError(QNetworkReply::NetworkError, QString)));
     rest->start();
   }
 }
 
-void AdmVoiceMailWidget::sVmMoveMessageError(QNetworkReply::NetworkError err)
+void AdmVoiceMailWidget::sVmMoveMessageError(QNetworkReply::NetworkError err, const QString &errString)
 {
-  qDebug() << err;
+  showNetworkErrorMsg("sVmMoveMessageError", err, errString);
 }
 
 void AdmVoiceMailWidget::sPlayMsgClicked()
 {
-  qDebug() << "AdmVoiceMailWidget::sPlayMsgClicked";
   if(_mObj->state() == Phonon::PlayingState)
   {
-    qDebug() << "AdmVoiceMailWidget::sPlayMsgClicked: pause";
     _mObj->pause();
   } else {
     if(_mObj->currentSource().type() == Phonon::MediaSource::Empty
        || _mObj->currentSource().type() == 5)
     {
-      qDebug() << QString("AdmVoiceMailWidget::sPlayMsgClicked: source type (%1)")
-                  .arg(_mObj->currentSource().type())
-                  ;
-      qDebug() << "AdmVoiceMailWidget::sPlayMsgClicked: currentSource().type() == Phonon::MediaSource::Empty";
       if(ui->_messages->selectedItems().count() > 0)
       {
-        qDebug() << QString("Selected row: %1").arg(ui->_messages->selectedItems().at(0)->row());
         QVariant data = ui->_messages->item(ui->_messages->selectedItems().at(0)->row(),0)->data(Qt::UserRole);
         QVariantMap dataMap = data.toMap();
-        qDebug() << dataMap.value("sndfile");
         RestApiAstVmGetMsgSoundFile *r = new RestApiAstVmGetMsgSoundFile();
         bool ok = false;
         QVariantMap params;
@@ -472,15 +455,11 @@ void AdmVoiceMailWidget::sPlayMsgClicked()
           connect(r,SIGNAL(sigReady(QByteArray)),this,SLOT(sSoundFileReady(QByteArray)));
           r->start();
         } else {
-          qDebug() << "AdmVoiceMailWidget::sPlayMsgClicked: r->set(...) NOT OK!!";
+          qCritical() << QString("AdmVoiceMailWidget::sPlayMsgClicked: RestApiVm::set(...) indicated failure to set all parameters");
+          QMessageBox::critical(this,"Rest API Error", "Failed to set the proper paremeters for the RestApiAstVmGetMsgSoundFile object.");
         }
       }
     } else {
-      qDebug() << QString("AdmVoiceMailWidget::sPlayMsgClicked: source type (%1) was not (%2)")
-                  .arg(_mObj->currentSource().type())
-                  .arg(Phonon::MediaSource::Empty)
-                  ;
-      qDebug() << "AdmVoiceMailWidget::sPlayMsgClicked: play";
       if(_mObj->isSeekable())
       {
         if(_mObj->currentTime() >= _mObj->totalTime())
@@ -492,7 +471,6 @@ void AdmVoiceMailWidget::sPlayMsgClicked()
 }
 void AdmVoiceMailWidget::sMsgSeekBackClick()
 {
-  qDebug() << _mObj->isSeekable();
   if(_mObj->isSeekable() && _mObj->state() == Phonon::PlayingState)
   {
     _mObj->seek( (_mObj->currentTime() - 1500) < 0
@@ -502,7 +480,6 @@ void AdmVoiceMailWidget::sMsgSeekBackClick()
 }
 void AdmVoiceMailWidget::sMsgSeekForwardClick()
 {
-  qDebug() << _mObj->isSeekable();
   if(_mObj->isSeekable() && _mObj->state() == Phonon::PlayingState)
   {
     _mObj->seek( (_mObj->currentTime() + 1500) >= _mObj->totalTime()
@@ -513,7 +490,6 @@ void AdmVoiceMailWidget::sMsgSeekForwardClick()
 
 void AdmVoiceMailWidget::sSoundFileReady(const QByteArray &data)
 {
-  qDebug() << data.length();
   _mObj->clear();
   if(NULL != _mFile)
   {
@@ -523,7 +499,6 @@ void AdmVoiceMailWidget::sSoundFileReady(const QByteArray &data)
   _mFile = new QTemporaryFile(QString("%1/msg.wav.XXXXXX").arg(QDir::tempPath()));
   if(_mFile->open())
   {
-    qDebug() << QString("_mFile->fileName(): %1").arg(_mFile->fileName());
     _mFile->write(data);
     _mFile->close();
     _mObj->setCurrentSource(QUrl(QString("file://%1").arg(_mFile->fileName())));
@@ -558,17 +533,10 @@ void AdmVoiceMailWidget::sMediaObjectStateChanged(Phonon::State newState, Phonon
       QIcon icon;
       icon.addFile(QString::fromUtf8(":/icons/media-playback-pause.png"), QSize(), QIcon::Normal, QIcon::Off);
       ui->_msgTogglePlay->setIcon(icon);
-      //playAction->setEnabled(false);
-      //pauseAction->setEnabled(true);
-      //stopAction->setEnabled(true);
       break;
     }
     case Phonon::StoppedState:
     {
-      //stopAction->setEnabled(false);
-      //playAction->setEnabled(true);
-      //pauseAction->setEnabled(false);
-      //timeLcd->display("00:00");
       QIcon icon;
       icon.addFile(QString::fromUtf8(":/icons/media-playback-start.png"), QSize(), QIcon::Normal, QIcon::Off);
       ui->_msgTogglePlay->setIcon(icon);
@@ -592,7 +560,6 @@ void AdmVoiceMailWidget::sMediaObjectSourceChanged(Phonon::MediaSource)
 }
 void AdmVoiceMailWidget::sMediaObjectFinished()
 {
-  qDebug() << "AdmVoiceMailWidget::sMediaObjectFinished";
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/media-playback-start.png"), QSize(), QIcon::Normal, QIcon::Off);
   ui->_msgTogglePlay->setIcon(icon);
@@ -608,9 +575,23 @@ void AdmVoiceMailWidget::sPlayOnPhoneClicked()
   // TODO: Get the Playback path from the rest api using msg_id
   if(ui->_messages->selectedItems().count() > 0)
   {
-    qDebug() << QString("Selected row: %1").arg(ui->_messages->selectedItems().at(0)->row());
     QVariant data = ui->_messages->item(ui->_messages->selectedItems().at(0)->row(),0)->data(Qt::UserRole);
     QVariantMap dataMap = data.toMap();
     emit sigPlayMsgOnPhone(this, dataMap);
+  }
+}
+
+void AdmVoiceMailWidget::showNetworkErrorMsg(const QString& functionName, QNetworkReply::NetworkError err, const QString &errString)
+{
+  if(err != QNetworkReply::NoError)
+  {
+    qCritical() << QString("AdmVoiceMailWidget: QNetwork Error: [%1]: (%2) %3")
+                   .arg(functionName)
+                   .arg(QString::number(err))
+                   .arg(errString);
+    QMessageBox::critical(this,"Network Error",
+                          QString("A network error occured: (%1) %2")
+                          .arg(QString::number(err))
+                          .arg(errString));
   }
 }

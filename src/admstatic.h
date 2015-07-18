@@ -15,6 +15,7 @@ public:
   /* Public static members */
   static AdmStatic* getInstance();
   static QString    elapsedTimeToString(QTime *time);
+  static QString    extStatusToString(uint extStatusNum);
 
   /* Public members */
   ~AdmStatic();

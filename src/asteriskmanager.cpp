@@ -436,8 +436,6 @@ QString AsteriskManager::actionOriginate(QString channel,
   insertNotEmpty(&headers, "Async", async);
   insertNotEmpty(&headers, "Codecs", codecs.join(","));
 
-  //qDebug() << "Headers:" << headers;
-
   if (!variables.isEmpty()) {
     QMapIterator<QString, QVariant> variable(variables);
     while (variable.hasNext()) {
@@ -863,6 +861,4 @@ void AsteriskManager::onReadyRead()
       dispatchPacket();
     }
   }
-
-//	qDebug("</ami>");
 }

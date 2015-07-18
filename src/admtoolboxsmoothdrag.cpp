@@ -20,6 +20,12 @@ AdmScrollAreaSmoothDrag::AdmScrollAreaSmoothDrag(QWidget *parent) :
   _pointDragMoveEvent = QPoint();
   _tbox = NULL;
 }
+AdmToolBoxSmoothDrag::~AdmToolBoxSmoothDrag()
+{
+  if(_timer != NULL)
+    delete _timer;
+}
+
 void AdmScrollAreaSmoothDrag::setWidget(QWidget *widget)
 {
   widget->installEventFilter(this);

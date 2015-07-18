@@ -14,8 +14,6 @@
 #include <gloox/chatstatefilter.h>
 #include <gloox/chatstatehandler.h>
 
-#include "admxmppchatblockwidget.h"
-
 namespace Ui {
 class AdmXmppChatWidget;
 }

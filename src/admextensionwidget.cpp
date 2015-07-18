@@ -69,7 +69,6 @@ QLabel *AdmExtensionWidget::getTextLabel()
 }
 void AdmExtensionWidget::dragEnterEvent(QDragEnterEvent *event)
 {
-  qDebug() << "AdmExtensionWidget::dragEnterEvent";
   //meDataAstCall
   const MimeDataAstCall *mime = qobject_cast<const MimeDataAstCall *>(event->mimeData());
   if(NULL != mime && mime->hasAdmCallWidget())
@@ -83,11 +82,6 @@ void AdmExtensionWidget::dragEnterEvent(QDragEnterEvent *event)
       // Accept the drop and change appearance
       emit sigDragEnterEvent(this,event);
       event->acceptProposedAction();
-      qDebug() << QString("Original backgroundrole: %1")
-                  .arg(backgroundRole());
-      qDebug() << QString("Original foregroundrole: %2")
-                  .arg(foregroundRole());
-
       setAutoFillBackground(true);
       setBackgroundRole(QPalette::Highlight);
       setForegroundRole(QPalette::HighlightedText);
@@ -104,13 +98,11 @@ void AdmExtensionWidget::dragEnterEvent(QDragEnterEvent *event)
 }
 void AdmExtensionWidget::dragMoveEvent(QDragMoveEvent *event)
 {
-  qDebug() << "AdmExtensionWidget::dragMoveEvent";
   emit sigDragMoveEvent(this,event);
 }
 
 void AdmExtensionWidget::dragLeaveEvent(QDragLeaveEvent *event)
 {
-  qDebug() << "AdmExtensionWidget::dragLeaveEvent";
   emit sigDragLeaveEvent(this, event);
 
   setAutoFillBackground(true);
@@ -217,7 +209,6 @@ void AdmExtensionWidget::_updateStatusFromSipPeerStatus(const QString &status)
 
 void AdmExtensionWidget::sExtensionStatusEvent(const QVariantMap &event)
 {
-  qDebug() << "AdmExtensionWidget::sExtensionStatusEvent";
   if(event.contains("Status"))
   {
     uint statusNum = event.value("Status").toUInt();
@@ -265,10 +256,9 @@ void AdmExtensionWidget::sSipExtensionDndStatusEvent(AstSipPeer *peer, const QVa
 
     if(_isDndOn != isDndOn)
     {
-      qDebug() << "Error: This should never happen. _isDndOn != isDndOn";
-      qDebug() << QString("isDndOn: %1. _isDndOn: %2")
-                  .arg(isDndOn)
-                  .arg(_isDndOn);
+      qCritical() << QString("AdmExtensionWidget::sSipExtensionDndStatusEvent: local value _isDndOn does not match this function's parameter isDndOn: _isDndOn: %1, isDndOn: %1")
+                     .arg(_isDndOn)
+                     .arg(isDndOn);
     }
   }
 }
@@ -295,86 +285,4 @@ void AdmExtensionWidget::_updateStatusIcon()
     if(statuses.testFlag(AsteriskManager::OnHold))
       setPixmap(QPixmap(":/icons/status-onhold.png"));
   }
-
-  QString status;
-  if(statuses.testFlag(AsteriskManager::Removed))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("Removed");
-  if(statuses.testFlag(AsteriskManager::Deactivated))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("Deactivated");
-  if(statuses.testFlag(AsteriskManager::NotInUse))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("NotInUse");
-  if(statuses.testFlag(AsteriskManager::InUse))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("InUse");
-  if(statuses.testFlag(AsteriskManager::Busy))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("Busy");
-  if(statuses.testFlag(AsteriskManager::Unavailable))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("Unavailable");
-  if(statuses.testFlag(AsteriskManager::Ringing))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("Ringing");
-  if(statuses.testFlag(AsteriskManager::OnHold))
-    status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-        .arg("OnHold");
-  qDebug() << status;
-
-  /*uint status = arg2.value("Status").toUInt();
-        AsteriskManager::ExtStatuses f1(status);
-        sSetExtStatus(arg2.value("Exten").toUInt(), f1);*/
-
-    /*QSettings set;
-    if(set.contains("DEVICES/default"))
-    {
-      if(set.contains("DEVICES/default"))
-      {
-        QString dvc = set.value("DEVICES/default").toString();
-        QStringList parts = dvc.split("/");
-        bool *valid = new bool(false);
-        uint dvcExt = parts.at(1).toUInt(valid);
-        if(valid && ext == dvcExt)
-        {
-          / *
-      Removed     = -2,
-      Deactivated = -1,
-      NotInUse    = 0,
-      InUse       = 1 << 0,
-      Busy        = 1 << 1,
-      Unavailable = 1 << 2,
-      Ringing     = 1 << 3,
-      OnHold      = 1 << 4
-  * /
-          QString status;
-          if(statuses.testFlag(AsteriskManager::Removed))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("Removed");
-          if(statuses.testFlag(AsteriskManager::Deactivated))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("Deactivated");
-          if(statuses.testFlag(AsteriskManager::NotInUse))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("NotInUse");
-          if(statuses.testFlag(AsteriskManager::InUse))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("InUse");
-          if(statuses.testFlag(AsteriskManager::Busy))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("Busy");
-          if(statuses.testFlag(AsteriskManager::Unavailable))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("Unavailable");
-          if(statuses.testFlag(AsteriskManager::Ringing))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("Ringing");
-          if(statuses.testFlag(AsteriskManager::OnHold))
-            status = tr("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
-                .arg("OnHold");
-          ui->_extStatus->setText(status);
-        }
-      }
-    }*/
 }

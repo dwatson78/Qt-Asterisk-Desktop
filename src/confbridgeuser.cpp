@@ -73,7 +73,6 @@ void ConfBridgeUser::setTalkingStatus(bool talking)
 
 void ConfBridgeUser::contextMenuRequested(const QPoint& point)
 {
-  qDebug() << "contextMenuRequested";
   QPoint globalPos = _lbl->mapToGlobal(point);
   QMenu* menu = new QMenu(this);
   QAction* act1 = menu->addAction("Mute User");
@@ -100,7 +99,6 @@ void ConfBridgeUser::mute()
     this->setTalkingStatus(false);
   }
   QString result = _ami->actionConfbridgeMute(this->_conference, this->_channel);
-  qDebug() << "mute result: " << result;
 }
 
 void ConfBridgeUser::unmute()
@@ -110,11 +108,9 @@ void ConfBridgeUser::unmute()
     talkingWhileMuted = true;
     this->setTalkingStatus(true);
   }
-  QString result = _ami->actionConfbridgeUnmute(this->_conference, this->_channel);
-  qDebug() << "unmute result: " << result;
+  _ami->actionConfbridgeUnmute(this->_conference, this->_channel);
 }
 void ConfBridgeUser::kick()
 {
-  QString result = _ami->actionConfbridgeKick(this->_conference, this->_channel);
-  qDebug() << "kick result: " << result;
+  _ami->actionConfbridgeKick(this->_conference, this->_channel);
 }

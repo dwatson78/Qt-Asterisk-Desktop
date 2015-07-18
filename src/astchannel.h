@@ -13,9 +13,9 @@ class AstChannel : public QObject
 {
   Q_OBJECT
 public:
-  explicit AstChannel(QVariantMap &event, QObject *parent = 0);
+  explicit AstChannel(const QString &uuid, QVariantMap &event, QObject *parent = 0);
   ~AstChannel();
-  QString getUuid(){return QString(_uuid->toLatin1());}
+  QString getUuid(){return _uuid;}
 
   QString getCallIdStr();
 
@@ -69,7 +69,7 @@ signals:
   void musicOff(AstChannel *, QVariantMap event);
 
 private:
-  const QString * _uuid;
+  const QString   _uuid;
   QTime         * _time;
 
   QString       _accountCode;

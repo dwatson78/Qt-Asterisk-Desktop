@@ -55,6 +55,7 @@ class AdmToolBoxSmoothDrag : public QToolBox
   Q_OBJECT
 public:
   explicit AdmToolBoxSmoothDrag(QWidget *parent = 0);
+  ~AdmToolBoxSmoothDrag();
 
   static const int DragTimerTimeout = 250; //250 milliseconds
 

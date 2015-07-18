@@ -9,8 +9,13 @@ AdmTabWidget::AdmTabWidget(QWidget *parent) :
   setTabBar(m_tabBar);
 }
 
+AdmTabWidget::~AdmTabWidget()
+{
+  if(m_tabBar != NULL)
+    delete m_tabBar;
+}
+
 void AdmTabWidget::setTabNeedAttention(int tabIndex, bool bold)
 {
-  qDebug() << "AdmTabWidget::setTabNeedAttention" << tabIndex << bold;
   m_tabBar->setTabNeedAttention(tabIndex, bold);
 }

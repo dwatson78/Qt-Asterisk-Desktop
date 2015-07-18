@@ -43,10 +43,9 @@ void RestApiAstVm::_getRequest(const QString &api, const QVariantMap &headers)
   QUrl url(_baseUrl.append(api));
   for(QVariantMap::const_iterator i = headers.begin(); i != headers.end(); ++i)
     url.addQueryItem(i.key(),i.value().toString());
-  qDebug() << url.toEncoded();
   QNetworkRequest req(url);
-  setRequest(req);
-  _nam->get(req);
+  _req = req;
+  _nam->get(_req);
 }
 
 void RestApiAstVm::parseNetworkResponse(QNetworkReply *reply)
@@ -54,7 +53,7 @@ void RestApiAstVm::parseNetworkResponse(QNetworkReply *reply)
   reply->request();
   if(reply->error() != QNetworkReply::NoError)
   {
-    setError(reply->request(),reply->error());
+    setError(reply->request(),reply->error(), reply->errorString());
     return;
   }
 
@@ -69,7 +68,7 @@ void RestApiAstVm::parseNetworkResponse(QNetworkReply *reply)
     {
       setReady(reply->request(), dataMap);
     } else {
-      setError(reply->request(), QNetworkReply::UnknownContentError);
+      setError(reply->request(), QNetworkReply::UnknownContentError, "Streamed data is unrecognized");
     }
   } else {
     setReady(reply->request(), data);
@@ -77,24 +76,6 @@ void RestApiAstVm::parseNetworkResponse(QNetworkReply *reply)
 
 }
 
-void RestApiAstVm::set(const QVariantMap &values, bool *ok)
-{
-  Q_UNUSED(values)
-  Q_UNUSED(ok)
-  // Implemented by derived class...
-}
-
-void RestApiAstVm::start()
-{
-  // Implemented by derived class...
-}
-
-void RestApiAstVm::setRequest(const QNetworkRequest &req)
-{
-  Q_UNUSED(req)
-  // Implemented by derived class...
-
-}
 void RestApiAstVm::setReady(const QNetworkRequest &req, const QVariantMap &data)
 {
   Q_UNUSED(req)
@@ -108,11 +89,13 @@ void RestApiAstVm::setReady(const QNetworkRequest &req, const QByteArray &data)
   // Implemented by derived class...
 }
 
-void RestApiAstVm::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
+void RestApiAstVm::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err, const QString &errString)
 {
-  Q_UNUSED(req)
-  Q_UNUSED(err)
-  // Implemented by derived class...
+  if(req == _req && err != QNetworkReply::NoError)
+  {
+    emit sigError(err, errString);
+    deleteLater();
+  }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -151,25 +134,12 @@ void RestApiAstVmMsgCounts::start()
   headers["vmbox"] = _vmBox;
   _getRequest(api, headers);
 }
-void RestApiAstVmMsgCounts::setRequest(const QNetworkRequest &req)
-{
-  _req = req;
-}
 
 void RestApiAstVmMsgCounts::setReady(const QNetworkRequest &req, const QVariantMap &data)
 {
   if(req == _req)
   {
     emit sigReady(data);
-    deleteLater();
-  }
-}
-
-void RestApiAstVmMsgCounts::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
-{
-  if(req == _req)
-  {
-    emit sigError(err);
     deleteLater();
   }
 }
@@ -213,25 +183,12 @@ void RestApiAstVmMsgDetails::start()
   headers["vmfolder"] = _vmFolder;
   _getRequest(api, headers);
 }
-void RestApiAstVmMsgDetails::setRequest(const QNetworkRequest &req)
-{
-  _req = req;
-}
 
 void RestApiAstVmMsgDetails::setReady(const QNetworkRequest &req, const QVariantMap &data)
 {
   if(req == _req)
   {
     emit sigReady(data);
-    deleteLater();
-  }
-}
-
-void RestApiAstVmMsgDetails::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
-{
-  if(req == _req)
-  {
-    emit sigError(err);
     deleteLater();
   }
 }
@@ -281,25 +238,12 @@ void RestApiAstVmGetMsgSoundFile::start()
   headers["vmmsgid"] = _vmMsgId;
   _getRequest(api, headers);
 }
-void RestApiAstVmGetMsgSoundFile::setRequest(const QNetworkRequest &req)
-{
-  _req = req;
-}
 
 void RestApiAstVmGetMsgSoundFile::setReady(const QNetworkRequest &req, const QByteArray &data)
 {
   if(req == _req)
   {
     emit sigReady(data);
-    deleteLater();
-  }
-}
-
-void RestApiAstVmGetMsgSoundFile::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
-{
-  if(req == _req)
-  {
-    emit sigError(err);
     deleteLater();
   }
 }
@@ -353,25 +297,12 @@ void RestApiAstVmMoveMessage::start()
   headers["vmmsgid"]       = _vmMsgId;
   _getRequest(api, headers);
 }
-void RestApiAstVmMoveMessage::setRequest(const QNetworkRequest &req)
-{
-  _req = req;
-}
 
 void RestApiAstVmMoveMessage::setReady(const QNetworkRequest &req, const QVariantMap &data)
 {
   if(req == _req)
   {
     emit sigReady(data);
-    deleteLater();
-  }
-}
-
-void RestApiAstVmMoveMessage::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
-{
-  if(req == _req)
-  {
-    emit sigError(err);
     deleteLater();
   }
 }
@@ -423,25 +354,12 @@ void RestApiAstVmDeleteMessage::start()
   headers["vmmsgid"]  = _vmMsgId;
   _getRequest(api, headers);
 }
-void RestApiAstVmDeleteMessage::setRequest(const QNetworkRequest &req)
-{
-  _req = req;
-}
 
 void RestApiAstVmDeleteMessage::setReady(const QNetworkRequest &req, const QVariantMap &data)
 {
   if(req == _req)
   {
     emit sigReady(data);
-    deleteLater();
-  }
-}
-
-void RestApiAstVmDeleteMessage::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
-{
-  if(req == _req)
-  {
-    emit sigError(err);
     deleteLater();
   }
 }
@@ -495,25 +413,12 @@ void RestApiAstVmForwardMessage::start()
   headers["vmdestbox"]  = _vmDestBox;
   _getRequest(api, headers);
 }
-void RestApiAstVmForwardMessage::setRequest(const QNetworkRequest &req)
-{
-  _req = req;
-}
 
 void RestApiAstVmForwardMessage::setReady(const QNetworkRequest &req, const QVariantMap &data)
 {
   if(req == _req)
   {
     emit sigReady(data);
-    deleteLater();
-  }
-}
-
-void RestApiAstVmForwardMessage::setError(const QNetworkRequest &req, QNetworkReply::NetworkError err)
-{
-  if(req == _req)
-  {
-    emit sigError(err);
     deleteLater();
   }
 }

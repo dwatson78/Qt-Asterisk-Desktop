@@ -31,9 +31,9 @@ AstParkedCall::AstParkedCall(AstChannel *chanParked, AstChannel *chanFrom, QVari
           this,SLOT(sDestroyChannel(AstChannel*))
   );
   if(event.contains("Uniqueid"))
-    this->_uuid = new QString(event.value("Uniqueid").toString());
+    this->_uuid = event.value("Uniqueid").toString();
   else
-    this->_uuid = new QString();
+    this->_uuid = QString();
 
   this->_isParked = true;
   if(event.contains("Exten"))
@@ -56,6 +56,8 @@ AstParkedCall::AstParkedCall(AstChannel *chanParked, AstChannel *chanFrom, QVari
 AstParkedCall::~AstParkedCall()
 {
   emit destroying(this);
+  if(_time != NULL)
+    delete _time;
 }
 
 void AstParkedCall::sParkedCallEvent(AsteriskManager::Event eventType, QVariantMap event, AstChannel *from)

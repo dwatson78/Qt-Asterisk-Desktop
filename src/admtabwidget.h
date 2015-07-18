@@ -14,6 +14,7 @@ class AdmTabWidget : public QTabWidget
   Q_OBJECT
 public:
   explicit AdmTabWidget(QWidget *parent = 0);
+  ~AdmTabWidget();
 
   void setTabNeedAttention(int tabIndex, bool bold);
 

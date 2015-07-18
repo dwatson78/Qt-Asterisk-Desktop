@@ -37,10 +37,10 @@ public:
 public slots:
   void sRefreshView();
   void sVmCountReady(const QVariantMap &data);
-  void sVmCountError(QNetworkReply::NetworkError err);
+  void sVmCountError(QNetworkReply::NetworkError err, const QString &errString);
 
   void sVmMsgDetailsReady(const QVariantMap &data);
-  void sVmMsgDetailsError(QNetworkReply::NetworkError err);
+  void sVmMsgDetailsError(QNetworkReply::NetworkError err, const QString &errString);
 
   void sFolderItemActivated(QListWidgetItem *current, QListWidgetItem * previous);
   void sLoadFolder(const QString &folder);
@@ -49,13 +49,15 @@ public slots:
   void sMsgCustomContextMenuRequested(QPoint pos);
   void sMsgCustomContextAction(QAction* action);
   void sVmForwardMessageReady(const QVariantMap &data);
-  void sVmForwardMessageError(QNetworkReply::NetworkError err);
+  void sVmForwardMessageError(QNetworkReply::NetworkError err, const QString &errString);
   void sVmDeleteMessageReady(const QVariantMap &data);
-  void sVmDeleteMessageError(QNetworkReply::NetworkError err);
+  void sVmDeleteMessageError(QNetworkReply::NetworkError err, const QString &errString);
 
   void sMsgCustomContextMoveMsg(QAction* action);
   void sVmMoveMessageReady(const QVariantMap &data);
-  void sVmMoveMessageError(QNetworkReply::NetworkError err);
+  void sVmMoveMessageError(QNetworkReply::NetworkError err, const QString &errString);
+
+  void showNetworkErrorMsg(const QString& functionName, QNetworkReply::NetworkError err, const QString &errString);
 
   void sPlayMsgClicked();
   void sMsgSeekBackClick();

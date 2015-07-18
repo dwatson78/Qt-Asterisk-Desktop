@@ -25,6 +25,10 @@ AdmCallWidget::~AdmCallWidget()
 {
   emit destroying(this);
 	delete ui;
+  delete _uuid;
+  delete _time;
+  delete _channels;
+  delete _channelWidgets;
 }
 
 void AdmCallWidget::addChannel(AstChannel* channel)
@@ -55,10 +59,6 @@ void AdmCallWidget::addChannel(AstChannel* channel)
 
 void AdmCallWidget::sUpdateChannel(AstChannel *channel)
 {
-  qDebug() << tr("sUpdateChannel: Channel: '%1', uuid: '%2'")
-              .arg(channel->getChannel())
-              .arg(channel->getUuid())
-  ;
   if(this->_channelWidgets->contains(channel->getUuid()))
   {
     bool valid = false;
@@ -91,11 +91,6 @@ void AdmCallWidget::sHangupChannel(AstChannel *channel)
   QMap<QString, AstChannel *>::iterator i;
   for(i = _channels->begin(); i != _channels->end(); ++i)
   {
-    qDebug() << tr("UniqueId: '%1', Channel: '%2', Hangup: '%3'")
-                .arg(i.value()->getUuid())
-                .arg(i.value()->getChannel())
-                .arg(i.value()->getHangupCauseStr())
-                ;
     i.value()->getHangupCauseNum(&valid);
     if(!valid)
     {
@@ -105,7 +100,6 @@ void AdmCallWidget::sHangupChannel(AstChannel *channel)
   }
   if(isAllHungup)
   {
-    qDebug() << "Everyone hungup!";
     disconnect(AdmStatic::getInstance()
                ->getTimer(),  SIGNAL(timeout()),
                this,          SLOT(sTickTock())
@@ -115,7 +109,6 @@ void AdmCallWidget::sHangupChannel(AstChannel *channel)
 
 void AdmCallWidget::sRemoveChannel(AstChannel *channel)
 {
-  qDebug() << "sRemoveChannel: " << channel->getUuid();
   disconnect(channel,  SIGNAL(updated(AstChannel *)),
           this,     SLOT(sUpdateChannel(AstChannel *))
   );
