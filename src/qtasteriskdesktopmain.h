@@ -11,6 +11,7 @@
 #include "admcallwidget.h"
 #include "astsippeer.h"
 #include "admvoicemailtabwidget.h"
+#include "dlgphonefeatures.h"
 
 namespace Ui {
 class QtAsteriskDesktopMain;
@@ -25,7 +26,9 @@ public:
   ~QtAsteriskDesktopMain();
 
 public slots:
+  void sExit();
   void sPreferences();
+  void sPhoneFeatures();
 
   void asteriskConnected();
   void asteriskConnected(QString arg1);
@@ -53,10 +56,6 @@ public slots:
   void sDestroyingSipPeer(AstSipPeer *peer);
   void sDestroyingAdmExtensionWidget(AdmExtensionWidget *widget);
 
-  void sMySipPeerUpdated(AstSipPeer *peer);
-  void sMySipPeerExtStatusEvent(AstSipPeer *peer, const QVariantMap &event);
-  void sMySipPeerDndStatusEvent(AstSipPeer *peer, const QVariantMap &event, bool isDndOn);
-
   void sPlayMsgOnPhone(AdmVoiceMailWidget* obj, const QVariantMap &data);
   
   static QtAsteriskDesktopMain* getInstance(){return _instance;}
@@ -68,6 +67,7 @@ private:
   QString _loginActionId;
   QString _sipPeersActionId;
   QMap<QString, AstSipPeer *>         * _showSipPeerActionId;
+  QMap<QString, AstSipPeer *>         * _extensionStateActionId;
   QMap<QString, AstChannel*>          * _chanMap;
   QMap<QString, AstParkedCall*>       * _parkedMap;
   QMap<QString, AdmCallWidget*>       * _callMap;
@@ -75,6 +75,7 @@ private:
   QMap<QString, AstSipPeer *>         * _sipPeerMap;
   QMap<QString, AstSipPeer *>         * _mySipPeerMap;
   static QtAsteriskDesktopMain        * _instance;
+  DlgPhoneFeatures                    * _phoneFeatures;
 };
 
 #endif // QTASTERISKDESKTOPMAIN_H

@@ -18,7 +18,9 @@ AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
   connect(  AdmStatic::getInstance()->getTimer(),
                             SIGNAL(timeout()),  this, SLOT(sTickTock())         );
   connect(  ui->_tbPark,    SIGNAL(clicked()),  this, SLOT(sStartCallPark())    );
-  connect(  ui->_tbHangup,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
+  connect(  ui->_tbHangup1,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
+  connect(  ui->_tbHangup2,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
+  ui->_stackedButtons->setCurrentIndex(0);
 }
 
 AdmCallWidget::~AdmCallWidget()
@@ -79,6 +81,18 @@ void AdmCallWidget::sUpdateChannel(AstChannel *channel)
             .arg(channel->getIsParked()   ? QString(" Parked on %1").arg(channel->getParkedExten(new bool)) : "")
       );
     }
+    if(ui->_stackedButtons->currentIndex() != 1)
+    {
+      bool ok = false;
+      uint chanStateVal = channel->getChannelState(&ok);
+      if(ok)
+      {
+        if(chanStateVal == AsteriskManager::ChanStateUp)
+        {
+          ui->_stackedButtons->setCurrentIndex(1);
+        }
+      }
+    }
     this->_channelWidgets->value(channel->getUuid())->sUpdateChannel();
   }
 }
@@ -86,6 +100,9 @@ void AdmCallWidget::sUpdateChannel(AstChannel *channel)
 void AdmCallWidget::sHangupChannel(AstChannel *channel)
 {
   Q_UNUSED(channel);
+
+  ui->_stackedButtons->setCurrentIndex(2);
+
   bool isAllHungup = true;
   bool valid = false;
   QMap<QString, AstChannel *>::iterator i;
@@ -109,6 +126,7 @@ void AdmCallWidget::sHangupChannel(AstChannel *channel)
 
 void AdmCallWidget::sRemoveChannel(AstChannel *channel)
 {
+  ui->_stackedButtons->setCurrentIndex(2);
   disconnect(channel,  SIGNAL(updated(AstChannel *)),
           this,     SLOT(sUpdateChannel(AstChannel *))
   );

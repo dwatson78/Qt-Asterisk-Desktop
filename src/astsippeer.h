@@ -1,6 +1,7 @@
 #ifndef ASTSIPPEER_H
 #define ASTSIPPEER_H
 
+#include "asteriskmanager.h"
 #include <QObject>
 #include <QVariantMap>
 
@@ -24,13 +25,15 @@ public:
   const QVariant& getIpPort()         {return _ipPort;}
   const QVariant& getObjectName()     {return _objectName;}
   bool            getRealTimeDevice() {return _realTimeDevice;}
-  const QString&  getStatus()         {return _status;}
   bool            getTextSupport()    {return _textSupport;}
   bool            getVideoSupport()   {return _videoSupport;}
   bool            getMyDevice()       {return _myDevice;}
   const QVariant& getVmBox()          {return _vmBox;}
 
-  void setDnd(bool isDndOn);
+  void  setDnd(bool isDndOn);
+  const QString&  getPeerStatus()     {return _peerStatus;}
+  AsteriskManager::ExtStatus
+                  getExtStatus()      {return _extStatus;}
 
 public slots:
   void sPeerStatusEvent(const QVariantMap &event);
@@ -60,7 +63,6 @@ private:
   QVariant  _ipPort;
   QVariant  _objectName;
   bool      _realTimeDevice;
-  QString   _status;
   bool      _textSupport;
   bool      _videoSupport;
 
@@ -78,6 +80,9 @@ private:
   QVariant  _vmBox;
 
   bool      _isDndOn;
+  AsteriskManager::ExtStatus
+            _extStatus;
+  QString   _peerStatus;
 };
 
 #endif // ASTSIPPEER_H

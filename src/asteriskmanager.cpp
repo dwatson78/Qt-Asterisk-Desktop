@@ -227,9 +227,14 @@ QString AsteriskManager::actionEvents()
   return sendAction("Events");
 }
 
-QString AsteriskManager::actionExtensionState()
+QString AsteriskManager::actionExtensionState(const QString &exten, const QString &context)
 {
-  return sendAction("ExtensionState");
+  QVariantMap headers;
+  headers["Exten"] = exten;
+  if(!context.isNull() && context.isEmpty())
+    headers["Context"] = context;
+
+  return sendAction("ExtensionState", headers);
 }
 
 QString AsteriskManager::actionFilter()

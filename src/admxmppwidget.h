@@ -17,6 +17,7 @@
 #include <gloox/rosterlistener.h>
 
 #include "admxmppbuddywidget.h"
+#include "admxmppbuddyitem.h"
 #include "admxmppchatwidget.h"
 
 namespace Ui {
@@ -81,6 +82,9 @@ public slots:
 
   void sBuddyActivated(const QModelIndex &index);
   void sDestroyingBuddy(AdmXmppBuddyWidget *buddy);
+  void sRemovingBuddy(AdmXmppBuddyWidget *buddy);
+  void sSetBuddyName(AdmXmppBuddyWidget *buddy, const QString &buddyName);
+  void sBuddyNameChanged(AdmXmppBuddyWidget *buddy, const QString &buddyName);
 
 protected:
 
@@ -93,9 +97,11 @@ private:
   ConnectionTCPClient * _conn;
   QSocketNotifier     * _socketNotify;
   QMap<JID,AdmXmppBuddyWidget*>     * _mapBuddies;
+  QMap<JID,AdmXmppBuddyItem*>     * _mapBuddyItems;
   QMap<QString,MessageSession*>     * _mapSessions;
   QMap<QString,AdmXmppChatWidget*>  * _mapChats;
   void _connect();
+  AdmXmppBuddyWidget *_addBuddyIfNotExist(const JID &jid, bool resortItems = true);
 };
 
 #endif // ADMXMPPWIDGET_H

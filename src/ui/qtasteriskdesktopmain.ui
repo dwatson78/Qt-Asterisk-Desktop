@@ -128,8 +128,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>84</height>
+             <width>148</width>
+             <height>207</height>
             </rect>
            </property>
            <attribute name="label">
@@ -152,8 +152,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>98</width>
-                 <height>28</height>
+                 <width>146</width>
+                 <height>205</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -194,8 +194,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>98</width>
-             <height>84</height>
+             <width>148</width>
+             <height>207</height>
             </rect>
            </property>
            <attribute name="label">
@@ -218,8 +218,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>98</width>
-                 <height>28</height>
+                 <width>146</width>
+                 <height>205</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -335,59 +335,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="_dvcExt">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_3">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Preferred</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QLabel" name="_extStatusLit">
-              <property name="text">
-               <string>Status:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="_extStatus">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
+             <widget class="AdmExtensionWidget" name="_extStatus"/>
             </item>
             <item>
              <spacer name="horizontalSpacer_2">
@@ -425,16 +373,6 @@
            </size>
           </property>
          </spacer>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="_tabVoiceMail">
-       <attribute name="title">
-        <string>Voice Mail</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="AdmVoiceMailTabWidget" name="_voiceMailTabWidget"/>
         </item>
        </layout>
       </widget>
@@ -490,6 +428,16 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="_tabVoiceMail">
+       <attribute name="title">
+        <string>Voice Mail</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="AdmVoiceMailTabWidget" name="_voiceMailTabWidget"/>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="_tabChat">
        <attribute name="title">
         <string>Chat</string>
@@ -517,19 +465,20 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionExit"/>
+    <addaction name="_actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionPreferences"/>
+    <addaction name="_actionPreferences"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionAbout"/>
+    <addaction name="_actionAbout"/>
+    <addaction name="_actionPhoneFeatures"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -544,25 +493,33 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionPreferences">
+  <action name="_actionPreferences">
    <property name="text">
     <string>Preferences</string>
    </property>
   </action>
-  <action name="actionAbout">
+  <action name="_actionAbout">
    <property name="text">
     <string>About</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="_actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+   <property name="toolTip">
+    <string>Quit the application</string>
    </property>
    <property name="menuRole">
     <enum>QAction::QuitRole</enum>
    </property>
    <property name="iconVisibleInMenu">
     <bool>false</bool>
+   </property>
+  </action>
+  <action name="_actionPhoneFeatures">
+   <property name="text">
+    <string>Phone Features</string>
    </property>
   </action>
  </widget>
@@ -590,6 +547,12 @@
    <class>AdmXmppWidget</class>
    <extends>QFrame</extends>
    <header>src/admxmppwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AdmExtensionWidget</class>
+   <extends>QFrame</extends>
+   <header>src/admextensionwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

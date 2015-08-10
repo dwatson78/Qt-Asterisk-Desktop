@@ -140,12 +140,7 @@ bool AdmXmppChatWidget::eventFilter(QObject *obj, QEvent *event)
 
 void AdmXmppChatWidget::sNewChatContentsChanged()
 {
-  if(ui->_newChat->document()->isEmpty())
-  {
-    setChatStateComposing(false);
-  }
-  else
-    setChatStateComposing(true);
+  setChatStateComposing(!ui->_newChat->document()->isEmpty());
 }
 
 void AdmXmppChatWidget::handleMessage(const Message &msg, MessageSession *session)
@@ -304,6 +299,8 @@ void AdmXmppChatWidget::sTickTock()
       
       disconnect(AdmStatic::getInstance()->getTimer(),  SIGNAL(timeout()),
                 this,                                   SLOT(sTickTock()));
+      delete _time;
+      _time = NULL;
     }
   }
 }

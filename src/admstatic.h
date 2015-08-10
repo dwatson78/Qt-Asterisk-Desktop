@@ -16,6 +16,7 @@ public:
   static AdmStatic* getInstance();
   static QString    elapsedTimeToString(QTime *time);
   static QString    extStatusToString(uint extStatusNum);
+  static QString    eventToString(const QVariantMap &event, const QString &search="");
 
   /* Public members */
   ~AdmStatic();

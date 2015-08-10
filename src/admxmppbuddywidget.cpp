@@ -1,22 +1,37 @@
 #include "admxmppbuddywidget.h"
 #include "ui_admxmppbuddywidget.h"
 
+#include <QMenu>
+#include <QMenuItem>
+#include <QAction>
+#include <QMessageBox>
+#include <QInputDialog>
+
 AdmXmppBuddyWidget::AdmXmppBuddyWidget(QWidget *parent) :
   QFrame(parent),
   ui(new Ui::AdmXmppBuddyWidget)
 {
   ui->setupUi(this);
+
+  setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(this,SIGNAL(customContextMenuRequested(QPoint)),
+          this,SLOT(sCustomContextMenu(QPoint)));
 }
 
 AdmXmppBuddyWidget::~AdmXmppBuddyWidget()
 {
+  emit destroying(this);
   delete ui;
 }
 
 void AdmXmppBuddyWidget::setPresence(const RosterItem &item, const QString &resource, Presence::PresenceType presence, const QString &msg)
 {
   Q_UNUSED(resource)
-  ui->_buddyName->setText(QString::fromUtf8(item.name().data()));
+  QString name = QString::fromUtf8(item.name().data());
+  if(name.trimmed().isEmpty())
+    name = QString::fromUtf8(item.jidJID().username().data());
+  setName(name);
+
   ui->_buddyStatusMsg->setText(msg);
   _jid = item.jidJID();
   if(item.online())
@@ -69,7 +84,63 @@ void AdmXmppBuddyWidget::setPresence(const RosterItem &item, const QString &reso
     ui->_buddyStatusMsg->setText("Offline");
   }
 }
+
+void AdmXmppBuddyWidget::setName(const QString &name)
+{
+  if(name != ui->_buddyName->text())
+  {
+    ui->_buddyName->setText(name);
+    emit sigBuddyNameChanged(this, name);
+  }
+}
+const QString AdmXmppBuddyWidget::getName()
+{
+  return ui->_buddyName->text();
+}
+
 const JID& AdmXmppBuddyWidget::getJid()
 {
   return _jid;
+}
+
+void AdmXmppBuddyWidget::sCustomContextMenu(const QPoint &pos)
+{
+  QMenu m;
+
+  // Set Buddy Name
+  QAction setBuddyName("Set Buddy Name...",&m);
+  connect(&setBuddyName,SIGNAL(triggered()),
+          this,SLOT(sSetBuddyName()));
+  m.addAction(&setBuddyName);
+
+  // Remove Buddy
+  QAction removeBuddy("Remove Buddy",&m);
+  connect(&removeBuddy,SIGNAL(triggered()),
+          this,SLOT(sRemoveBuddy()));
+  m.addAction(&removeBuddy);
+
+  // Show the menu
+  m.exec(mapToGlobal(pos));
+}
+
+void AdmXmppBuddyWidget::sSetBuddyName()
+{
+  bool ok = false;
+  QString buddyName = QInputDialog::getText(this,"Set Buddy Name","Buddy name:",QLineEdit::Normal,ui->_buddyName->text(),&ok);
+  if(ok && !buddyName.trimmed().isEmpty())
+  {
+    emit sigSetBuddyName(this, buddyName);
+  }
+}
+
+void AdmXmppBuddyWidget::sRemoveBuddy()
+{
+  QString msg = QString("Are you sure you wish to remove '%1' from your list?").arg(ui->_buddyName->text());
+  QMessageBox b(QMessageBox::Question,"Remove Buddy?",msg,QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,this);
+  int result = b.exec();
+  if(result == QMessageBox::Yes)
+  {
+    emit sigRemoveBuddy(this);
+    deleteLater();
+  }
 }

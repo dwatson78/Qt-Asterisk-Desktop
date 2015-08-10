@@ -29,6 +29,7 @@ class AsteriskManager : public QTcpSocket
 
   Q_ENUMS(Response)
   Q_ENUMS(Event)
+  Q_ENUMS(ChanState)
 
 public:
   enum Response {
@@ -135,6 +136,20 @@ public:
   };
   Q_DECLARE_FLAGS(ExtStatuses, ExtStatus)
 
+  enum ChanState{
+    ChanStateDown = 0,
+    ChanStateReserved,
+    ChanStateOffhook,
+    ChanStateDialing,
+    ChanStateRing,
+    ChanStateRinging,
+    ChanStateUp,
+    ChanStateBusy,
+    ChanStateDialingOffhook,
+    ChanStatePrering,
+    ChanStateUnknown
+  };
+
   explicit AsteriskManager(QObject *parent = 0);
 
   QString eventValue(AsteriskManager::Event event);
@@ -176,7 +191,7 @@ public:
   QString actionDBGet(const QString &family, const QString &key);
   QString actionDBPut();
   QString actionEvents();
-  QString actionExtensionState();
+  QString actionExtensionState(const QString &exten, const QString &context=QString());
   QString actionFilter();
   QString actionFilterList();
   QString actionGetConfig();

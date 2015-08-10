@@ -1,6 +1,8 @@
 #include "admextensionwidget.h"
 #include "ui_admextensionwidget.h"
 
+#include "admstatic.h"
+
 #include <QPalette>
 #include "draggabletoolbutton.h"
 
@@ -166,7 +168,7 @@ void AdmExtensionWidget::setSipPeer(AstSipPeer *peer)
             this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
     connect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
             this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
-    _updateStatusFromSipPeerStatus(peer->getStatus());
+    _updateStatusFromSipPeerStatus(peer->getPeerStatus());
   }
 }
 
@@ -192,7 +194,7 @@ void AdmExtensionWidget::sSipPeerDestroying(AstSipPeer *peer)
 void AdmExtensionWidget::sSipPeerUpdated(AstSipPeer *peer)
 {
   ui->_desc->setText(peer->getDescription());
-  _updateStatusFromSipPeerStatus(peer->getStatus());
+  _updateStatusFromSipPeerStatus(peer->getPeerStatus());
 }
 
 void AdmExtensionWidget::_updateStatusFromSipPeerStatus(const QString &status)
@@ -200,7 +202,7 @@ void AdmExtensionWidget::_updateStatusFromSipPeerStatus(const QString &status)
   if(   status.startsWith("OK")
      || status == "Registered"
      || status == "Reachable")
-    _statusNum = AsteriskManager::NotInUse;
+    _statusNum = _sipPeer->getExtStatus();
   else
     _statusNum = AsteriskManager::Unavailable;
 

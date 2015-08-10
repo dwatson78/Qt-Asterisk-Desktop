@@ -83,7 +83,7 @@ QString AdmStatic::elapsedTimeToString(QTime *time)
   return elapsStr;
 }
 
-QString extStatusToString(uint extStatusNum)
+QString AdmStatic::extStatusToString(uint extStatusNum)
 {
   AsteriskManager::ExtStatuses statuses(extStatusNum);
   QString status;
@@ -112,4 +112,28 @@ QString extStatusToString(uint extStatusNum)
     status = QString("%1%2%3").arg(status).arg(status == QString() ? "" : ", ")
         .arg("OnHold");
   return status;
+}
+
+QString AdmStatic::eventToString(const QVariantMap &event, const QString &search)
+{
+  bool matches = search.isEmpty();
+  QRegExp re(search);
+
+  QString o;
+  for(QVariantMap::const_iterator i = event.begin(); i != event.end(); ++i)
+  {
+    o.append(QString("%1: %2\n")
+            .arg(i.key())
+            .arg(i.value().toString())
+    );
+    if(!re.isEmpty() && !matches)
+    {
+      if(i.value().toString().contains(re))
+        matches = true;
+    }
+  }
+  if(!o.isEmpty())
+    o.append("\n");
+
+  return matches ? o : QString();
 }

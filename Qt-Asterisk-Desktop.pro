@@ -3,6 +3,7 @@ QT += \
     gui \
     network \
     sql \
+    webkit \
     phonon
 
 greaterThan(QT_MAJOR_VERSION, 4) {
@@ -51,7 +52,9 @@ SOURCES +=   \
     src/admtabwidget.cpp \
     src/admtabbar.cpp \
     src/admnotificationmanager.cpp \
-    src/astchanparts.cpp
+    src/astchanparts.cpp \
+    src/dlgphonefeatures.cpp \
+    src/admxmppbuddyitem.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -78,7 +81,9 @@ HEADERS +=   \
     src/admtabwidget.h \
     src/admtabbar.h \
     src/admnotificationmanager.h \
-    src/astchanparts.h
+    src/astchanparts.h \
+    src/dlgphonefeatures.h \
+    src/admxmppbuddyitem.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -93,7 +98,8 @@ FORMS +=     \
     src/ui/admxmppwidget.ui \
     src/ui/admxmppbuddywidget.ui \
     src/ui/admxmppchatwidget.ui \
-    src/ui/admxmppchatblockwidget.ui
+    src/ui/admxmppchatblockwidget.ui \
+    src/ui/dlgphonefeatures.ui
 
 RESOURCES += \
     resources.qrc

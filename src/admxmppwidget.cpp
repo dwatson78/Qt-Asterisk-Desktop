@@ -24,8 +24,9 @@ AdmXmppWidget::AdmXmppWidget(QWidget *parent) :
   _socketNotify = NULL;
 
   _mapBuddies = new QMap<JID,AdmXmppBuddyWidget*>();
-  _mapSessions = new QMap<QString,MessageSession*>();
+  _mapBuddyItems = new QMap<JID,AdmXmppBuddyItem*>();
   _mapChats = new QMap<QString,AdmXmppChatWidget*>();
+  _mapSessions = new QMap<QString,MessageSession*>();
   
   connect(ui->_status,  SIGNAL(currentIndexChanged(int)),
           this,         SLOT(sStatusIndexChanged(int))
@@ -42,6 +43,7 @@ AdmXmppWidget::AdmXmppWidget(QWidget *parent) :
           
   // Customize colors
   ui->_buddyList->setStyleSheet("QListWidget::item:selected {background: palette(button);}");
+  ui->_buddyList->setSortingEnabled(true);
 
   // Connect to XMPP
   _connect();
@@ -63,6 +65,7 @@ AdmXmppWidget::~AdmXmppWidget()
   // delete local maps
   delete _mapSessions;
   delete _mapChats;
+  delete _mapBuddyItems;
   delete _mapBuddies;
 }
 
@@ -309,66 +312,44 @@ bool AdmXmppWidget::onTLSConnect(const CertInfo &info)
 
 void AdmXmppWidget::handleItemAdded (const JID &jid)
 {
-  Q_UNUSED(jid)
-  qWarning() << QString("GlooxRosterListener::handleItemAdded: UNHANDLED: jid: %1")
-              .arg(QString::fromUtf8(jid.full().data()));
+  _addBuddyIfNotExist(jid);
 }
 void AdmXmppWidget::handleItemSubscribed (const JID &jid)
 {
-  Q_UNUSED(jid)
-  qWarning() << QString("GlooxRosterListener::handleItemSubscribed: UNHANDLED: jid: %1")
-              .arg(QString::fromUtf8(jid.full().data()));
+  _addBuddyIfNotExist(jid);
 }
 void AdmXmppWidget::handleItemRemoved (const JID &jid)
 {
-  Q_UNUSED(jid)
-  qWarning() << QString("GlooxRosterListener::handleItemRemoved: UNHANDLED: jid: %1")
-              .arg(QString::fromUtf8(jid.full().data()));
+  if(_mapBuddies->contains(jid))
+    _mapBuddies->value(jid)->deleteLater();
 }
 void AdmXmppWidget::handleItemUpdated (const JID &jid)
 {
-  Q_UNUSED(jid)
-  qWarning() << QString("GlooxRosterListener::handleItemUpdated: UNHANDLED: jid: %1")
-              .arg(QString::fromUtf8(jid.full().data()));
+  QString name = QString::fromUtf8(_client->rosterManager()->getRosterItem(jid)->name().data());
+  if(_mapBuddies->contains(jid))
+    _mapBuddies->value(jid)->setName(name);
 }
 void AdmXmppWidget::handleItemUnsubscribed (const JID &jid)
 {
-  Q_UNUSED(jid)
-  qWarning() << QString("GlooxRosterListener::handleItemUnsubscribed: UNHANDLED: jid: %1")
-              .arg(QString::fromUtf8(jid.full().data()));
+  if(_mapBuddies->contains(jid))
+    _mapBuddies->value(jid)->deleteLater();
 }
 void AdmXmppWidget::handleRoster (const Roster &roster)
 {
   std::map<const std::string, RosterItem*>::const_iterator it;
-  QListWidgetItem *item = NULL;
-  AdmXmppBuddyWidget *widget = NULL;
   for(it = roster.begin(); it != roster.end(); ++it)
   {
-    item = new QListWidgetItem(ui->_buddyList);
-    widget = new AdmXmppBuddyWidget(ui->_buddyList);
-    _mapBuddies->insert(it->second->jidJID(), widget);
-    connect(widget,  SIGNAL(destroying(AdmXmppBuddyWidget*)),
-            this,   SLOT(sDestroyingBuddy(AdmXmppBuddyWidget*)));
-    ui->_buddyList->addItem(item);
-    ui->_buddyList->setItemWidget(item,widget);
-    item->setSizeHint(widget->sizeHint());
-    item = NULL;
-    widget = NULL;
+    _addBuddyIfNotExist(it->second->jidJID(), false);
   }
+  ui->_buddyList->sortItems();
 }
 void AdmXmppWidget::handleRosterPresence (const RosterItem &item, const std::string &resource, Presence::PresenceType presence, const std::string &msg)
 {
-  AdmXmppBuddyWidget *buddy = NULL;
-  if(_mapBuddies->contains(item.jidJID()))
+  AdmXmppBuddyWidget *buddy = _addBuddyIfNotExist(item.jidJID());
+  if(NULL != buddy)
   {
-    buddy = _mapBuddies->value(item.jidJID());
-  } else {
-    buddy = new AdmXmppBuddyWidget();
-    _mapBuddies->insert(item.jidJID(),buddy);
-    connect(buddy,  SIGNAL(destroying(AdmXmppBuddyWidget*)),
-            this,   SLOT(sDestroyingBuddy(AdmXmppBuddyWidget*)));
+    buddy->setPresence(item, QString::fromUtf8(resource.data()), presence, QString::fromUtf8(msg.data()));
   }
-  buddy->setPresence(item, QString::fromUtf8(resource.data()), presence, QString::fromUtf8(msg.data()));
 }
 void AdmXmppWidget::handleSelfPresence (const RosterItem &item, const std::string &resource, Presence::PresenceType presence, const std::string &msg)
 {
@@ -477,7 +458,12 @@ void AdmXmppWidget::_connect()
     JID jid(username.toUtf8().constData());
     _client = new Client(jid,password.toUtf8().constData());
 
+    // Setup the jabber disco features
+    // Let others know that this is a standard full-GUI client
+    _client->disco()->setIdentity("client","pc");
+    // Accepts and sends the "chat states" feature
     _client->disco()->addFeature(gloox::XMLNS_CHAT_STATES);
+    // Accepts and sends the "attention" feature"
     _client->disco()->addFeature(gloox::XMLNS_ATTENTION);
 
     _client->registerStanzaExtension(new Attention());
@@ -487,8 +473,6 @@ void AdmXmppWidget::_connect()
     _client->registerStanzaExtension(new ChatState(ChatStateInactive));
     _client->registerStanzaExtension(new ChatState(ChatStateGone));
     _client->registerStanzaExtension(new ChatState(ChatStateInvalid));
-
-
 
     _client->registerConnectionListener(this);
 
@@ -513,6 +497,35 @@ void AdmXmppWidget::_connect()
             this,   SLOT(sSockectActivated(int)));
 
   }
+}
+AdmXmppBuddyWidget * AdmXmppWidget::_addBuddyIfNotExist(const JID &jid, bool resortItems)
+{
+  AdmXmppBuddyWidget *buddy = NULL;
+  if(_mapBuddies->contains(jid))
+  {
+    buddy = _mapBuddies->value(jid);
+  } else {
+    qDebug() << "Add buddy:" << QString::fromUtf8(jid.username().data());
+
+    AdmXmppBuddyItem *item = new AdmXmppBuddyItem(ui->_buddyList,jid);
+    _mapBuddyItems->insert(jid,item);
+
+    buddy = item->getBuddyWidget();
+    _mapBuddies->insert(jid,buddy);
+
+    connect(buddy,  SIGNAL(destroying(AdmXmppBuddyWidget*)),
+            this,   SLOT(sDestroyingBuddy(AdmXmppBuddyWidget*)));
+    connect(buddy,  SIGNAL(sigRemoveBuddy(AdmXmppBuddyWidget*)),
+            this,   SLOT(sRemovingBuddy(AdmXmppBuddyWidget*)));
+    connect(buddy,  SIGNAL(sigSetBuddyName(AdmXmppBuddyWidget*,QString)),
+            this,   SLOT(sSetBuddyName(AdmXmppBuddyWidget*,QString)));
+    connect(buddy,  SIGNAL(sigBuddyNameChanged(AdmXmppBuddyWidget*,QString)),
+            this,   SLOT(sBuddyNameChanged(AdmXmppBuddyWidget*,QString)));
+
+    if(resortItems)
+      ui->_buddyList->sortItems();
+  }
+  return buddy;
 }
 
 void AdmXmppWidget::sSockectActivated(int fd)
@@ -587,7 +600,40 @@ void AdmXmppWidget::sBuddyActivated(const QModelIndex &index)
 
 void AdmXmppWidget::sDestroyingBuddy(AdmXmppBuddyWidget *buddy)
 {
-  _mapBuddies->remove(buddy->getJid());
+  if(_mapBuddies->contains(buddy->getJid()))
+    _mapBuddies->remove(buddy->getJid());
+
+  //ui->_buddyList->removeItemWidget();
+  for(int i =0; i < ui->_buddyList->count(); ++i)
+  {
+    if(buddy == ui->_buddyList->itemWidget(ui->_buddyList->item(i)))
+    {
+      if(_mapBuddyItems->contains(buddy->getJid()))
+        _mapBuddyItems->remove(buddy->getJid());
+       ui->_buddyList->takeItem(i);
+    }
+  }
+}
+void AdmXmppWidget::sSetBuddyName(AdmXmppBuddyWidget *buddy, const QString &buddyName)
+{
+  RosterItem *rosterItem = _client->rosterManager()->getRosterItem(buddy->getJid());
+  rosterItem->setName(buddyName.toStdString());
+  _client->rosterManager()->synchronize();
+  rosterItem = NULL;
+}
+void AdmXmppWidget::sBuddyNameChanged(AdmXmppBuddyWidget *buddy, const QString &buddyName)
+{
+  Q_UNUSED(buddy)
+  Q_UNUSED(buddyName)
+  qWarning() << "AdmXmppWidget::sBuddyNameChanged: UNHANDLED";
+  ui->_buddyList->sortItems();
+}
+
+void AdmXmppWidget::sRemovingBuddy(AdmXmppBuddyWidget *buddy)
+{
+  qDebug() << "AdmXmppWidget::sRemovingBuddy";
+  _client->rosterManager()->remove(buddy->getJid());
+  _client->rosterManager()->synchronize();
 }
 
 void AdmXmppWidget::sDestroyingChatWidget(AdmXmppChatWidget* obj)

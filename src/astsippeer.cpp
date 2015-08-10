@@ -62,9 +62,11 @@ AstSipPeer::AstSipPeer(const QVariantMap &event, QObject *parent) :
   if(event.contains("RealtimeDevice"))
     _realTimeDevice = event.value("RealtimeDevice").toString().toLower() == "yes";
 
-  _status = QString();
+  _peerStatus = QString();
   if(event.contains("Status"))
-    _status = event.value("Status").toString();
+    _peerStatus = event.value("Status").toString();
+
+  _extStatus = AsteriskManager::Unavailable;
 
   _textSupport = false;
   if(event.contains("TextSupport"))
@@ -87,13 +89,13 @@ AstSipPeer::~AstSipPeer()
 
 void AstSipPeer::sPeerStatusEvent(const QVariantMap &event)
 {
+  QString prevPeerStatus = QString(_peerStatus);
   if(event.contains("PeerStatus"))
   {
     QString peerStatus = event.value("PeerStatus").toString();
-    
     if(peerStatus == "Registered" || peerStatus == "Reachable")
     {
-      _status = event.value("PeerStatus").toString();
+      _peerStatus = peerStatus;
       if(event.contains("Address"))
       {
         QStringList addrParts = event.value("Address").toString().split(":");
@@ -101,12 +103,13 @@ void AstSipPeer::sPeerStatusEvent(const QVariantMap &event)
         _ipPort = addrParts.count() == 2 ? addrParts.at(1).toUInt() : QVariant(QVariant::UInt);
       }
     } else if(peerStatus == "Unregistered" || peerStatus == "Unreachable") {
-      _status = event.value("PeerStatus").toString();
+      _peerStatus = peerStatus;
       _ipAdress = QString();
       _ipPort = QVariant(QVariant::UInt);
     }
   }
-  emit sUpdated(this);
+  if(prevPeerStatus != _peerStatus)
+    emit sUpdated(this);
 }
 
 void AstSipPeer::sResponseShowSipPeer(const QVariantMap &event)
@@ -184,7 +187,7 @@ arg3:  "{b5e85124-23b3-4c32-b024-335f0a6a0b8c}" */
 
   varName = "Status";
   if(event.contains(varName))
-    _status = event.value(varName).toString();
+    _peerStatus = event.value(varName).toString();
 
   varName = "VoiceMailbox";
   if(event.contains(varName))
@@ -195,6 +198,13 @@ arg3:  "{b5e85124-23b3-4c32-b024-335f0a6a0b8c}" */
 
 void AstSipPeer::sExtensionStatusEvent(const QVariantMap &event)
 {
+  if(event.contains("Status"))
+  {
+    bool ok = false;
+    uint status = event.value("Status").toUInt(&ok);
+    if(ok)
+      _extStatus = (AsteriskManager::ExtStatus)status;
+  }
   emit sigExtensionStatusEvent(this, event);
 }
 

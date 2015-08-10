@@ -19,14 +19,22 @@ public:
   ~AdmXmppBuddyWidget();
   
   void setPresence(const RosterItem &item, const QString &resource, Presence::PresenceType presence, const QString &msg);
+  void setName(const QString &name);
+  const QString getName();
   const JID& getJid();
 
 public slots:
+  void sCustomContextMenu(const QPoint &pos);
 
+  void sSetBuddyName();
+  void sRemoveBuddy();
 protected:
 
 signals:
   void destroying(AdmXmppBuddyWidget *);
+  void sigSetBuddyName(AdmXmppBuddyWidget *, const QString &);
+  void sigRemoveBuddy(AdmXmppBuddyWidget *);
+  void sigBuddyNameChanged(AdmXmppBuddyWidget *, const QString &);
 
 private:
   Ui::AdmXmppBuddyWidget *ui;

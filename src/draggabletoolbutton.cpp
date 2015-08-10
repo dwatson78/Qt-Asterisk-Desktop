@@ -39,7 +39,25 @@ void DraggableToolButton::mousePressEvent(QMouseEvent *event)
 {
   if(event->button() == Qt::LeftButton)
   {
-    AdmCallWidget *cw = qobject_cast<AdmCallWidget *>(parent());
+    bool found = false;
+    AdmCallWidget *cw = NULL;
+    QObject *obj = this;
+    // Find the AdmCallWidget. We should reach this through our parent lineage
+    while(!found)
+    {
+      obj = obj->parent();
+      if(obj)
+      {
+        cw = qobject_cast<AdmCallWidget *>(obj);
+        if(cw)
+        {
+          found = true;
+          break;
+        }
+      } else {
+        break;
+      }
+    }
     if(NULL != cw)
     {
       QDrag *drag = new QDrag(this);
