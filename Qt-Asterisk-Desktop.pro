@@ -54,7 +54,8 @@ SOURCES +=   \
     src/admnotificationmanager.cpp \
     src/astchanparts.cpp \
     src/dlgphonefeatures.cpp \
-    src/admxmppbuddyitem.cpp
+    src/admxmppbuddyitem.cpp \
+    src/admintercomvideodialog.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -83,7 +84,8 @@ HEADERS +=   \
     src/admnotificationmanager.h \
     src/astchanparts.h \
     src/dlgphonefeatures.h \
-    src/admxmppbuddyitem.h
+    src/admxmppbuddyitem.h \
+    src/admintercomvideodialog.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -99,7 +101,8 @@ FORMS +=     \
     src/ui/admxmppbuddywidget.ui \
     src/ui/admxmppchatwidget.ui \
     src/ui/admxmppchatblockwidget.ui \
-    src/ui/dlgphonefeatures.ui
+    src/ui/dlgphonefeatures.ui \
+    src/ui/admintercomvideodialog.ui
 
 RESOURCES += \
     resources.qrc

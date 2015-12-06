@@ -21,6 +21,8 @@
 #include <QStringList>
 #include <QHostAddress>
 
+#include "admintercomvideodialog.h"
+
 QtAsteriskDesktopMain *_instance;
 
 QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
@@ -56,6 +58,8 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
           this,                  SLOT(sPreferences()));
   connect(ui->_actionPhoneFeatures, SIGNAL(triggered()),
           this,                     SLOT(sPhoneFeatures()));
+  connect(ui->_actionOpenVideo,  SIGNAL(triggered()),
+          this,             SLOT(sTestOpenVideo()));
 
 
   _ami = new AsteriskManager(this);
@@ -1142,3 +1146,10 @@ void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVari
     }
   }
 }
+
+void QtAsteriskDesktopMain::sTestOpenVideo()
+{
+  AdmIntercomVideoDialog dlg;
+  dlg.exec();
+}
+

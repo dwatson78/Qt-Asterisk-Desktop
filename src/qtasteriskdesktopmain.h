@@ -27,6 +27,7 @@ public:
 
 public slots:
   void sExit();
+  void sTestOpenVideo();
   void sPreferences();
   void sPhoneFeatures();
 
@@ -48,7 +49,6 @@ public slots:
   void sCallXfer(AdmCallWidget * call, const QString & exten);
   void sCallPark(AdmCallWidget * call);
   void sCallHangup(AdmCallWidget * call);
-
   void sDestroyingParkedCalled(AstParkedCall *parkedCall);
   void sPickUpParkedCall(AstParkedCall *parkedCall);
   void sDestroyingChannel(AstChannel *channel);
@@ -57,7 +57,7 @@ public slots:
   void sDestroyingAdmExtensionWidget(AdmExtensionWidget *widget);
 
   void sPlayMsgOnPhone(AdmVoiceMailWidget* obj, const QVariantMap &data);
-  
+
   static QtAsteriskDesktopMain* getInstance(){return _instance;}
 
 private:
