@@ -277,14 +277,20 @@ void AdmExtensionWidget::_updateStatusIcon()
     setPixmap(QPixmap(":/icons/status-dnd.png"));
   } else {
     if(statuses.testFlag(AsteriskManager::NotInUse))
+    {
       setPixmap(QPixmap(":/icons/status-avail.png"));
-    else if(statuses.testFlag(AsteriskManager::InUse)
+    } else if(statuses.testFlag(AsteriskManager::InUse)
             || statuses.testFlag(AsteriskManager::Busy))
+    {
       setPixmap(QPixmap(":/icons/status-busy.png"));
-
+    }
     if(statuses.testFlag(AsteriskManager::Ringing))
+    {
       setPixmap(QPixmap(":/icons/status-ring.png"));
+    }
     if(statuses.testFlag(AsteriskManager::OnHold))
+    {
       setPixmap(QPixmap(":/icons/status-onhold.png"));
+    }
   }
 }

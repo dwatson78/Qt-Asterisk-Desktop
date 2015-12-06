@@ -57,6 +57,7 @@ void AdmCallWidget::addChannel(AstChannel* channel)
   AdmChanWidget *chanWidget = new AdmChanWidget(channel);
   this->_channelWidgets->insert(channel->getUuid(),chanWidget);
   ui->_layoutChans->addWidget(chanWidget);
+  this->sUpdateChannel(channel);
 }
 
 void AdmCallWidget::sUpdateChannel(AstChannel *channel)

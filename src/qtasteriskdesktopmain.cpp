@@ -19,6 +19,7 @@
 #include <QLabel>
 #include <QSettings>
 #include <QStringList>
+#include <QHostAddress>
 
 QtAsteriskDesktopMain *_instance;
 
@@ -79,7 +80,32 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
     QString host = settings.value(AmiPref::getName(AmiPref::host)).toString();
     uint port = settings.value(AmiPref::getName(AmiPref::port)).toUInt(&valid);
     if(valid)
+    {
       _ami->connectToHost(host, port);
+      bool connected = _ami->waitForConnected(60000);
+      qDebug() << "connected: " << connected;
+      qDebug() << _ami->socketType();
+      qDebug() << _ami->peerName();
+
+      qDebug() << _ami->peerAddress().toIPv4Address();
+      qDebug() << _ami->peerPort();
+      if(!connected)
+      {
+        qDebug() << _ami->errorString();
+        _ami->connectToHost(host, port);
+        bool connected = _ami->waitForConnected(60000);
+        qDebug() << "connected: " << connected;
+        qDebug() << _ami->socketType();
+        qDebug() << _ami->peerName();
+
+        qDebug() << _ami->peerAddress().toIPv4Address();
+        qDebug() << _ami->peerPort();
+        if(!connected)
+        {
+          qDebug() << _ami->errorString();
+        }
+      }
+    }
     else
       asteriskDisconnected();
   }
@@ -165,7 +191,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     case (AsteriskManager::Success):
     {
 #ifdef AST_DEBUG
-      QString catchMe = AdmStatic::eventToString(arg2,"(4004|4005)");
+      QString catchMe = AdmStatic::eventToString(arg2,"(2004|1998)");
       if(!catchMe.isNull() && !catchMe.isEmpty())
       {
         qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent:"
@@ -223,7 +249,19 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
         _extensionStateActionId->remove(arg3);
         if(arg1 == AsteriskManager::Success && peer)
         {
+          QString catchMe = AdmStatic::eventToString(arg2);
+          if(!catchMe.isNull() && !catchMe.isEmpty())
+          {
+            qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent:"
+                     << catchMe
+            ;
+          }
           peer->sExtensionStatusEvent(arg2);
+          if(peer->getObjectName().toString() == "2004"
+             || peer->getObjectName().toString() == "1998")
+          {
+            qDebug() << peer->getObjectName().toString() << " changed once again!";
+          }
         }
       }
       break;
@@ -256,11 +294,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
 void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, QVariantMap arg2)
 {
 #ifdef AST_DEBUG
-  qDebug() << "QtAsteriskDesktopMain::asteriskEventGenerated"
-           << "\n\tAST_DEBUG:"
-           << AST_DEBUG
-  ;
-  QString catchMe = AdmStatic::eventToString(arg2,"(4004|4005)");
+  QString catchMe = AdmStatic::eventToString(arg2,"(2004|1998)");
   if(!catchMe.isNull() && !catchMe.isEmpty())
   {
     qDebug() << "QtAsteriskDesktopMain::asteriskEventGenerated:"
@@ -350,12 +384,18 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         uuid = arg2.value("UniqueId",QString()).toString();
       else if(arg2.contains("UniqueID"))
         uuid = arg2.value("UniqueID",QString()).toString();
+      else if(arg2.contains("ParkeeUniqueid"))
+        uuid = arg2.value("ParkeeUniqueid",QString()).toString();
       else
         uuid = QString();
-      QString fromChannelName;
+      QString fromChannelName=QString();
+      QString fromChannelUuid=QString();
       if(arg2.contains("From"))
         fromChannelName = arg2.value("From").toString();
-      if(uuid != QString() && fromChannelName != QString() && _chanMap->contains(uuid))
+      else if(arg2.contains("ParkeeLinkedid"))
+        fromChannelUuid = arg2.value("ParkeeLinkedid").toString();
+
+      if(uuid != QString() && (fromChannelName != QString() || fromChannelUuid != QString()) && _chanMap->contains(uuid))
       {
         if(!_parkedMap->contains(uuid))
         {
@@ -366,7 +406,12 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           {
             if(i.key() == uuid)
               continue;
-            if(i.value()->getChannel() == fromChannelName)
+            if (!fromChannelUuid.isNull() && i.value()->getUuid() == fromChannelUuid)
+            {
+              chanFrom = i.value();
+              break;
+            }
+            else if(!fromChannelName.isEmpty() &&  i.value()->getChannel() == fromChannelName)
             {
               chanFrom = i.value();
               break;
@@ -397,6 +442,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           uuid = arg2.value("UniqueId",QString()).toString();
         else if(arg2.contains("UniqueID"))
           uuid = arg2.value("UniqueID",QString()).toString();
+        else if(arg2.contains("ParkeeUniqueid"))
+          uuid = arg2.value("ParkeeUniqueid",QString()).toString();
         else
           uuid = QString();
         if(uuid != QString() && _parkedMap->contains(uuid))
@@ -413,33 +460,72 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     case AsteriskManager::MusicOnHold:
     {
       //Get the Uniqueid
-      QString uuid;
+      QString uuid1,uuid2;
+
       if(arg2.contains("Uniqueid"))
-        uuid = arg2.value("Uniqueid",QString()).toString();
+        uuid1 = arg2.value("Uniqueid",QString()).toString();
       else if(arg2.contains("UniqueId"))
-        uuid = arg2.value("UniqueId",QString()).toString();
+        uuid1 = arg2.value("UniqueId",QString()).toString();
       else if(arg2.contains("UniqueID"))
-        uuid = arg2.value("UniqueID",QString()).toString();
+        uuid1 = arg2.value("UniqueID",QString()).toString();
+      else if(arg2.contains("ParkeeUniqueid"))
+        uuid1 = arg2.value("ParkeeUniqueid",QString()).toString();
       else
-        uuid = QString();
-      if(uuid != QString() && _chanMap->contains(uuid))
+        uuid1 = QString();
+
+      if(arg2.contains("RetrieverUniqueid"))
+        uuid2 = arg2.value("RetrieverUniqueid",QString()).toString();
+      else
+        uuid2 = QString();
+
+      if(uuid1 != QString() && _chanMap->contains(uuid1))
       {
-        AstChannel *chan = _chanMap->value(uuid,0);
+        AstChannel *chan = _chanMap->value(uuid1,0);
         chan->sChannelEvent(arg1, arg2);
       } else {
         qWarning() << QString("QtAsteriskDesktopMain::asteriskEventGenerated: Could not find channel for: uuid: %1, event: %2")
-                      .arg(uuid)
+                      .arg(uuid1)
                       .arg(arg2.contains("Event") ? arg2.value("Event").toString() : QString::number(arg1));
+      }
+      if(uuid2 != QString() && _chanMap->contains(uuid2))
+      {
+        AstChannel *chan = _chanMap->value(uuid2,0);
+        chan->sChannelEvent(arg1, arg2);
       }
       break;
     }
     case AsteriskManager::Bridge:
+    case AsteriskManager::BridgeEnter:
     {
-      if(arg2.value("Bridgestate").toString() == "Link")
+      if(arg2.contains("Bridgestate") && arg2.value("Bridgestate").toString() != "Link")
+        break;
+      else
       {
         QString uuid1,uuid2;
-        uuid1 = arg2.value("Uniqueid1").toString();
-        uuid2 = arg2.value("Uniqueid2").toString();
+        if(arg2.contains("Uniqueid1"))
+          uuid1 = arg2.value("Uniqueid1").toString();
+        else if(arg2.contains("Linkedid"))
+          uuid1 = arg2.value("Linkedid").toString();
+        if(arg2.contains("Uniqueid2"))
+          uuid2 = arg2.value("Uniqueid2").toString();
+        else if(arg2.contains("Uniqueid"))
+          uuid2 = arg2.value("Uniqueid").toString();
+
+        if(uuid1.isNull())
+        {
+          qWarning() << "QtAsteriskDesktopMain::asteriskEventGenerated: uuid1 could not be found.";
+          break;
+        }
+        else if(uuid2.isNull())
+        {
+          qWarning() << "QtAsteriskDesktopMain::asteriskEventGenerated: uuid2 could not be found.";
+          break;
+        }
+        else if (uuid1 == uuid2)
+        {
+          qWarning() << "QtAsteriskDesktopMain::asteriskEventGenerated: uuid1 and uuid2 are the same value.";
+          //break;
+        }
 
         // Call handling
         if(!_callMap->contains(uuid1))
@@ -524,7 +610,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         sipPeerMap = _sipPeerMap;
 
       sipPeerMap->insert(peer->getObjectName().toString(),peer);
-      _ami->actionDBGet("CustomDevstate",QString("DEVDND%1").arg(peer->getObjectName().toString()));
+      QString dndActionId = _ami->actionDBGet("CustomDevstate",QString("DEVDND%1").arg(peer->getObjectName().toString()));
+      qDebug() << QString("QtAsteriskDesktopMain::asteriskEventGenerated: actionDBGet: peer: %1, actionId: %2").arg(peer->getObjectName().toString()).arg(dndActionId);
 
       connect(peer, SIGNAL(destroying(AstSipPeer*)),
               this, SLOT(sDestroyingSipPeer(AstSipPeer*)));
@@ -610,6 +697,11 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           widget->setSipPeer(peer);
         }
         widget->sExtensionStatusEvent(arg2);
+        if(peer->getObjectName().toString() == "2004"
+           || peer->getObjectName().toString() == "1998")
+        {
+          qDebug() << peer->getObjectName().toString() << " changed once again!";
+        }
       } else if(exten.toString().startsWith("*76")) {
         QRegExp re("^\\*76(.*)$");
         if(re.exactMatch(exten.toString()))
@@ -624,6 +716,11 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         }
       } else if(NULL != peer /*&& exten.toString() != sipPeerName*/) {
         peer->sExtensionStatusEvent(arg2);
+        if(peer->getObjectName().toString() == "2004"
+           || peer->getObjectName().toString() == "1998")
+        {
+          qDebug() << peer->getObjectName().toString() << " changed once again!";
+        }
       }
       break;
     }

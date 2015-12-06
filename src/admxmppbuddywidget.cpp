@@ -13,6 +13,9 @@ AdmXmppBuddyWidget::AdmXmppBuddyWidget(QWidget *parent) :
 {
   ui->setupUi(this);
 
+  ui->_buddyStatusIcon->setPixmap(QPixmap(QString::fromUtf8(":/icons/status-offline.png")));
+  ui->_buddyStatusMsg->setText("Offline");
+
   setContextMenuPolicy(Qt::CustomContextMenu);
   connect(this,SIGNAL(customContextMenuRequested(QPoint)),
           this,SLOT(sCustomContextMenu(QPoint)));
@@ -33,9 +36,9 @@ void AdmXmppBuddyWidget::setPresence(const RosterItem &item, const QString &reso
   setName(name);
 
   ui->_buddyStatusMsg->setText(msg);
-  _jid = item.jidJID();
   if(item.online())
   {
+    _jid = item.jidJID();
     switch(presence)
     {
       case Presence::Available:
@@ -80,6 +83,7 @@ void AdmXmppBuddyWidget::setPresence(const RosterItem &item, const QString &reso
         break;
     }
   } else {
+    _jid = JID();
     ui->_buddyStatusIcon->setPixmap(QPixmap(QString::fromUtf8(":/icons/status-offline.png")));
     ui->_buddyStatusMsg->setText("Offline");
   }

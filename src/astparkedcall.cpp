@@ -32,18 +32,28 @@ AstParkedCall::AstParkedCall(AstChannel *chanParked, AstChannel *chanFrom, QVari
   );
   if(event.contains("Uniqueid"))
     this->_uuid = event.value("Uniqueid").toString();
+  else if(event.contains("ParkeeUniqueid"))
+    this->_uuid = event.value("ParkeeUniqueid").toString();
   else
     this->_uuid = QString();
 
   this->_isParked = true;
   if(event.contains("Exten"))
     _parkedExten = event.value("Exten").toUInt();
+  else if(event.contains("ParkingSpace"))
+    _parkedExten = event.value("ParkingSpace").toUInt();
   if(event.contains("ConnectedLineName"))
     _parkedFromName = event.value("ConnectedLineName").toString();
+  else if(event.contains("ParkeeConnectedLineName"))
+    _parkedFromName = event.value("ParkeeConnectedLineName").toString();
   if(event.contains("ConnectedLineNum"))
     _parkedFromNum = event.value("ConnectedLineNum").toString();
+  else if(event.contains("ParkeeConnectedLineNum"))
+    _parkedFromNum = event.value("ParkeeConnectedLineNum").toString();
   if(event.contains("From"))
     _parkedFromChannelName = event.value("From").toString();
+  else if(event.contains("ParkerDialString"))
+    _parkedFromChannelName = event.value("ParkerDialString").toString();
 
   connect(ui->_tbAnswerParkedCall,  SIGNAL(clicked()),
           this,                     SLOT(sStartAnswerParkedCall())
@@ -85,8 +95,12 @@ void AstParkedCall::sParkedCallEvent(AsteriskManager::Event eventType, QVariantM
       QVariant num(QVariant::UInt);
       if(event.contains("ConnectedLineName"))
         name = event.value("ConnectedLineName").toString();
+      else if(event.contains("ParkeeConnectedLineName"))
+        name = event.value("ParkeeConnectedLineName").toString();
       if(event.contains("ConnectedLineNum") && event.value("ConnectedLineNum").toString() != "")
         num = event.value("ConnectedLineNum").toUInt();
+      else if(event.contains("ParkeeConnectedLineNum") && event.value("ParkeeConnectedLineNum").toString() != "")
+        num = event.value("ParkeeConnectedLineNum").toUInt();
       if(!num.isNull())
       {
         this->ui->_statusInfo1->setText(QString("Answered: %1 <%2>").arg(name).arg(num.toString()));

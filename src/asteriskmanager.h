@@ -51,6 +51,9 @@ public:
     Bridge,
     BridgeAction,
     BridgeExec,
+    BridgeEnter, //13
+    BridgeLeave, //13
+    BridgeCreate,
     ChanSpyStart,
     ChanSpyStop,
     ConfbridgeEnd,

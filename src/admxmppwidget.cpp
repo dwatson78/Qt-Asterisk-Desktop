@@ -578,7 +578,7 @@ void AdmXmppWidget::sBuddyActivated(const QModelIndex &index)
 
   QWidget *w = ui->_buddyList->itemWidget(ui->_buddyList->currentItem());
   AdmXmppBuddyWidget *b = qobject_cast<AdmXmppBuddyWidget*>(w);
-  if(b)
+  if(b && b->getJid() == true)
   {
     QString jidStr = QString::fromUtf8(b->getJid().bare().data());
     AdmXmppChatWidget *wchat = NULL;
