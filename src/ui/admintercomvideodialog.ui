@@ -9,26 +9,70 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>660</width>
-    <height>470</height>
+    <width>658</width>
+    <height>533</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
-    <widget class="QDialogButtonBox" name="_buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="0" column="0">
+    <widget class="Phonon::VideoPlayer" name="_video">
+     <property name="minimumSize">
+      <size>
+       <width>640</width>
+       <height>480</height>
+      </size>
      </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     <property name="maximumSize">
+      <size>
+       <width>640</width>
+       <height>480</height>
+      </size>
      </property>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="Phonon::VideoPlayer" name="_video"/>
+   <item row="1" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0,0">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="_openDoor">
+       <property name="text">
+        <string>Open Door</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="_refreshVideo">
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="_buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

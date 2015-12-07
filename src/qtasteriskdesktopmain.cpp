@@ -1149,7 +1149,7 @@ void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVari
 
 void QtAsteriskDesktopMain::sTestOpenVideo()
 {
-  AdmIntercomVideoDialog dlg;
+  AdmIntercomVideoDialog dlg(0,QUrl("rtsp://10.121.212.23:554/live.sdp"));
   dlg.exec();
 }
 
