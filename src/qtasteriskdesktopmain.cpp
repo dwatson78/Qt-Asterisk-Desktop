@@ -25,11 +25,17 @@
 
 QtAsteriskDesktopMain *_instance;
 
+QStringList _skipEvents;
+
 QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   QMainWindow(parent),
   ui(new Ui::QtAsteriskDesktopMain)
 {
   _instance = this;
+  
+  _skipEvents.append("VarSet");
+  _skipEvents.append("Newexten");
+  
   _phoneFeatures = NULL;
 
   ui->setupUi(this);
@@ -195,7 +201,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     case (AsteriskManager::Success):
     {
 #ifdef AST_DEBUG
-      QString catchMe = AdmStatic::eventToString(arg2,"(2004|1998)");
+      QString catchMe = AdmStatic::eventToString(arg2,"(4005|6001)");
       if(!catchMe.isNull() && !catchMe.isEmpty())
       {
         qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent:"
@@ -253,16 +259,9 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
         _extensionStateActionId->remove(arg3);
         if(arg1 == AsteriskManager::Success && peer)
         {
-          QString catchMe = AdmStatic::eventToString(arg2);
-          if(!catchMe.isNull() && !catchMe.isEmpty())
-          {
-            qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent:"
-                     << catchMe
-            ;
-          }
           peer->sExtensionStatusEvent(arg2);
-          if(peer->getObjectName().toString() == "2004"
-             || peer->getObjectName().toString() == "1998")
+          if(peer->getObjectName().toString() == "4005"
+             || peer->getObjectName().toString() == "6001")
           {
             qDebug() << peer->getObjectName().toString() << " changed once again!";
           }
@@ -297,8 +296,11 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
 
 void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, QVariantMap arg2)
 {
+  if(arg2.contains("Event") && _skipEvents.contains(arg2.value("Event").toString()))
+    return;
+    
 #ifdef AST_DEBUG
-  QString catchMe = AdmStatic::eventToString(arg2,"(2004|1998)");
+  QString catchMe = AdmStatic::eventToString(arg2,"(4005|6001)");
   if(!catchMe.isNull() && !catchMe.isEmpty())
   {
     qDebug() << "QtAsteriskDesktopMain::asteriskEventGenerated:"
@@ -306,12 +308,9 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     ;
   }
 #endif
-  //Skip the following events
+  //Process the following events
   switch(arg1)
   {
-    case AsteriskManager::VarSet:
-    case AsteriskManager::Newexten:
-      return;
     case AsteriskManager::ConfbridgeStart:
       this->showConferenceRoom(arg2);
       break;
@@ -503,71 +502,102 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     {
       if(arg2.contains("Bridgestate") && arg2.value("Bridgestate").toString() != "Link")
         break;
-      else
+
+      QString chanUuid1,chanUuid2,callUuid;
+      if(arg2.contains("BridgeUniqueid"))
       {
-        QString uuid1,uuid2;
-        if(arg2.contains("Uniqueid1"))
-          uuid1 = arg2.value("Uniqueid1").toString();
-        else if(arg2.contains("Linkedid"))
-          uuid1 = arg2.value("Linkedid").toString();
-        if(arg2.contains("Uniqueid2"))
-          uuid2 = arg2.value("Uniqueid2").toString();
-        else if(arg2.contains("Uniqueid"))
-          uuid2 = arg2.value("Uniqueid").toString();
+        callUuid = arg2.value("BridgeUniqueid").toString();
+        chanUuid1 = arg2.value("Linkedid").toString();
+        if(arg2.value("Uniqueid").toString() != chanUuid1)
+          chanUuid2 = arg2.value("Uniqueid").toString();
+      } else {
+        callUuid = arg2.value("Uniqueid1").toString();
+        chanUuid1 = arg2.value("Uniqueid1").toString();
+        chanUuid2 = arg2.value("Uniqueid2").toString();
+      }
 
-        if(uuid1.isNull())
+      // Call handling
+      if(!_callMap->contains(callUuid))
+      {
+        AdmCallWidget *call = new AdmCallWidget(callUuid);
+        connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
+                this, SLOT(sCallXfer(AdmCallWidget*,QString))
+        );
+        connect(call, SIGNAL(callPark(AdmCallWidget*)),
+                this, SLOT(sCallPark(AdmCallWidget*))
+        );
+        connect(call, SIGNAL(callHangup(AdmCallWidget*)),
+                this, SLOT(sCallHangup(AdmCallWidget*))
+        );
+        connect(call, SIGNAL(destroying(AdmCallWidget*)),
+                this, SLOT(sDestroyingCall(AdmCallWidget*))
+        );
+
+        if(_chanMap->contains(chanUuid1))
+          call->addChannel(_chanMap->value(chanUuid1));
+
+        if(_chanMap->contains(chanUuid2))
+          call->addChannel(_chanMap->value(chanUuid2));
+
+        _callMap->insert(callUuid,call);
+        ui->_layoutCalls->addWidget(call);
+      }
+        
+      //SwapUniqueId handling
+      if(arg2.contains("SwapUniqueid"))
+      {
+        QString swapId = arg2.value("SwapUniqueid").toString();
+        qDebug() << "Swap the UniqueId " << chanUuid2 << swapId;
+        if(_callMap->contains(callUuid))
         {
-          qWarning() << "QtAsteriskDesktopMain::asteriskEventGenerated: uuid1 could not be found.";
-          break;
-        }
-        else if(uuid2.isNull())
-        {
-          qWarning() << "QtAsteriskDesktopMain::asteriskEventGenerated: uuid2 could not be found.";
-          break;
-        }
-        else if (uuid1 == uuid2)
-        {
-          qWarning() << "QtAsteriskDesktopMain::asteriskEventGenerated: uuid1 and uuid2 are the same value.";
-          //break;
-        }
-
-        // Call handling
-        if(!_callMap->contains(uuid1))
-        {
-          AdmCallWidget *call = new AdmCallWidget();
-          connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
-                  this, SLOT(sCallXfer(AdmCallWidget*,QString))
-          );
-          connect(call, SIGNAL(callPark(AdmCallWidget*)),
-                  this, SLOT(sCallPark(AdmCallWidget*))
-          );
-          connect(call, SIGNAL(callHangup(AdmCallWidget*)),
-                  this, SLOT(sCallHangup(AdmCallWidget*))
-          );
-          connect(call, SIGNAL(destroying(AdmCallWidget*)),
-                  this, SLOT(sDestroyingCall(AdmCallWidget*))
-          );
-
-          if(_chanMap->contains(uuid1))
-            call->addChannel(_chanMap->value(uuid1));
-
-          if(_chanMap->contains(uuid2))
-            call->addChannel(_chanMap->value(uuid2));
-
-          _callMap->insert(uuid1,call);
-
-          ui->_layoutCalls->addWidget(call);
-        }
-        // Parked call handling
-        if(!uuid1.isNull() && !uuid2.isNull())
-        {
-          if(_parkedMap->contains(uuid1) && _chanMap->contains(uuid2))
+          AdmCallWidget *cw1 = _callMap->value(callUuid);
+          qDebug() << "chan uuid" << chanUuid2 << "exists" << _chanMap->contains(chanUuid2);
+          qDebug() << "call uuid" << callUuid << "contains channel" << chanUuid2 << cw1->getChannels()->contains(chanUuid2);
+          qDebug() << "chan uuid" << swapId << "exists" << _chanMap->contains(swapId);
+          qDebug() << "call uuid" << callUuid << "contains channel" << swapId << cw1->getChannels()->contains(swapId);
+          
+          if(cw1->getChannels()->contains(swapId))
           {
-            _parkedMap->value(uuid1)->sParkedCallEvent(arg1,arg2,_chanMap->value(uuid2));
+            qDebug() << "Removing channel" << swapId << "from call" << callUuid;
+            cw1->sRemoveChannel(_chanMap->value(swapId));
+          }
+          if(!cw1->getChannels()->contains(chanUuid2))
+          {
+            qDebug() << "Adding channel" << chanUuid2 << "to call" << callUuid;
+            cw1->addChannel(_chanMap->value(chanUuid2));
           }
         }
       }
+        
+      // Parked call handling
+      if(!chanUuid1.isNull() && !chanUuid2.isNull())
+      {
+        if(_parkedMap->contains(chanUuid1) && _chanMap->contains(chanUuid2))
+        {
+          _parkedMap->value(chanUuid1)->sParkedCallEvent(arg1,arg2,_chanMap->value(chanUuid2));
+        }
+      }
       break;
+    }
+    case AsteriskManager::BridgeLeave:
+    {
+      QString callUuid, chanUuid;
+      if(arg2.contains("Uniqueid"))
+        chanUuid = arg2.value("Uniqueid").toString();
+
+      if(arg2.contains("BridgeUniqueid"))
+        callUuid = arg2.value("BridgeUniqueid").toString();
+      else
+        callUuid = arg2.value("Uniqueid").toString();
+
+      if(!callUuid.isNull() && !chanUuid.isNull())
+      {
+        if(_callMap->contains(callUuid) && _chanMap->contains(chanUuid))
+        {
+          qDebug() << "Removing channel" << chanUuid << "from call" << callUuid;
+          _callMap->value(callUuid)->sRemoveChannel(_chanMap->value(chanUuid));
+        }
+      }
     }
     case AsteriskManager::Dial:
     {
@@ -577,6 +607,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         if(_chanMap->contains(uuid))
         {
           //Disable the music on hold status
+          
+          /*
           _chanMap->value(uuid)->sMusicOff(arg2);
           AdmCallWidget *call = new AdmCallWidget();
           connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
@@ -600,6 +632,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           _callMap->insert(uuid,call);
 
           ui->_layoutCalls->addWidget(call);
+          */
         }
       }
       break;
@@ -701,8 +734,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           widget->setSipPeer(peer);
         }
         widget->sExtensionStatusEvent(arg2);
-        if(peer->getObjectName().toString() == "2004"
-           || peer->getObjectName().toString() == "1998")
+        if(peer->getObjectName().toString() == "4005"
+           || peer->getObjectName().toString() == "6001")
         {
           qDebug() << peer->getObjectName().toString() << " changed once again!";
         }
@@ -720,8 +753,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         }
       } else if(NULL != peer /*&& exten.toString() != sipPeerName*/) {
         peer->sExtensionStatusEvent(arg2);
-        if(peer->getObjectName().toString() == "2004"
-           || peer->getObjectName().toString() == "1998")
+        if(peer->getObjectName().toString() == "4005"
+           || peer->getObjectName().toString() == "6001")
         {
           qDebug() << peer->getObjectName().toString() << " changed once again!";
         }
