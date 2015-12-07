@@ -8,7 +8,7 @@ AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
   ui(new Ui::AdmCallWidget)
 {
 	ui->setupUi(this);
-  _uuid = new QString(uuid);
+  _uuid = uuid;
   _time = new QTime();
   _time->start();
 
@@ -27,7 +27,6 @@ AdmCallWidget::~AdmCallWidget()
 {
   emit destroying(this);
 	delete ui;
-  delete _uuid;
   delete _time;
   delete _channels;
   delete _channelWidgets;
