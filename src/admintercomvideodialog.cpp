@@ -1,16 +1,19 @@
 #include "admintercomvideodialog.h"
 #include "ui_admintercomvideodialog.h"
+#include "qtasteriskdesktopmain.h"
 
 #include <QUrl>
 #include <QTimer>
+#include <QDebug>
 
-AdmIntercomVideoDialog::AdmIntercomVideoDialog(QWidget *parent, QUrl url):
+AdmIntercomVideoDialog::AdmIntercomVideoDialog(QWidget *parent, AstChannel *chan, QUrl url, QString dtmfSequence):
   QDialog(parent),
   ui(new Ui::AdmIntercomVideoDialog)
 {
   ui->setupUi(this);
-  
+  _chan = chan;
   _url = url;
+  _dtmfSequence = dtmfSequence;
   
   connect(ui->_buttonBox, SIGNAL(clicked(QAbstractButton*)),
           this,           SLOT(SBtnClicked(QAbstractButton*))
@@ -18,10 +21,23 @@ AdmIntercomVideoDialog::AdmIntercomVideoDialog(QWidget *parent, QUrl url):
   connect(ui->_refreshVideo,  SIGNAL(clicked()),
           this,               SLOT(SRefreshVideo())
   );
-  connect(ui->_openDoor,  SIGNAL(clicked()),
-          this,           SLOT(SOpenDoor())
+
+  connect(_chan,  SIGNAL(hangup(AstChannel*)),
+          this,     SLOT(sHangupChannel(AstChannel *))
   );
-  
+  connect(_chan,  SIGNAL(destroying(AstChannel *)),
+          this,     SLOT(sRemoveChannel(AstChannel *))
+  );
+
+  if(_dtmfSequence.isNull() || _dtmfSequence.isEmpty() || NULL == _chan)
+  {
+    ui->_openDoor->setVisible(false);
+  } else if(NULL != _chan) {
+    connect(ui->_openDoor,  SIGNAL(clicked()),
+            this,           SLOT(SOpenDoor())
+    );
+  }
+
  _mObj = new Phonon::MediaObject();
  _mSrc = Phonon::MediaSource(_url);
  
@@ -54,6 +70,14 @@ void AdmIntercomVideoDialog::SRefreshVideo()
 
 void AdmIntercomVideoDialog::SOpenDoor()
 {
+  ui->_openDoor->setEnabled(false);
+  QtAsteriskDesktopMain::getInstance()->sSendDtmf(_chan, _dtmfSequence, true, 3250);
+  QTimer::singleShot(5000,this,SLOT(sEnableOpenDoor()));
+}
+
+void AdmIntercomVideoDialog::sEnableOpenDoor()
+{
+  ui->_openDoor->setEnabled(true);
 }
 
 void AdmIntercomVideoDialog::SStop()
@@ -71,4 +95,16 @@ void AdmIntercomVideoDialog::SStart()
   qDebug() << "play";
   ui->_video->load(_mSrc);
   ui->_video->play();
+}
+
+void AdmIntercomVideoDialog::sHangupChannel(AstChannel *)
+{
+  QTimer::singleShot(1000,this,SLOT(deleteLater()));
+  //this->deleteLater();
+}
+
+void AdmIntercomVideoDialog::sRemoveChannel(AstChannel *)
+{
+  QTimer::singleShot(1000,this,SLOT(deleteLater()));
+  //this->deleteLater();
 }

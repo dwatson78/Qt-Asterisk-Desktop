@@ -55,7 +55,8 @@ SOURCES +=   \
     src/astchanparts.cpp \
     src/dlgphonefeatures.cpp \
     src/admxmppbuddyitem.cpp \
-    src/admintercomvideodialog.cpp
+    src/admintercomvideodialog.cpp \
+    src/delayedamiaction.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -85,7 +86,8 @@ HEADERS +=   \
     src/astchanparts.h \
     src/dlgphonefeatures.h \
     src/admxmppbuddyitem.h \
-    src/admintercomvideodialog.h
+    src/admintercomvideodialog.h \
+    src/delayedamiaction.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \

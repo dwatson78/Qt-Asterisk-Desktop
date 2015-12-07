@@ -65,6 +65,8 @@ public:
     DNDState,
     DTMF,
     Dial,
+    DialBegin, //13
+    DialEnd, //13
     ExtensionStatus,
     FullyBooted,
     Hangup,
@@ -246,7 +248,7 @@ public:
   QString actionParkinglots();
   QString actionPauseMonitor();
   QString actionPing();
-  QString actionPlayDTMF(QString channel, QString digit);
+  QString actionPlayDTMF(QString channel, QString digit, int duration=0);
   QString actionPresenceState();
   QString actionPRIShowSpans();
   QString actionQueueAdd(QString queue,
@@ -296,16 +298,18 @@ public:
   QString actionUserEvent();
   QString actionVoicemailUsersList();
   QString actionWaitEvent();
+  QString sendAction(QString action, QVariantMap headers = QVariantMap(), QString presetActionId = QString());
+  void insertNotEmpty(QVariantMap *headers, QString key, QVariant value);
+protected:
 
 private:
   QMetaEnum responseEnum, eventEnum;
   QVariantMap packetBuffer;
-
   QString valueToString(QVariant value);
   QVariant stringValue(QString string);
-  void insertNotEmpty(QVariantMap *headers, QString key, QVariant value);
+
   void dispatchPacket();
-  QString sendAction(QString action, QVariantMap headers = QVariantMap());
+  //QString sendAction(QString action, QVariantMap headers = QVariantMap(), QString presetActionId = QString());
 
 private slots:
   void onReadyRead();

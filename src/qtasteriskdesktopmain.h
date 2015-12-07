@@ -58,6 +58,8 @@ public slots:
 
   void sPlayMsgOnPhone(AdmVoiceMailWidget* obj, const QVariantMap &data);
 
+  void sSendDtmf(AstChannel *channel, QString dtmfSequence, bool hangup = false, int hangupDelay = 0);
+
   static QtAsteriskDesktopMain* getInstance(){return _instance;}
 
 private:

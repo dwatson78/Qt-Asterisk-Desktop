@@ -485,12 +485,13 @@ QString AsteriskManager::actionPing()
   return sendAction("Ping");
 }
 
-QString AsteriskManager::actionPlayDTMF(QString channel, QString digit)
+QString AsteriskManager::actionPlayDTMF(QString channel, QString digit, int duration)
 {
   QVariantMap headers;
   headers["Channel"] = channel;
   headers["Digit"] = digit;
-
+  if(duration > 0)
+    headers["Duration"] = duration;
   return sendAction("PlayDTMF", headers);
 }
 
@@ -795,12 +796,13 @@ void AsteriskManager::dispatchPacket()
   packetBuffer.clear();
 }
 
-QString AsteriskManager::sendAction(QString action, QVariantMap headers)
+QString AsteriskManager::sendAction(QString action, QVariantMap headers, QString presetActionId)
 {
-  QString actionID = QString();
+  QString actionID = presetActionId;
 
   if (state() == QAbstractSocket::ConnectedState) {
-    actionID = QUuid::createUuid().toString();
+    if(actionID.isNull())
+      actionID = QUuid::createUuid().toString();
 
     headers["ActionID"] = actionID;
     headers["Action"] = action;

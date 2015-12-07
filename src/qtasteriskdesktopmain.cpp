@@ -22,6 +22,7 @@
 #include <QHostAddress>
 
 #include "admintercomvideodialog.h"
+#include "delayedamiaction.h"
 
 QtAsteriskDesktopMain *_instance;
 
@@ -201,7 +202,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     case (AsteriskManager::Success):
     {
 #ifdef AST_DEBUG
-      QString catchMe = AdmStatic::eventToString(arg2,"(4005|6001)");
+      QString catchMe = AdmStatic::eventToString(arg2,"(2004|4004)");
       if(!catchMe.isNull() && !catchMe.isEmpty())
       {
         qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent:"
@@ -260,8 +261,8 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
         if(arg1 == AsteriskManager::Success && peer)
         {
           peer->sExtensionStatusEvent(arg2);
-          if(peer->getObjectName().toString() == "4005"
-             || peer->getObjectName().toString() == "6001")
+          if(peer->getObjectName().toString() == "2004"
+             || peer->getObjectName().toString() == "4004")
           {
             qDebug() << peer->getObjectName().toString() << " changed once again!";
           }
@@ -300,7 +301,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     return;
     
 #ifdef AST_DEBUG
-  QString catchMe = AdmStatic::eventToString(arg2,"(4005|6001)");
+  QString catchMe = AdmStatic::eventToString(arg2,"(2004|4004)");
   if(!catchMe.isNull() && !catchMe.isEmpty())
   {
     qDebug() << "QtAsteriskDesktopMain::asteriskEventGenerated:"
@@ -601,39 +602,39 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     }
     case AsteriskManager::Dial:
     {
-      if(arg2.value("SubEvent").toString() == "Begin")
+      if(arg2.contains("SubEvent") && arg2.value("SubEvent").toString() != "Begin")
+        return;
+
+      QString uuid = arg2.value("UniqueID").toString();
+      if(_chanMap->contains(uuid))
       {
-        QString uuid = arg2.value("UniqueID").toString();
-        if(_chanMap->contains(uuid))
-        {
-          //Disable the music on hold status
-          
-          /*
-          _chanMap->value(uuid)->sMusicOff(arg2);
-          AdmCallWidget *call = new AdmCallWidget();
-          connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
-                  this, SLOT(sCallXfer(AdmCallWidget*,QString))
-          );
-          connect(call, SIGNAL(callPark(AdmCallWidget*)),
-                  this, SLOT(sCallPark(AdmCallWidget*))
-          );
-          connect(call, SIGNAL(callHangup(AdmCallWidget*)),
-                  this, SLOT(sCallHangup(AdmCallWidget*))
-          );
-          connect(call, SIGNAL(destroying(AdmCallWidget*)),
-                  this, SLOT(sDestroyingCall(AdmCallWidget*))
-          );
-          call->addChannel(_chanMap->value(uuid));
+        //Disable the music on hold status
 
-          QString destUuid = arg2.value("DestUniqueID").toString();
-          if(_chanMap->contains(destUuid))
-            call->addChannel(_chanMap->value(destUuid));
+        /*
+        _chanMap->value(uuid)->sMusicOff(arg2);
+        AdmCallWidget *call = new AdmCallWidget();
+        connect(call, SIGNAL(callXfer(AdmCallWidget*,QString)),
+                this, SLOT(sCallXfer(AdmCallWidget*,QString))
+        );
+        connect(call, SIGNAL(callPark(AdmCallWidget*)),
+                this, SLOT(sCallPark(AdmCallWidget*))
+        );
+        connect(call, SIGNAL(callHangup(AdmCallWidget*)),
+                this, SLOT(sCallHangup(AdmCallWidget*))
+        );
+        connect(call, SIGNAL(destroying(AdmCallWidget*)),
+                this, SLOT(sDestroyingCall(AdmCallWidget*))
+        );
+        call->addChannel(_chanMap->value(uuid));
 
-          _callMap->insert(uuid,call);
+        QString destUuid = arg2.value("DestUniqueID").toString();
+        if(_chanMap->contains(destUuid))
+          call->addChannel(_chanMap->value(destUuid));
 
-          ui->_layoutCalls->addWidget(call);
-          */
-        }
+        _callMap->insert(uuid,call);
+
+        ui->_layoutCalls->addWidget(call);
+        */
       }
       break;
     }
@@ -734,8 +735,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           widget->setSipPeer(peer);
         }
         widget->sExtensionStatusEvent(arg2);
-        if(peer->getObjectName().toString() == "4005"
-           || peer->getObjectName().toString() == "6001")
+        if(peer->getObjectName().toString() == "2004"
+           || peer->getObjectName().toString() == "4004")
         {
           qDebug() << peer->getObjectName().toString() << " changed once again!";
         }
@@ -753,8 +754,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         }
       } else if(NULL != peer /*&& exten.toString() != sipPeerName*/) {
         peer->sExtensionStatusEvent(arg2);
-        if(peer->getObjectName().toString() == "4005"
-           || peer->getObjectName().toString() == "6001")
+        if(peer->getObjectName().toString() == "2004"
+           || peer->getObjectName().toString() == "4004")
         {
           qDebug() << peer->getObjectName().toString() << " changed once again!";
         }
@@ -1182,7 +1183,37 @@ void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVari
 
 void QtAsteriskDesktopMain::sTestOpenVideo()
 {
-  AdmIntercomVideoDialog dlg(0,QUrl("rtsp://10.121.212.23:554/live.sdp"));
+  AdmIntercomVideoDialog dlg(0,0,QUrl("rtsp://10.121.212.23:554/live.sdp"),QString());
   dlg.exec();
 }
 
+void QtAsteriskDesktopMain::sSendDtmf(AstChannel *channel, QString dtmfSequence, bool hangup, int hangupDelay)
+{
+  int delayInterval = 160;
+  int duration = 80;
+  int delay = 80;
+  DelayedAmiAction *amiAct = NULL;
+  QString actionId = QString();
+  for(QChar *it=dtmfSequence.begin(); it!=dtmfSequence.end(); ++it)
+  {
+    amiAct = new DelayedAmiAction(this,_ami,delay);
+    if(amiAct)
+    {
+      actionId = amiAct->actionPlayDTMF(channel->getChannel(),QString(it),duration);
+      amiAct = NULL;
+      actionId = QString();
+    }
+    delay += delayInterval;
+  }
+  if(hangup)
+  {
+    delay += hangupDelay;
+    amiAct = new DelayedAmiAction(this,_ami,delay);
+    if(amiAct)
+    {
+      actionId = amiAct->actionHangup(channel->getChannel());
+      amiAct = NULL;
+      actionId = QString();
+    }
+  }
+}

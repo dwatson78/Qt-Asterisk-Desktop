@@ -3,6 +3,8 @@
 
 #include "admstatic.h"
 
+#include "admintercomvideodialog.h"
+
 AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
   QFrame(parent),
   ui(new Ui::AdmCallWidget)
@@ -25,6 +27,7 @@ AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
 
 AdmCallWidget::~AdmCallWidget()
 {
+  qDebug() << "AdmCallWidget::~AdmCallWidget()";
   emit destroying(this);
 	delete ui;
   delete _time;
@@ -94,6 +97,34 @@ void AdmCallWidget::sUpdateChannel(AstChannel *channel)
       }
     }
     this->_channelWidgets->value(channel->getUuid())->sUpdateChannel();
+  }
+  // Check to see if this user is on the phone with the door intercom
+  bool isMyDevice = false;
+  bool isDoorIntercom = false;
+  AstChannel *chanDoor = NULL;
+  QMap<QString, AstChannel *>::iterator i;
+  for(i = _channels->begin(); i != _channels->end(); ++i)
+  {
+    AstChanParts *chanPart = i.value()->getChannelParts();
+    if(chanPart->isMyDevice())
+    {
+      isMyDevice = true;
+    }
+    else if(chanPart->getType() == "SIP" && chanPart->getExten() == "6001")
+    {
+      isDoorIntercom = true;
+      chanDoor = i.value();
+    }
+    if(isMyDevice && isDoorIntercom)
+    {
+      AdmIntercomVideoDialog *dlg = new AdmIntercomVideoDialog(0,chanDoor,QUrl("rtsp://10.121.212.23:554/live.sdp"), "46");
+      //dlg.setModal(false);
+      dlg->show();
+      dlg->raise();
+      dlg->activateWindow();
+      //dlg.exec();
+      break;
+    }
   }
 }
 
