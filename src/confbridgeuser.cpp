@@ -43,13 +43,11 @@ ConfBridgeUser::ConfBridgeUser(QWidget *parent, AsteriskManager* ami, QVariantMa
                 .arg(this->_uuid));
 
   QString lblStr;
-  if(event.contains("CallerIDname") && event.contains("CallerIDnum"))
-  {
-    lblStr = tr("%1 <%2>")
-        .arg(event.contains("CallerIDname") ? event.value("CallerIDname").toString() : QString())
-        .arg(event.contains("CallerIDnum") ? QString::number(event.value("CallerIDnum").toUInt()) : QString());
-  }
+  lblStr = tr("%1 <%2>")
+      .arg(event.contains("CallerIDName") ? event.value("CallerIDName").toString() : "UNKNOWN")
+      .arg(event.contains("CallerIDNum") ? QString::number(event.value("CallerIDNum").toUInt()) : "");
   _lbl = new QLabel(lblStr);
+
   setContextMenuPolicy(Qt::CustomContextMenu);
   connect(this, SIGNAL(customContextMenuRequested(QPoint)),
           this, SLOT(contextMenuRequested(const QPoint&))

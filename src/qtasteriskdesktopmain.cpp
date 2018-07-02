@@ -68,13 +68,15 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   connect(ui->_actionOpenVideo,  SIGNAL(triggered()),
           this,             SLOT(sTestOpenVideo()));
 
-
   _ami = new AsteriskManager(this);
-  connect( _ami, SIGNAL(connected()),
-           this, SLOT(asteriskConnected())
+  connect(_ami,   SIGNAL(connected()),
+           this,  SLOT(asteriskConnected())
   );
   connect(_ami, SIGNAL(disconnected()),
           this, SLOT(asteriskDisconnected())
+  );
+  connect(_ami, SIGNAL(error(QAbstractSocket::SocketError)),
+          this, SLOT(asteriskError(QAbstractSocket::SocketError))
   );
   connect(_ami, SIGNAL(responseSent(AsteriskManager::Response,QVariantMap,QString)),
           this, SLOT(asteriskResponseSent(AsteriskManager::Response,QVariantMap,QString))
@@ -82,49 +84,8 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   connect(_ami, SIGNAL(eventGenerated(AsteriskManager::Event,QVariantMap)),
           this, SLOT(asteriskEventGenerated(AsteriskManager::Event,QVariantMap))
   );
+
   QSettings settings;
-  settings.beginGroup("AMI");
-  if(settings.contains(AmiPref::getName(AmiPref::host)) && settings.contains(AmiPref::getName(AmiPref::port)))
-  {
-    bool valid = false;
-    
-    QString host = settings.value(AmiPref::getName(AmiPref::host)).toString();
-    uint port = settings.value(AmiPref::getName(AmiPref::port)).toUInt(&valid);
-    if(valid)
-    {
-      _ami->connectToHost(host, port);
-      bool connected = _ami->waitForConnected(60000);
-      qDebug() << "connected: " << connected;
-      qDebug() << _ami->socketType();
-      qDebug() << _ami->peerName();
-
-      qDebug() << _ami->peerAddress().toIPv4Address();
-      qDebug() << _ami->peerPort();
-      if(!connected)
-      {
-        qDebug() << _ami->errorString();
-        _ami->connectToHost(host, port);
-        bool connected = _ami->waitForConnected(60000);
-        qDebug() << "connected: " << connected;
-        qDebug() << _ami->socketType();
-        qDebug() << _ami->peerName();
-
-        qDebug() << _ami->peerAddress().toIPv4Address();
-        qDebug() << _ami->peerPort();
-        if(!connected)
-        {
-          qDebug() << _ami->errorString();
-        }
-      }
-    }
-    else
-      asteriskDisconnected();
-  }
-  else
-    asteriskDisconnected();
-
-  settings.endGroup();
-
   if(settings.contains("DEVICES/default"))
   {
     AstChanParts cp(settings.value("DEVICES/default").toString());
@@ -133,6 +94,8 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
       ui->_extStatus->setExten(cp.getExten());
     }
   }
+
+  connectToAsterisk();
 }
 
 QtAsteriskDesktopMain::~QtAsteriskDesktopMain()
@@ -168,8 +131,66 @@ QtAsteriskDesktopMain::~QtAsteriskDesktopMain()
   delete _chanMap;
   delete _showSipPeerActionId;
   delete _extensionStateActionId;
+  _ami->blockSignals(true);
   delete _ami;
   _instance = NULL;
+}
+
+void QtAsteriskDesktopMain::connectToAsterisk()
+{
+  QSettings settings;
+  settings.beginGroup("AMI");
+  bool valid = false;
+  QString host;
+  uint port,connectInterval;
+
+  if( settings.contains(AmiPref::getName(AmiPref::host)))
+  {
+    host = settings.value(AmiPref::getName(AmiPref::host)).toString();
+  }
+  if(host.isNull() || host.isEmpty())
+  {
+    qCritical("Missing host name.");
+    return;
+  }
+
+  if(settings.contains(AmiPref::getName(AmiPref::port)))
+  {
+    port = settings.value(AmiPref::getName(AmiPref::port)).toUInt(&valid);
+  }
+  if(!valid || port <= 0 || port > 65535)
+  {
+    qCritical("Missing or invalid port number.");
+    return;
+  }
+
+  if(settings.contains(AmiPref::getName(AmiPref::connectInterval)))
+  {
+    connectInterval = settings.value(AmiPref::getName(AmiPref::connectInterval)).toUInt(&valid);
+  }
+  if(!valid || connectInterval <= 0)
+  {
+    qCritical("Missing or invalid connect interval.");
+    return;
+  } else {
+    _asteriskConnectInterval = connectInterval * 1000;
+  }
+
+  bool connected = false;
+  while(!connected)
+  {
+    _ami->connectToHost(host, port);
+    connected = _ami->waitForConnected(_asteriskConnectInterval);
+    if(!connected)
+    {
+      qCritical() << QString("Connection to AMI timed out\nhost name: %1\nhost address: %2\nhost port: %3\nsocket error: %4")
+                     .arg(_ami->peerName())
+                     .arg(_ami->peerAddress().toIPv4Address())
+                     .arg(_ami->peerPort())
+                     .arg(_ami->errorString())
+      ;
+    }
+  }
 }
 
 void QtAsteriskDesktopMain::asteriskConnected()
@@ -193,6 +214,107 @@ void QtAsteriskDesktopMain::asteriskConnected(QString arg1)
 void QtAsteriskDesktopMain::asteriskDisconnected()
 {
   qWarning() << "QtAsteriskDesktopMain::asteriskDisconnected: Asterisk Disconnected!";
+  _showSipPeerActionId->clear();
+  _extensionStateActionId->clear();
+  while(_chanMap->values().count() > 0)
+  {
+    delete _chanMap->values().at(0);
+  }
+  while(_parkedMap->values().count() > 0)
+  {
+    delete _parkedMap->values().at(0);
+  }
+  while(_callMap->values().count() > 0)
+  {
+    delete _callMap->values().at(0);
+  }
+  while(_extensionMap->values().count() > 0)
+  {
+    delete _extensionMap->values().at(0);
+  }
+  while(_sipPeerMap->values().count() > 0)
+  {
+    delete _sipPeerMap->values().at(0);
+  }
+  while(_mySipPeerMap->values().count() > 0)
+  {
+    delete _mySipPeerMap->values().at(0);
+  }
+  AdmStatic::removeLayoutChildren(ui->_layoutSipPeersAvail);
+  AdmStatic::removeLayoutChildren(ui->_layoutPrograms);
+  AdmStatic::removeLayoutChildren(ui->_layoutSipPeersUnavail);
+  ui->_voiceMailTabWidget->clearVoiceMailWidgets();
+  
+  QTimer::singleShot(_asteriskConnectInterval,this,SLOT(connectToAsterisk()));
+}
+
+void QtAsteriskDesktopMain::asteriskError(QAbstractSocket::SocketError err)
+{
+  QString socketErr;
+  switch(err)
+  {
+    case QAbstractSocket::ConnectionRefusedError:
+      socketErr = "ConnectionRefusedError";
+      break;
+    case QAbstractSocket::RemoteHostClosedError:
+      socketErr = "RemoteHostClosedError";
+      break;
+    case QAbstractSocket::HostNotFoundError:
+      socketErr = "HostNotFoundError";
+      break;
+    case QAbstractSocket::SocketAccessError:
+      socketErr = "SocketAccessError";
+      break;
+    case QAbstractSocket::SocketResourceError:
+      socketErr = "SocketResourceError";
+      break;
+    case QAbstractSocket::SocketTimeoutError:
+      socketErr = "SocketTimeoutError";
+      break;
+    case QAbstractSocket::DatagramTooLargeError:
+      socketErr = "DatagramTooLargeError";
+      break;
+    case QAbstractSocket::NetworkError:
+      socketErr = "NetworkError";
+      break;
+    case QAbstractSocket::AddressInUseError:
+      socketErr = "AddressInUseError";
+      break;
+    case QAbstractSocket::SocketAddressNotAvailableError:
+      socketErr = "SocketAddressNotAvailableError";
+      break;
+    case QAbstractSocket::UnsupportedSocketOperationError:
+      socketErr = "UnsupportedSocketOperationError";
+      break;
+    case QAbstractSocket::UnfinishedSocketOperationError:
+      socketErr = "UnfinishedSocketOperationError";
+      break;
+    case QAbstractSocket::ProxyAuthenticationRequiredError:
+      socketErr = "ProxyAuthenticationRequiredError";
+      break;
+    case QAbstractSocket::SslHandshakeFailedError:
+      socketErr = "SslHandshakeFailedError";
+      break;
+    case QAbstractSocket::ProxyConnectionRefusedError:
+      socketErr = "ProxyConnectionRefusedError";
+      break;
+    case QAbstractSocket::ProxyConnectionClosedError:
+      socketErr = "ProxyConnectionClosedError";
+      break;
+    case QAbstractSocket::ProxyConnectionTimeoutError:
+      socketErr = "ProxyConnectionTimeoutError";
+      break;
+    case QAbstractSocket::ProxyNotFoundError:
+      socketErr = "ProxyNotFoundError";
+      break;
+    case QAbstractSocket::ProxyProtocolError:
+      socketErr = "ProxyProtocolError";
+      break;
+    case QAbstractSocket::UnknownSocketError:
+      socketErr = "UnknownSocketError";
+      break;
+  }
+  qWarning() << "UNHANDLED QtAsteriskDesktopMain::asteriskError: Asterisk Error:" << socketErr;
 }
 
 void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1, QVariantMap arg2, QString arg3)
@@ -202,7 +324,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     case (AsteriskManager::Success):
     {
 #ifdef AST_DEBUG
-      QString catchMe = AdmStatic::eventToString(arg2,"(2004|4004)");
+      QString catchMe = AdmStatic::eventToString(arg2,"(zzNOTESTzz)");
       if(!catchMe.isNull() && !catchMe.isEmpty())
       {
         qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent:"
@@ -248,6 +370,7 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
           {
             if(!peer->getVmBox().isNull())
             {
+              qDebug() << "Mailbox" << peer->getVmBox().toString();
               AdmVoiceMailWidget *w = new AdmVoiceMailWidget(peer->getVmBox().toString());
               connect(w,    SIGNAL(sigPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)),
                       this, SLOT(sPlayMsgOnPhone(AdmVoiceMailWidget*,QVariantMap)));
@@ -299,9 +422,9 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
 {
   if(arg2.contains("Event") && _skipEvents.contains(arg2.value("Event").toString()))
     return;
-    
+
 #ifdef AST_DEBUG
-  QString catchMe = AdmStatic::eventToString(arg2,"(2004|4004)");
+  QString catchMe = AdmStatic::eventToString(arg2,"(.)");
   if(!catchMe.isNull() && !catchMe.isEmpty())
   {
     qDebug() << "QtAsteriskDesktopMain::asteriskEventGenerated:"
@@ -309,6 +432,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     ;
   }
 #endif
+
   //Process the following events
   switch(arg1)
   {
@@ -498,8 +622,13 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
       }
       break;
     }
+    case AsteriskManager::NewConnectedLine:
+    {
+      break;
+    }
     case AsteriskManager::Bridge:
     case AsteriskManager::BridgeEnter:
+    case AsteriskManager::BridgeMerge:
     {
       if(arg2.contains("Bridgestate") && arg2.value("Bridgestate").toString() != "Link")
         break;
@@ -508,7 +637,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
       if(arg2.contains("BridgeUniqueid"))
       {
         callUuid = arg2.value("BridgeUniqueid").toString();
-        chanUuid1 = arg2.value("Linkedid").toString();
+        chanUuid1 = arg2.value("Uniqueid").toString();
         if(arg2.value("Uniqueid").toString() != chanUuid1)
           chanUuid2 = arg2.value("Uniqueid").toString();
       } else {
@@ -542,21 +671,33 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
 
         _callMap->insert(callUuid,call);
         ui->_layoutCalls->addWidget(call);
+      } else {
+        if(_chanMap->contains(chanUuid1))
+        {
+          if(!_callMap->value(callUuid)->getChannels()->contains(chanUuid1))
+            _callMap->value(callUuid)->addChannel(_chanMap->value(chanUuid1));
+        }
+        if(_chanMap->contains(chanUuid2))
+        {
+          if(!_callMap->value(callUuid)->getChannels()->contains(chanUuid2))
+            _callMap->value(callUuid)->addChannel(_chanMap->value(chanUuid2));
+        }
       }
         
       //SwapUniqueId handling
       if(arg2.contains("SwapUniqueid"))
       {
         QString swapId = arg2.value("SwapUniqueid").toString();
-        qDebug() << "Swap the UniqueId " << chanUuid2 << swapId;
+        if(chanUuid2.isEmpty())
+          chanUuid2 = QString(chanUuid1);
+        qDebug() << "Swap the UniqueId " << swapId << chanUuid2 ;
         if(_callMap->contains(callUuid))
         {
           AdmCallWidget *cw1 = _callMap->value(callUuid);
+          qDebug() << "chan uuid(swapid)" << swapId << "exists" << _chanMap->contains(swapId);
+          qDebug() << "call uuid" << callUuid << "contains channel" << swapId << cw1->getChannels()->contains(swapId);
           qDebug() << "chan uuid" << chanUuid2 << "exists" << _chanMap->contains(chanUuid2);
           qDebug() << "call uuid" << callUuid << "contains channel" << chanUuid2 << cw1->getChannels()->contains(chanUuid2);
-          qDebug() << "chan uuid" << swapId << "exists" << _chanMap->contains(swapId);
-          qDebug() << "call uuid" << callUuid << "contains channel" << swapId << cw1->getChannels()->contains(swapId);
-          
           if(cw1->getChannels()->contains(swapId))
           {
             qDebug() << "Removing channel" << swapId << "from call" << callUuid;
@@ -669,6 +810,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         ui->_layoutSipPeersAvail->addWidget(peerWidget);
       } else if (sipPeerMap == _mySipPeerMap) {
         ui->_extStatus->setSipPeer(peer);
+        ui->_extStatus->setExten(peer->getObjectName());
       }
 
       QString actionId = _ami->actionSIPshowpeer(peer->getObjectName().toString());
@@ -760,6 +902,10 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           qDebug() << peer->getObjectName().toString() << " changed once again!";
         }
       }
+      break;
+    }
+    case AsteriskManager::MessageWaiting:
+    {
       break;
     }
     default:
@@ -1169,13 +1315,15 @@ void QtAsteriskDesktopMain::sPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVari
                 QString(),
                 0,
                 "Playback",
-                QString("/var/spool/asterisk/voicemail/default/%1/%2/%3")
+                QString("/var/spool/asterisk/voicemail/%1/%2/%3/%4")
+                        .arg(obj->getContext())
                         .arg(obj->getVmBox())
                         .arg(vmFolderFile)
                         .arg(sndFile),
                 10000, // 10 second timeout
                 QString("VM: %1").arg(data.value("callerid").toString())
         );
+        qDebug() << obj->getMailbox();
       }
     }
   }
@@ -1189,17 +1337,17 @@ void QtAsteriskDesktopMain::sTestOpenVideo()
 
 void QtAsteriskDesktopMain::sSendDtmf(AstChannel *channel, QString dtmfSequence, bool hangup, int hangupDelay)
 {
-  int delayInterval = 160;
-  int duration = 80;
-  int delay = 80;
+  int delayInterval = 250;
+  int duration = 125;
+  int delay = 50;
   DelayedAmiAction *amiAct = NULL;
   QString actionId = QString();
-  for(QChar *it=dtmfSequence.begin(); it!=dtmfSequence.end(); ++it)
+  for(int i = 0; i < dtmfSequence.length(); i++)
   {
     amiAct = new DelayedAmiAction(this,_ami,delay);
     if(amiAct)
     {
-      actionId = amiAct->actionPlayDTMF(channel->getChannel(),QString(it),duration);
+      actionId = amiAct->actionPlayDTMF(channel->getChannel(),dtmfSequence.at(i),duration);
       amiAct = NULL;
       actionId = QString();
     }
@@ -1216,4 +1364,13 @@ void QtAsteriskDesktopMain::sSendDtmf(AstChannel *channel, QString dtmfSequence,
       actionId = QString();
     }
   }
+}
+
+void QtAsteriskDesktopMain::sSendAmiVoicemailRefresh(QString mailbox, QString context)
+{
+  if(mailbox.isNull() || mailbox.isEmpty() || context.isNull() || context.isEmpty())
+    return;
+
+  QString actionId = _ami->actionVoicemailRefresh(mailbox, context);
+  qDebug() << "QtAsteriskDesktopMain::sSendAmiVoicemailRefresh:" << mailbox << context << actionId;
 }

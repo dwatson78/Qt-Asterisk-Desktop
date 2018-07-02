@@ -60,9 +60,8 @@ protected:
   virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
 
 private:
+  QString _vmContext;
   QString _vmBox;
-
-
 };
 
 class RestApiAstVmMsgDetails : public RestApiAstVm
@@ -79,6 +78,7 @@ protected:
   virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
 
 private:
+  QString _vmContext;
   QString _vmBox;
   QString _vmFolder;
 };
@@ -97,6 +97,7 @@ protected:
   virtual void setReady(const QNetworkRequest &req, const QByteArray &data);
 
 private:
+  QString _vmContext;
   QString _vmBox;
   QString _vmFolder;
   QString _vmMsgId;
@@ -116,6 +117,7 @@ protected:
   virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
 
 private:
+  QString _vmContext;
   QString _vmBox;
   QString _vmFolderSrc;
   QString _vmFolderDst;
@@ -136,6 +138,7 @@ protected:
   virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
 
 private:
+  QString _vmContext;
   QString _vmBox;
   QString _vmFolder;
   QString _vmMsgId;
@@ -156,6 +159,7 @@ protected:
   virtual void setReady(const QNetworkRequest &req, const QVariantMap &data);
 
 private:
+  QString _vmContext;
   QString _vmBox;
   QString _vmFolder;
   QString _vmMsgId;

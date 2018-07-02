@@ -53,6 +53,7 @@ public:
     BridgeExec,
     BridgeEnter, //13
     BridgeLeave, //13
+    BridgeMerge, //13
     BridgeCreate,
     ChanSpyStart,
     ChanSpyStop,
@@ -92,6 +93,7 @@ public:
     NewCallerid,
     NewPeerAccount,
     Newchannel,
+    NewConnectedLine,
     Newexten,
     Newstate,
     OriginateResponse,
@@ -296,6 +298,7 @@ public:
   QString actionUnpauseMonitor();
   QString actionUpdateConfig();
   QString actionUserEvent();
+  QString actionVoicemailRefresh(QString mailbox, QString context);
   QString actionVoicemailUsersList();
   QString actionWaitEvent();
   QString sendAction(QString action, QVariantMap headers = QVariantMap(), QString presetActionId = QString());

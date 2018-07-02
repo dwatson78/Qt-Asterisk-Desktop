@@ -725,6 +725,15 @@ QString AsteriskManager::actionUserEvent()
   return sendAction("UserEvent");
 }
 
+QString AsteriskManager::actionVoicemailRefresh(QString mailbox, QString context)
+{
+  QVariantMap headers;
+  headers["Context"] = context;
+  headers["Mailbox"] = mailbox;
+  
+  return sendAction("VoicemailRefresh",headers);
+}
+
 QString AsteriskManager::actionVoicemailUsersList()
 {
   return sendAction("VoicemailUsersList");

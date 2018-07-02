@@ -22,12 +22,15 @@ AdmIntercomVideoDialog::AdmIntercomVideoDialog(QWidget *parent, AstChannel *chan
           this,               SLOT(SRefreshVideo())
   );
 
-  connect(_chan,  SIGNAL(hangup(AstChannel*)),
-          this,     SLOT(sHangupChannel(AstChannel *))
-  );
-  connect(_chan,  SIGNAL(destroying(AstChannel *)),
-          this,     SLOT(sRemoveChannel(AstChannel *))
-  );
+  if(NULL != chan)
+  {
+    connect(_chan,  SIGNAL(hangup(AstChannel*)),
+            this,     SLOT(sHangupChannel(AstChannel *))
+    );
+    connect(_chan,  SIGNAL(destroying(AstChannel *)),
+            this,     SLOT(sRemoveChannel(AstChannel *))
+    );
+  }
 
   if(_dtmfSequence.isNull() || _dtmfSequence.isEmpty() || NULL == _chan)
   {
@@ -70,6 +73,9 @@ void AdmIntercomVideoDialog::SRefreshVideo()
 
 void AdmIntercomVideoDialog::SOpenDoor()
 {
+  if(NULL == _chan)
+    return;
+
   ui->_openDoor->setEnabled(false);
   QtAsteriskDesktopMain::getInstance()->sSendDtmf(_chan, _dtmfSequence, true, 3250);
   QTimer::singleShot(5000,this,SLOT(sEnableOpenDoor()));

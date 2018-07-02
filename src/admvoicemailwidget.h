@@ -29,10 +29,12 @@ class AdmVoiceMailWidget : public QWidget
   Q_OBJECT
   
 public:
-  explicit AdmVoiceMailWidget(QString vmBox, QWidget *parent = 0);
+  explicit AdmVoiceMailWidget(QString mailbox, QWidget *parent = 0);
   ~AdmVoiceMailWidget();
 
+  const QString &getMailbox(){return _mailbox;}
   const QString &getVmBox(){return _vmBox;}
+  const QString &getContext(){return _vmContext;}
 
 public slots:
   void sRefreshView();
@@ -58,6 +60,7 @@ public slots:
   void sVmMoveMessageError(QNetworkReply::NetworkError err, const QString &errString);
 
   void showNetworkErrorMsg(const QString& functionName, QNetworkReply::NetworkError err, const QString &errString);
+  void sSendAmiVoicemailRefresh();
 
   void sPlayMsgClicked();
   void sMsgSeekBackClick();
@@ -80,14 +83,18 @@ private:
   void _setFolderItemName(QListWidgetItem *item);
 
   Ui::AdmVoiceMailWidget *ui;
+  QString _mailbox;
+  QString _vmContext;
   QString _vmBox;
   Phonon::MediaObject *_mObj;
   Phonon::MediaSource _mSrc;
   Phonon::AudioOutput *_mOut;
-  QTemporaryFile *_mFile;
+  //QTemporaryFile *_mFile;
 
   QString _selectedFolder;
   int _selectedMessageRow;
+
+  void removeTmpMsgFiles();
 };
 
 

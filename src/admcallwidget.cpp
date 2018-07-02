@@ -13,6 +13,7 @@ AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
   _uuid = uuid;
   _time = new QTime();
   _time->start();
+  _isDoorIntercom = false;
 
   this->_channels = new QMap<QString,AstChannel*>();
   this->_channelWidgets = new QMap<QString,AdmChanWidget*>();
@@ -22,7 +23,10 @@ AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
   connect(  ui->_tbPark,    SIGNAL(clicked()),  this, SLOT(sStartCallPark())    );
   connect(  ui->_tbHangup1,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
   connect(  ui->_tbHangup2,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
+
   ui->_stackedButtons->setCurrentIndex(0);
+
+  qDebug() << "Created Call Widget: uuid: " << _uuid;
 }
 
 AdmCallWidget::~AdmCallWidget()
@@ -33,6 +37,7 @@ AdmCallWidget::~AdmCallWidget()
   delete _time;
   delete _channels;
   delete _channelWidgets;
+  qDebug() << "Deleted Call Widget: uuid: " << _uuid;
 }
 
 void AdmCallWidget::addChannel(AstChannel* channel)
@@ -60,6 +65,7 @@ void AdmCallWidget::addChannel(AstChannel* channel)
   this->_channelWidgets->insert(channel->getUuid(),chanWidget);
   ui->_layoutChans->addWidget(chanWidget);
   this->sUpdateChannel(channel);
+  qDebug() << "Add Channel " << channel->getUuid() << "to call " << _uuid;
 }
 
 void AdmCallWidget::sUpdateChannel(AstChannel *channel)
@@ -99,31 +105,41 @@ void AdmCallWidget::sUpdateChannel(AstChannel *channel)
     this->_channelWidgets->value(channel->getUuid())->sUpdateChannel();
   }
   // Check to see if this user is on the phone with the door intercom
-  bool isMyDevice = false;
-  bool isDoorIntercom = false;
-  AstChannel *chanDoor = NULL;
-  QMap<QString, AstChannel *>::iterator i;
-  for(i = _channels->begin(); i != _channels->end(); ++i)
+  if(!_isDoorIntercom && this->_channels->count() >= 2)
   {
-    AstChanParts *chanPart = i.value()->getChannelParts();
-    if(chanPart->isMyDevice())
+    bool isMyDevice = false;
+    bool isDoorIntercom = false;
+    AstChannel *chanDoor = NULL;
+    QMap<QString, AstChannel *>::iterator i;
+    for(i = _channels->begin(); i != _channels->end(); ++i)
     {
-      isMyDevice = true;
-    }
-    else if(chanPart->getType() == "SIP" && chanPart->getExten() == "6001")
-    {
-      isDoorIntercom = true;
-      chanDoor = i.value();
-    }
-    if(isMyDevice && isDoorIntercom)
-    {
-      AdmIntercomVideoDialog *dlg = new AdmIntercomVideoDialog(0,chanDoor,QUrl("rtsp://10.121.212.23:554/live.sdp"), "46");
-      //dlg.setModal(false);
-      dlg->show();
-      dlg->raise();
-      dlg->activateWindow();
-      //dlg.exec();
-      break;
+      AstChanParts *chanPart = i.value()->getChannelParts();
+      if(chanPart->isMyDevice())
+      {
+        isMyDevice = true;
+      }
+      else if(chanPart->getType() == "SIP" && chanPart->getExten() == "2201")
+      {
+        isDoorIntercom = true;
+        chanDoor = i.value();
+      }
+      if(isMyDevice && isDoorIntercom && NULL != chanDoor)
+      {
+        _isDoorIntercom = true;
+
+        //Disable the ui buttons to transfer and park
+        ui->_tbPark->setEnabled(false);
+        ui->_tbXfer->setEnabled(false);
+
+        // Show the video dialog
+        AdmIntercomVideoDialog *dlg = new AdmIntercomVideoDialog(this,chanDoor,QUrl("rtsp://10.121.212.23:554/live2.sdp"), "46");
+        //dlg.setModal(false);
+        dlg->show();
+        dlg->raise();
+        dlg->activateWindow();
+        //dlg.exec();
+        break;
+      }
     }
   }
 }
@@ -174,6 +190,7 @@ void AdmCallWidget::sRemoveChannel(AstChannel *channel)
     this->_channelWidgets->value(channel->getUuid())->deleteLater();
     this->_channelWidgets->remove(channel->getUuid());
   }
+  qDebug() << "Remove Channel " << channel->getUuid() << "from call " << _uuid;
   if(this->_channels->count() == 0)
     this->deleteLater();
 }

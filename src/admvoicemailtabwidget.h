@@ -18,6 +18,7 @@ public:
   ~AdmVoiceMailTabWidget();
 
   void addVoiceMailWidget(AdmVoiceMailWidget *widget);
+  void clearVoiceMailWidgets();
   
 private:
   Ui::AdmVoiceMailTabWidget *ui;

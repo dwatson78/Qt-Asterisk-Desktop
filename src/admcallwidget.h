@@ -48,6 +48,7 @@ private:
 
   QMap<QString,AstChannel*>     *_channels;
   QMap<QString,AdmChanWidget*>  *_channelWidgets;
+  bool _isDoorIntercom;
 };
 
 #endif // ADMCALLWIDGET_H

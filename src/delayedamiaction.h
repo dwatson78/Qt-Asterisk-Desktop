@@ -11,7 +11,7 @@ class DelayedAmiAction : public QObject
 public:
   explicit DelayedAmiAction(QObject *parent = 0, AsteriskManager *ami = 0, int delay = 100);
 
-  QString actionPlayDTMF(QString channel, QString digit = QString(), int duration = 0);
+  QString actionPlayDTMF(QString channel, QChar digit = QChar(), int duration = 0);
   QString actionHangup(QString channel, uint cause = 0);
 
 signals:

@@ -31,9 +31,11 @@ public slots:
   void sPreferences();
   void sPhoneFeatures();
 
+  void connectToAsterisk();
   void asteriskConnected();
   void asteriskConnected(QString arg1);
   void asteriskDisconnected();
+  void asteriskError(QAbstractSocket::SocketError);
   void asteriskResponseSent(AsteriskManager::Response arg1, QVariantMap arg2, QString arg3);
   void asteriskEventGenerated(AsteriskManager::Event arg1, QVariantMap arg2);
 
@@ -59,6 +61,8 @@ public slots:
   void sPlayMsgOnPhone(AdmVoiceMailWidget* obj, const QVariantMap &data);
 
   void sSendDtmf(AstChannel *channel, QString dtmfSequence, bool hangup = false, int hangupDelay = 0);
+  
+  void sSendAmiVoicemailRefresh(QString mailbox, QString context = "default");
 
   static QtAsteriskDesktopMain* getInstance(){return _instance;}
 
@@ -78,6 +82,9 @@ private:
   QMap<QString, AstSipPeer *>         * _mySipPeerMap;
   static QtAsteriskDesktopMain        * _instance;
   DlgPhoneFeatures                    * _phoneFeatures;
+  uint                                  _asteriskConnectInterval;
+
+
 };
 
 #endif // QTASTERISKDESKTOPMAIN_H

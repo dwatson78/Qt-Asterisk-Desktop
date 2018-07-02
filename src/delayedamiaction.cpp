@@ -11,7 +11,7 @@ DelayedAmiAction::DelayedAmiAction(QObject *parent, AsteriskManager *ami, int de
   _ami = ami;
   _delay = delay;
 }
-QString DelayedAmiAction::actionPlayDTMF(QString channel, QString digit, int duration)
+QString DelayedAmiAction::actionPlayDTMF(QString channel, QChar digit, int duration)
 {
   if(NULL == _ami)
     return QString();
@@ -21,7 +21,7 @@ QString DelayedAmiAction::actionPlayDTMF(QString channel, QString digit, int dur
 
   _headers.clear();
   _headers["Channel"] = channel;
-  _headers["Digit"] = digit;
+  _headers["Digit"] = QString(digit);
   if(duration > 0)
     _headers["Duration"] = duration;
 
