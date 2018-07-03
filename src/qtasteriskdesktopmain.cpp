@@ -143,6 +143,8 @@ void QtAsteriskDesktopMain::connectToAsterisk()
   bool valid = false;
   QString host;
   uint port,connectInterval;
+  port = 0;
+  connectInterval = 0;
 
   if( settings.contains(AmiPref::getName(AmiPref::host)))
   {
@@ -312,6 +314,18 @@ void QtAsteriskDesktopMain::asteriskError(QAbstractSocket::SocketError err)
       break;
     case QAbstractSocket::UnknownSocketError:
       socketErr = "UnknownSocketError";
+      break;
+    case QAbstractSocket::OperationError:
+      socketErr = "OperationError";
+      break;
+    case QAbstractSocket::SslInternalError:
+      socketErr = "SslInternalError";
+      break;
+    case QAbstractSocket::SslInvalidUserDataError:
+      socketErr = "SslInvalidUserDataError";
+      break;
+    case QAbstractSocket::TemporaryError:
+      socketErr = "TemporaryError";
       break;
   }
   qWarning() << "UNHANDLED QtAsteriskDesktopMain::asteriskError: Asterisk Error:" << socketErr;
@@ -556,6 +570,9 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           ui->_layoutParked->addWidget(parkedCall);
         }
       }
+      /* do not add break statement here */
+      /* fall-thru */
+      [[fallthrough]];
     }
     case AsteriskManager::UnParkedCall:
     case AsteriskManager::ParkedCallGiveUp:
@@ -579,7 +596,9 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           _parkedMap->value(uuid)->sParkedCallEvent(arg1, arg2);
         }
       }
-      // Do not add a break here
+      /* do not add break statement here */
+      /* fall-thru */
+      [[fallthrough]];
     }
     case AsteriskManager::Hangup:
     case AsteriskManager::Newstate:
@@ -740,6 +759,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           _callMap->value(callUuid)->sRemoveChannel(_chanMap->value(chanUuid));
         }
       }
+      break;
     }
     case AsteriskManager::Dial:
     {
@@ -1083,7 +1103,7 @@ void QtAsteriskDesktopMain::sDial()
     if(cp.isValid())
     {
       QString dvc = cp.getType().append("/").append(cp.getExten());
-      _ami->actionOriginate(dvc, ui->_dialNum->text(), "default", 1, QString(), QString(),0,tr("Originate: %1").arg(ui->_dialNum->text()));
+      _ami->actionOriginate(dvc, ui->_dialNum->text(), "from-internal", 1, QString(), QString(),0,tr("Dial: %1").arg(ui->_dialNum->text()));
     }
   }
 }

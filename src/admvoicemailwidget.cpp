@@ -48,7 +48,7 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString mailbox, QWidget *parent) :
   headers.append("Call-Id");
   ui->_messages->setColumnCount(headers.count());
   ui->_messages->setHorizontalHeaderLabels(headers);
-  ui->_messages->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
+  ui->_messages->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
   ui->_messages->horizontalHeader()->setStretchLastSection(true);
   /*ui->_messages->horizontalHeaderItem(0)->setSizeHint(
         QSize(200, ui->_messages->horizontalHeaderItem(0)->sizeHint().height()));*/

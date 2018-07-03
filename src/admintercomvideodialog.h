@@ -4,8 +4,10 @@
 #include <QDialog>
 #include <QUrl>
 #include <QAbstractButton>
-#include <Phonon/MediaObject>
-#include <Phonon/MediaSource>
+
+
+#include "phonon/mediaobject.h"
+#include "phonon/mediasource.h"
 
 #include "astchannel.h"
 

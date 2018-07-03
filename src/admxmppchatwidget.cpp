@@ -196,7 +196,7 @@ void AdmXmppChatWidget::addChatBlock(const JID & jid, const Message &msg)
   else
     spanColor = "red";
     
-  QString msgBody = Qt::escape(QString::fromUtf8(msg.body().data()));
+  QString msgBody = QString::fromUtf8(msg.body().data()).toHtmlEscaped();
   msgBody = msgBody.replace('\n',"<br/>");
   msgBody = msgBody.replace(' ',"&nbsp;");
   msgBody = msgBody.replace('\t',"&emsp;");
@@ -216,12 +216,12 @@ void AdmXmppChatWidget::addMsg(const JID &jid, const Message &msg)
     if(!isActive)
     {
       QApplication::alert(window());
-      QString from = Qt::escape(QString::fromUtf8(jid.username().data()));
+      QString from = QString::fromUtf8(jid.username().data()).toHtmlEscaped();
       QString notifBody = QString::fromUtf8(msg.body().data());
       if(notifBody.length() > 80)
         notifBody = notifBody.left(77).append("...");
       notifBody = notifBody.replace('"',"\\\"");
-      notifBody = Qt::escape(notifBody);
+      notifBody = notifBody.toHtmlEscaped();
       notifBody = notifBody.replace(QChar((uint)169),"&copy;");
       
       AdmNotificationManager::showMsg(from, notifBody, "mail-message-new", 7500, this);

@@ -2,7 +2,6 @@
 #include "ui_admxmppbuddywidget.h"
 
 #include <QMenu>
-#include <QMenuItem>
 #include <QAction>
 #include <QMessageBox>
 #include <QInputDialog>

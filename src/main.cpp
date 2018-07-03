@@ -3,11 +3,14 @@
 #include <QApplication>
 #include <iostream>
 
-void msgHandler(QtMsgType type, const char* msg)
+void msgHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg)
 {
   const QString symbols[] = {"DEBUG", "WARN", "ERROR", "FATAL"};
-  QString ou = QString("%1 [%2]: %3")
+  QString ou = QString("%1 (%2:%3 %4) [%5]: %6")
       .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz"))
+      .arg(context.file)
+      .arg(context.line)
+      .arg(context.function)
       .arg(symbols[type])
       .arg(msg);
   std::cerr << ou.toStdString() << std::endl;
@@ -17,7 +20,7 @@ void msgHandler(QtMsgType type, const char* msg)
 
 int main(int argc, char *argv[])
 {
-  qInstallMsgHandler(msgHandler);
+  qInstallMessageHandler(msgHandler);
   QApplication a(argc, argv);
   QCoreApplication::setOrganizationName("Watson Brothers");
   QCoreApplication::setApplicationName("QtAsteriskDesktop");

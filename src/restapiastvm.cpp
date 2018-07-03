@@ -2,13 +2,14 @@
 #include "admstatic.h"
 #include "qtasteriskdesktopprefs.h"
 
-#include <qjson/parser.h>
-
 #include <QDebug>
 #include <QVariantMap>
 #include <QUrl>
+#include <QUrlQuery>
 #include <QUuid>
 #include <QSettings>
+#include <QJsonParseError>
+#include <QJsonDocument>
 
 RestApiAstVm::RestApiAstVm(QObject *parent) :
   QObject(parent)
@@ -40,10 +41,13 @@ RestApiAstVm::~RestApiAstVm()
 
 void RestApiAstVm::_getRequest(const QString &api, const QVariantMap &headers)
 {
-  QUrl url(_baseUrl.append(api));
+  QUrl urlq(_baseUrl.append(api));
+  QUrlQuery urlqs;
   for(QVariantMap::const_iterator i = headers.begin(); i != headers.end(); ++i)
-    url.addQueryItem(i.key(),i.value().toString());
-  QNetworkRequest req(url);
+    urlqs.addQueryItem(i.key(),i.value().toString());
+  urlq.setQuery(urlqs);
+  qDebug() << "URL: " << urlq.toString();
+  QNetworkRequest req(urlq);
   _req = req;
   _nam->get(_req);
 }
@@ -61,19 +65,18 @@ void RestApiAstVm::parseNetworkResponse(QNetworkReply *reply)
 
   if(!_isDataStream)
   {
-    QJson::Parser prsr;
-    bool ok;
-    QVariantMap dataMap = prsr.parse(data, &ok).toMap();
-    if(ok)
+    QJsonParseError *err = new QJsonParseError();
+    QJsonDocument doc = QJsonDocument::fromJson(data, err);
+    if(!doc.isNull())
     {
+      QVariantMap dataMap = doc.toVariant().toMap();
       setReady(reply->request(), dataMap);
     } else {
-      setError(reply->request(), QNetworkReply::UnknownContentError, "Streamed data is unrecognized");
+      setError(reply->request(), reply->error(), err->errorString());
     }
   } else {
     setReady(reply->request(), data);
   }
-
 }
 
 void RestApiAstVm::setReady(const QNetworkRequest &req, const QVariantMap &data)

@@ -13,12 +13,11 @@
 #include <QTemporaryFile>
 
 #include <QMenu>
-#include <QMenuItem>
 #include <QAction>
 
-#include <Phonon/MediaObject>
-#include <Phonon/MediaSource>
-#include <Phonon/AudioOutput>
+#include "phonon/mediaobject.h"
+#include "phonon/mediasource.h"
+#include "phonon/audiooutput.h"
 
 namespace Ui {
 class AdmVoiceMailWidget;
