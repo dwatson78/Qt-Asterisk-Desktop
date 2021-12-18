@@ -12,6 +12,12 @@
 #include "astsippeer.h"
 #include "admvoicemailtabwidget.h"
 #include "dlgphonefeatures.h"
+#include "astlocalbridge.h"
+
+#ifdef AST_DEBUG
+  #include <QScopedPointer>
+  #include <QFile>
+#endif
 
 namespace Ui {
 class QtAsteriskDesktopMain;
@@ -30,9 +36,11 @@ public slots:
   void sPreferences();
   void sPhoneFeatures();
 
+  void connectToAsterisk();
   void asteriskConnected();
   void asteriskConnected(QString arg1);
   void asteriskDisconnected();
+  void asteriskError(QAbstractSocket::SocketError);
   void asteriskResponseSent(AsteriskManager::Response arg1, QVariantMap arg2, QString arg3);
   void asteriskEventGenerated(AsteriskManager::Event arg1, QVariantMap arg2);
 
@@ -48,7 +56,6 @@ public slots:
   void sCallXfer(AdmCallWidget * call, const QString & exten);
   void sCallPark(AdmCallWidget * call);
   void sCallHangup(AdmCallWidget * call);
-
   void sDestroyingParkedCalled(AstParkedCall *parkedCall);
   void sPickUpParkedCall(AstParkedCall *parkedCall);
   void sDestroyingChannel(AstChannel *channel);
@@ -57,7 +64,9 @@ public slots:
   void sDestroyingAdmExtensionWidget(AdmExtensionWidget *widget);
 
   void sPlayMsgOnPhone(AdmVoiceMailWidget* obj, const QVariantMap &data);
-  
+
+  void sSendAmiVoicemailRefresh(QString mailbox, QString context = "default");
+
   static QtAsteriskDesktopMain* getInstance(){return _instance;}
 
 private:
@@ -74,8 +83,16 @@ private:
   QMap<QString, AdmExtensionWidget *> * _extensionMap;
   QMap<QString, AstSipPeer *>         * _sipPeerMap;
   QMap<QString, AstSipPeer *>         * _mySipPeerMap;
+  QList<AstLocalBridge>               * _localBridgeMap;
   static QtAsteriskDesktopMain        * _instance;
   DlgPhoneFeatures                    * _phoneFeatures;
+  uint                                  _asteriskConnectInterval;
+
+#ifdef AST_DEBUG
+  QScopedPointer<QFile> m_astdebugFile;
+  int m_astdebugSequence;
+#endif
+
 };
 
 #endif // QTASTERISKDESKTOPMAIN_H

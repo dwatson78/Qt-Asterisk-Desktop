@@ -20,16 +20,21 @@ AdmCallWidget::AdmCallWidget(QString uuid, QFrame *parent) :
   connect(  ui->_tbPark,    SIGNAL(clicked()),  this, SLOT(sStartCallPark())    );
   connect(  ui->_tbHangup1,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
   connect(  ui->_tbHangup2,  SIGNAL(clicked()),  this, SLOT(sStartCallHangup())  );
+
   ui->_stackedButtons->setCurrentIndex(0);
+
+  qDebug() << "Created Call Widget: uuid: " << _uuid;
 }
 
 AdmCallWidget::~AdmCallWidget()
 {
+  qDebug() << "AdmCallWidget::~AdmCallWidget()";
   emit destroying(this);
 	delete ui;
   delete _time;
   delete _channels;
   delete _channelWidgets;
+  qDebug() << "Deleted Call Widget: uuid: " << _uuid;
 }
 
 void AdmCallWidget::addChannel(AstChannel* channel)
@@ -57,6 +62,7 @@ void AdmCallWidget::addChannel(AstChannel* channel)
   this->_channelWidgets->insert(channel->getUuid(),chanWidget);
   ui->_layoutChans->addWidget(chanWidget);
   this->sUpdateChannel(channel);
+  qDebug() << "Add Channel " << channel->getUuid() << "to call " << _uuid;
 }
 
 void AdmCallWidget::sUpdateChannel(AstChannel *channel)
@@ -143,6 +149,7 @@ void AdmCallWidget::sRemoveChannel(AstChannel *channel)
     this->_channelWidgets->value(channel->getUuid())->deleteLater();
     this->_channelWidgets->remove(channel->getUuid());
   }
+  qDebug() << "Remove Channel " << channel->getUuid() << "from call " << _uuid;
   if(this->_channels->count() == 0)
     this->deleteLater();
 }

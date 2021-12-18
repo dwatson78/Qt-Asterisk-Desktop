@@ -188,6 +188,9 @@ void AdmExtensionWidget::sSipPeerDestroying(AstSipPeer *peer)
           this,     SLOT(sSipExtensionStatusEvent(AstSipPeer*,QVariantMap)));
   disconnect(_sipPeer, SIGNAL(sigDndStatusEvent(AstSipPeer*,QVariantMap,bool)),
           this,     SLOT(sSipExtensionDndStatusEvent(AstSipPeer*,QVariantMap,bool)));
+  ui->_desc->setText("N/A");
+  ui->_exten->setText("N/A");
+  setPixmap(QPixmap(":/icons/status-unavail.png"));
   _sipPeer = NULL;
 }
 

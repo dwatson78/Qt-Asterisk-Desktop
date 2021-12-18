@@ -4,6 +4,7 @@
 #include <QToolButton>
 #include <QDragMoveEvent>
 #include <QMouseEvent>
+#include <QMimeData>
 
 #include "admcallwidget.h"
 
@@ -16,6 +17,10 @@ public:
   AdmCallWidget* admCallWidget() const;
   void setAdmCallWidget(AdmCallWidget *admCallWidget);
   bool hasAdmCallWidget() const;
+
+  bool hasFormat(const QString& mimeType) const;
+  QStringList formats() const;
+  QVariant retrieveData(const QString& mimeType, QVariant::Type type) const;
 private:
   AdmCallWidget* _admCallWidget;
 };

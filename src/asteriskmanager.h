@@ -39,92 +39,162 @@ public:
   };
 
   enum Event {
-    AgentCalled,
-    AgentComplete,
-    AgentConnect,
-    AgentDump,
-    AgentRingNoAnswer,
-    Agentlogin,
-    Agentlogoff,
-    Alarm,
-    AlarmClear,
-    Bridge,
-    BridgeAction,
-    BridgeExec,
-    BridgeEnter, //13
-    BridgeLeave, //13
-    BridgeCreate,
-    ChanSpyStart,
-    ChanSpyStop,
-    ConfbridgeEnd,
-    ConfbridgeJoin,
-    ConfbridgeLeave,
-    ConfbridgeStart,
-    ConfbridgeTalking,
-    DAHDIChannel,
-    DNDState,
-    DTMF,
-    Dial,
-    ExtensionStatus,
-    FullyBooted,
-    Hangup,
-    HangupHandlerPop,
-    HangupHandlerPush,
-    HangupHandlerRun,
-    HangupRequest,
-    Hold,
-    Join,
-    Leave,
-    LocalBridge,
-    LogChannel,
-    Masquerade,
-    MeetmeEnd,
-    MeetmeJoin,
-    MeetmeLeave,
-    MeetmeMute,
-    MeetmeTalkRequest,
-    MeetmeTalking,
-    MessageWaiting,
-    ModuleLoadReport,
-    NewAccountCode,
-    NewCallerid,
-    NewPeerAccount,
-    Newchannel,
-    Newexten,
-    Newstate,
-    OriginateResponse,
-    ParkedCall,
-    ParkedCallGiveUp,
-    ParkedCallTimeOut,
-    Pickup,
-    PresenceStatus,
-    QueueCallerAbandon,
-    QueueMemberAdded,
-    QueueMemberPaused,
-    QueueMemberPenalty,
-    QueueMemberRemoved,
-    QueueMemberRinginuse,
-    QueueMemberStatus,
-    Rename,
-    Shutdown,
-    SoftHangupRequest,
-    SpanAlarm,
-    SpanAlarmClear,
-    UnParkedCall,
-    VarSet,
-    // Event yg gak ke dokumentasi di 'make full' asterisk
-    CoreShowChannel,
-    CoreShowChannelsComplete,
-    MusicOnHold,
-    PeerEntry,
-    PeerlistComplete,
-    PeerStatus,
-    QueueEntry,
-    QueueMember,
-    QueueParams,
-    QueueStatusComplete,
-    RTCPReceived,
-    RTCPSent
+      NOOP_PLACEHOLDER
+    , AgentCalled
+    , AgentComplete
+    , AgentConnect
+    , AgentDump
+    , AgentLogin
+    , AgentLogoff
+    , AgentRingNoAnswer
+    , Agents
+    , AgentsComplete
+    , AGIExecEnd
+    , AGIExecStart
+    , Alarm
+    , AlarmClear
+    , AorDetail
+    , AsyncAGIEnd
+    , AsyncAGIExec
+    , AsyncAGIStart
+    , AttendedTransfer
+    , AuthDetail
+    , AuthMethodNotAllowed
+    , BlindTransfer
+    , BridgeCreate
+    , BridgeDestroy
+    , BridgeEnter
+    , BridgeInfoChannel
+    , BridgeInfoComplete
+    , BridgeLeave
+    , BridgeMerge
+    , BridgeVideoSourceUpdate
+    , Cdr
+    , CEL
+    , ChallengeResponseFailed
+    , ChallengeSent
+    , ChannelTalkingStart
+    , ChannelTalkingStop
+    , ChanSpyStart
+    , ChanSpyStop
+    , ConfbridgeEnd
+    , ConfbridgeJoin
+    , ConfbridgeLeave
+    , ConfbridgeList
+    , ConfbridgeMute
+    , ConfbridgeRecord
+    , ConfbridgeStart
+    , ConfbridgeStopRecord
+    , ConfbridgeTalking
+    , ConfbridgeUnmute
+    , ContactStatus
+    , ContactStatusDetail
+    , CoreShowChannel
+    , CoreShowChannelsComplete
+    , DAHDIChannel
+    , DeviceStateChange
+    , DeviceStateListComplete
+    , DialBegin
+    , DialEnd
+    , DNDState
+    , DTMFBegin
+    , DTMFEnd
+    , EndpointDetail
+    , EndpointDetailComplete
+    , EndpointList
+    , EndpointListComplete
+    , ExtensionStateListComplete
+    , ExtensionStatus
+    , FailedACL
+    , FAXSession
+    , FAXSessionsComplete
+    , FAXSessionsEntry
+    , FAXStats
+    , FAXStatus
+    , FullyBooted
+    , Hangup
+    , HangupHandlerPop
+    , HangupHandlerPush
+    , HangupHandlerRun
+    , HangupRequest
+    , Hold
+    , IdentifyDetail
+    , InvalidAccountID
+    , InvalidPassword
+    , InvalidTransport
+    , LoadAverageLimit
+    , LocalBridge
+    , LocalOptimizationBegin
+    , LocalOptimizationEnd
+    , LogChannel
+    , MCID
+    , MeetmeEnd
+    , MeetmeJoin
+    , MeetmeLeave
+    , MeetmeMute
+    , MeetmeTalking
+    , MeetmeTalkRequest
+    , MemoryLimit
+    , MessageWaiting
+    , MiniVoiceMail
+    , MonitorStart
+    , MonitorStop
+    , MusicOnHoldStart
+    , MusicOnHoldStop
+    , MWIGet
+    , MWIGetComplete
+    , NewAccountCode
+    , NewCallerid
+    , Newchannel
+    , NewConnectedLine
+    , NewExten
+    , Newstate
+    , OriginateResponse
+    , ParkedCall
+    , ParkedCallGiveUp
+    , ParkedCallSwap
+    , ParkedCallTimeOut
+    , PeerEntry
+    , PeerStatus
+    , Pickup
+    , PresenceStateChange
+    , PresenceStateListComplete
+    , PresenceStatus
+    , QueueCallerAbandon
+    , QueueCallerJoin
+    , QueueCallerLeave
+    , QueueMemberAdded
+    , QueueMemberPause
+    , QueueMemberPenalty
+    , QueueMemberRemoved
+    , QueueMemberRinginuse
+    , QueueMemberStatus
+    , ReceiveFAX
+    , Registry
+    , Reload
+    , Rename
+    , RequestBadFormat
+    , RequestNotAllowed
+    , RequestNotSupported
+    , RTCPReceived
+    , RTCPSent
+    , SendFAX
+    , SessionLimit
+    , SessionTimeout
+    , Shutdown
+    , SIPQualifyPeerDone
+    , SoftHangupRequest
+    , SpanAlarm
+    , SpanAlarmClear
+    , Status
+    , StatusComplete
+    , SuccessfulAuth
+    , TransportDetail
+    , UnexpectedAddress
+    , Unhold
+    , UnParkedCall
+    , UserEvent
+    , VarSet
   };
 
   enum ExtStatus{
@@ -246,7 +316,7 @@ public:
   QString actionParkinglots();
   QString actionPauseMonitor();
   QString actionPing();
-  QString actionPlayDTMF(QString channel, QString digit);
+  QString actionPlayDTMF(QString channel, QString digit, int duration=0);
   QString actionPresenceState();
   QString actionPRIShowSpans();
   QString actionQueueAdd(QString queue,
@@ -294,18 +364,21 @@ public:
   QString actionUnpauseMonitor();
   QString actionUpdateConfig();
   QString actionUserEvent();
+  QString actionVoicemailRefresh(QString mailbox, QString context);
   QString actionVoicemailUsersList();
   QString actionWaitEvent();
+  QString sendAction(QString action, QVariantMap headers = QVariantMap(), QString presetActionId = QString());
+  void insertNotEmpty(QVariantMap *headers, QString key, QVariant value);
+protected:
 
 private:
   QMetaEnum responseEnum, eventEnum;
   QVariantMap packetBuffer;
-
   QString valueToString(QVariant value);
   QVariant stringValue(QString string);
-  void insertNotEmpty(QVariantMap *headers, QString key, QVariant value);
+
   void dispatchPacket();
-  QString sendAction(QString action, QVariantMap headers = QVariantMap());
+  //QString sendAction(QString action, QVariantMap headers = QVariantMap(), QString presetActionId = QString());
 
 private slots:
   void onReadyRead();

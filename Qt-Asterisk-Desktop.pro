@@ -3,23 +3,22 @@ QT += \
     gui \
     network \
     sql \
-    webkit \
-    phonon
+    webkit
 
 greaterThan(QT_MAJOR_VERSION, 4) {
- QT +=  widgets
+ QT +=  widgets webkitwidgets
 }
 
-OTHER_INC = "$$_PRO_FILE_PWD_/3rdparty/include"
-OTHER_LIBS = "$$_PRO_FILE_PWD_/3rdparty/lib"
+OTHER_INC = "$$_PRO_FILE_PWD_/../3rdparty/include"
+OTHER_LIBS = "$$_PRO_FILE_PWD_/../3rdparty/lib"
 
 INCLUDEPATH += \
     /usr/include/qjson \
-    /usr/include/qt4/phonon \
+    /usr/include/phonon4qt5 \
     $$OTHER_INC
 
 LIBS += \
-    -lqjson -lphonon -L$$OTHER_LIBS -lgloox -lpthread -lqt-wrap-libnotify
+    -lqjson -lphonon4qt5 -L$$OTHER_LIBS -lgloox -lpthread -lqt-wrap-libnotify
 
 TARGET = QtAsteriskDesktop
 
@@ -54,7 +53,8 @@ SOURCES +=   \
     src/admnotificationmanager.cpp \
     src/astchanparts.cpp \
     src/dlgphonefeatures.cpp \
-    src/admxmppbuddyitem.cpp
+    src/admxmppbuddyitem.cpp \
+    src/astdialogshowevents.cpp
 
 HEADERS +=   \
     src/qtasteriskdesktopmain.h \
@@ -83,7 +83,9 @@ HEADERS +=   \
     src/admnotificationmanager.h \
     src/astchanparts.h \
     src/dlgphonefeatures.h \
-    src/admxmppbuddyitem.h
+    src/admxmppbuddyitem.h \
+    src/astdialogshowevents.h \
+    src/astlocalbridge.h
 
 FORMS +=     \
     src/ui/qtasteriskdesktopmain.ui \
@@ -99,14 +101,26 @@ FORMS +=     \
     src/ui/admxmppbuddywidget.ui \
     src/ui/admxmppchatwidget.ui \
     src/ui/admxmppchatblockwidget.ui \
-    src/ui/dlgphonefeatures.ui
+    src/ui/dlgphonefeatures.ui \
+    src/ui/astdialogshowevents.ui
 
 RESOURCES += \
     resources.qrc
 
 TEMPLATE = app
-DESTDIR = bin
-MOC_DIR = tmp/moc
-OBJECTS_DIR = tmp/obj
-UI_DIR = tmp/ui
-RCC_DIR = tmp/rcc
+
+CONFIG(release, debug|release) {
+  DESTDIR = bin
+}
+CONFIG(debug, debug|release) {
+  DESTDIR = debug
+}
+
+message("CONFIG: $${CONFIG}")
+
+MOC_DIR = tmp/$$DESTDIR/moc
+OBJECTS_DIR = tmp/$$DESTDIR/obj
+UI_DIR = tmp/$$DESTDIR/ui
+RCC_DIR = tmp/$$DESTDIR/rcc
+
+DEFINES += AST_DEBUG

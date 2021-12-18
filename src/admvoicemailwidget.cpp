@@ -1,8 +1,10 @@
 #include "admvoicemailwidget.h"
 #include "ui_admvoicemailwidget.h"
+#include "qtasteriskdesktopmain.h"
 #include "restapiastvm.h"
 
 #include <QDebug>
+#include "admstatic.h"
 #include <QDir>
 #include <QStringList>
 #include <QVariant>
@@ -11,18 +13,32 @@
 #include <QMetaObject>
 #include <QMetaEnum>
 #include <QInputDialog>
+#include <QFuture>
+#include <QtConcurrent/QtConcurrentRun>
 
-AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
+AdmVoiceMailWidget::AdmVoiceMailWidget(QString mailbox, QWidget *parent) :
   QWidget(parent),
   ui(new Ui::AdmVoiceMailWidget)
 {
   ui->setupUi(this);
-  _vmBox = vmBox;
-  _mObj = new Phonon::MediaObject();
+  _mailbox = mailbox;
+  _vmBox = mailbox;
+  _vmContext = "default";
+  if(_mailbox.contains("@"))
+  {
+    QStringList vmBoxParts = _mailbox.split("@");
+    if(vmBoxParts.count() == 2)
+    {
+      _vmBox = vmBoxParts[0];
+      _vmContext = vmBoxParts[1];
+    }
+  }
+
+  _mObj = new Phonon::MediaObject(this);
   _mSrc = Phonon::MediaSource();
   _mOut = new Phonon::AudioOutput(Phonon::CommunicationCategory, this);
   Phonon::createPath(_mObj,_mOut);
-  _mFile = NULL;
+  //_mFile = NULL;
   _selectedFolder = QString();
   _selectedMessageRow = -1;
 
@@ -34,7 +50,7 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
   headers.append("Call-Id");
   ui->_messages->setColumnCount(headers.count());
   ui->_messages->setHorizontalHeaderLabels(headers);
-  ui->_messages->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
+  ui->_messages->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
   ui->_messages->horizontalHeader()->setStretchLastSection(true);
   /*ui->_messages->horizontalHeaderItem(0)->setSizeHint(
         QSize(200, ui->_messages->horizontalHeaderItem(0)->sizeHint().height()));*/
@@ -65,6 +81,8 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
             this, SLOT(sMediaObjectSourceChanged(Phonon::MediaSource)));
   connect(_mObj,  SIGNAL(finished()),
           this,   SLOT(sMediaObjectFinished()));
+  connect(this,   SIGNAL(sigSeek(qint64)),
+          _mObj,  SLOT(seek(qint64)));
   connect(ui->_msgSeekBack, SIGNAL(clicked()),
           this,             SLOT(sMsgSeekBackClick()));
   connect(ui->_msgSeekForward,  SIGNAL(clicked()),
@@ -81,9 +99,13 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString vmBox, QWidget *parent) :
 
 AdmVoiceMailWidget::~AdmVoiceMailWidget()
 {
+  _mObj->clearQueue();
+  _mObj->clear();
+  removeTmpMsgFiles();
+
   delete ui;
-  if(_mFile != NULL)
-    delete _mFile;
+  //if(_mFile != NULL)
+  //  delete _mFile;
   delete _mOut;
   delete _mObj;
 }
@@ -168,6 +190,7 @@ void AdmVoiceMailWidget::sLoadFolder(const QString &folder)
   ui->_messages->setRowCount(0);
   // Get the message details for this folder
   QVariantMap params;
+  params["vmContext"] = _vmContext;
   params["vmBox"] = _vmBox;
   params["vmFolder"] = folder;
   bool ok = false;
@@ -242,12 +265,13 @@ void AdmVoiceMailWidget::sMessagesItemChanged(QTableWidgetItem *current, QTableW
 {
   Q_UNUSED(previous)
 
+  _mObj->clearQueue();
   _mObj->clear();
-  if(NULL != _mFile)
-  {
-    delete _mFile;
-    _mFile = NULL;
-  }
+  //if(NULL != _mFile)
+  //{
+    //delete _mFile;
+    //_mFile = NULL;
+  //}
   ui->_frameSelectedMessage->setEnabled(NULL != current);
 }
 
@@ -304,6 +328,7 @@ void AdmVoiceMailWidget::sMsgCustomContextAction(QAction* action)
     if(re.exactMatch(destBox))
     {
       QVariantMap params;
+      params["vmContext"] = _vmContext;
       params["vmBox"] = _vmBox;
       params["vmFolder"] = folder;
       params["vmMsgId"] = dataMap["msg_id"].toString();
@@ -324,27 +349,54 @@ void AdmVoiceMailWidget::sMsgCustomContextAction(QAction* action)
     }
   } else if(action->text() == "Archive")
   {
+    qDebug() << AdmStatic::eventToString(dataMap);
+
     if(folder != "Deleted")
     {
-      QAction *archive = new QAction("Deleted",this);
-      sMsgCustomContextMoveMsg(archive);
+      QDateTime qdt;
+      qdt.setTime_t(dataMap["origtime"].toUInt());
+
+      if(QMessageBox(QMessageBox::Question
+                     ,QString("Archive Message?")
+                     ,QString("Are you sure you want to archive this message?\n\nFrom: %1\nDate: %2\nOriginal Mailbox: %3")
+                     .arg(dataMap["callerid"].toString())
+                     .arg(qdt.toLocalTime().toString("ddd MM/dd hh:mm:ss AP"))
+                     .arg(dataMap["origmailbox"].toString())
+                     ,(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel))
+         .exec() == QMessageBox::Yes)
+      {
+        QAction *archive = new QAction("Deleted",this);
+        sMsgCustomContextMoveMsg(archive);
+      }
     }
   } else if (action->text() == "Delete") {
-
-    QVariantMap params;
-    params["vmBox"] = _vmBox;
-    params["vmFolder"] = folder;
-    params["vmMsgId"] = dataMap["msg_id"].toString();
-    bool ok = false;
-    RestApiAstVmDeleteMessage *r = new RestApiAstVmDeleteMessage();
-    r->set(params, &ok);
-    if(ok)
+    QDateTime qdt;
+    qdt.setTime_t(dataMap["origtime"].toUInt());
+    if(QMessageBox(QMessageBox::Question
+                   ,QString("Delete Message?")
+                   ,QString("Are you sure you want to delete this message?\n\nFrom: %1\nDate: %2\nOriginal Mailbox: %3")
+                   .arg(dataMap["callerid"].toString())
+                   .arg(qdt.toLocalTime().toString("ddd MM/dd hh:mm:ss AP"))
+                   .arg(dataMap["origmailbox"].toString())
+                   ,(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel))
+       .exec() == QMessageBox::Yes)
     {
-      connect(r,    SIGNAL(sigReady(QVariantMap)),
-              this, SLOT(sVmDeleteMessageReady(QVariantMap)));
-      connect(r,    SIGNAL(sigError(QNetworkReply::NetworkError, QString)),
-              this, SLOT(sVmDeleteMessageError(QNetworkReply::NetworkError, QString)));
-      r->start();
+      QVariantMap params;
+      params["vmContext"] = _vmContext;
+      params["vmBox"] = _vmBox;
+      params["vmFolder"] = folder;
+      params["vmMsgId"] = dataMap["msg_id"].toString();
+      bool ok = false;
+      RestApiAstVmDeleteMessage *r = new RestApiAstVmDeleteMessage();
+      r->set(params, &ok);
+      if(ok)
+      {
+        connect(r,    SIGNAL(sigReady(QVariantMap)),
+                this, SLOT(sVmDeleteMessageReady(QVariantMap)));
+        connect(r,    SIGNAL(sigError(QNetworkReply::NetworkError, QString)),
+                this, SLOT(sVmDeleteMessageError(QNetworkReply::NetworkError, QString)));
+        r->start();
+      }
     }
   }
 }
@@ -362,6 +414,7 @@ void AdmVoiceMailWidget::sVmDeleteMessageReady(const QVariantMap &data)
 {
   Q_UNUSED(data);
   sRefreshView();
+  sSendAmiVoicemailRefresh();
 }
 void AdmVoiceMailWidget::sVmDeleteMessageError(QNetworkReply::NetworkError err, const QString &errString)
 {
@@ -379,6 +432,7 @@ void AdmVoiceMailWidget::sMsgCustomContextMoveMsg(QAction* action)
 
     bool ok = false;
     QVariantMap params;
+    params["vmContext"] = _vmContext;
     params["vmBox"] = _vmBox;
     params["vmFolderSrc"] = ui->_folders->currentItem()->data(RestApiAstVm::ROLE_FOLDER_NAME).toString();
     params["vmFolderDst"] = action->text() == "New" ? "INBOX" : action->text();
@@ -398,6 +452,7 @@ void AdmVoiceMailWidget::sVmMoveMessageReady(const QVariantMap &data)
 {
   Q_UNUSED(data)
   sRefreshView();
+  sSendAmiVoicemailRefresh();
   //QString folder = ui->_folders->currentItem()->data(RestApiAstVm::ROLE_FOLDER_NAME).toString();
   //sLoadFolder(folder);
 }
@@ -411,6 +466,7 @@ void AdmVoiceMailWidget::sRefreshView()
 
   RestApiAstVmMsgCounts *rest = new RestApiAstVmMsgCounts();
   QVariantMap params;
+  params["vmContext"] = _vmContext;
   params["vmBox"] = _vmBox;
   bool ok = false;
   rest->set(params, &ok);
@@ -445,6 +501,7 @@ void AdmVoiceMailWidget::sPlayMsgClicked()
         RestApiAstVmGetMsgSoundFile *r = new RestApiAstVmGetMsgSoundFile();
         bool ok = false;
         QVariantMap params;
+        params["vmContext"] = _vmContext;
         params["vmBox"] = _vmBox;
         QString folder = ui->_folders->currentItem()->data(RestApiAstVm::ROLE_FOLDER_NAME).toString();
         params["vmFolder"] = folder;
@@ -460,6 +517,7 @@ void AdmVoiceMailWidget::sPlayMsgClicked()
         }
       }
     } else {
+      qDebug() << QString("AdmVoiceMailWidget::sPlayMsgClicked: currentSource().type()=%1 state()=%2").arg(_mObj->currentSource().type()).arg(_mObj->state());
       if(_mObj->isSeekable())
       {
         if(_mObj->currentTime() >= _mObj->totalTime())
@@ -473,47 +531,62 @@ void AdmVoiceMailWidget::sMsgSeekBackClick()
 {
   if(_mObj->isSeekable() && _mObj->state() == Phonon::PlayingState)
   {
-    _mObj->seek( (_mObj->currentTime() - 1500) < 0
-                  ? 0
-                  : _mObj->currentTime() - 1500);
+    qint64 seekTo = (_mObj->currentTime() - 1500) < 0
+            ? 0
+            : _mObj->currentTime() - 1500;
+    emit sigSeek(seekTo);
   }
 }
 void AdmVoiceMailWidget::sMsgSeekForwardClick()
 {
+
   if(_mObj->isSeekable() && _mObj->state() == Phonon::PlayingState)
   {
-    _mObj->seek( (_mObj->currentTime() + 1500) >= _mObj->totalTime()
-                  ? _mObj->totalTime()
-                  : _mObj->currentTime() + 1500);
+    qint64 seekTo = (_mObj->currentTime() + 1500) >= _mObj->totalTime()
+            ? _mObj->totalTime()
+            : _mObj->currentTime() + 1500;
+    emit sigSeek(seekTo);
   }
 }
 
 void AdmVoiceMailWidget::sSoundFileReady(const QByteArray &data)
 {
+  _mObj->clearQueue();
   _mObj->clear();
-  if(NULL != _mFile)
+
+  //delete other wav files
+  removeTmpMsgFiles();
+
+  //QTemporaryFile *pf = _mFile;
+  QTemporaryFile _mFile(QString("%1/qtadm_vm_msg.wav.XXXXXX").arg(QDir::tempPath()));
+  _mFile.setAutoRemove(false);
+  if(_mFile.open())
   {
-    delete _mFile;
-    _mFile = NULL;
-  }
-  _mFile = new QTemporaryFile(QString("%1/msg.wav.XXXXXX").arg(QDir::tempPath()));
-  if(_mFile->open())
-  {
-    _mFile->write(data);
-    _mFile->close();
-    _mObj->setCurrentSource(QUrl(QString("file://%1").arg(_mFile->fileName())));
+    _mFile.write(data);
+    _mFile.close();
+    _mObj->enqueue(QUrl(QString("file://%1").arg(_mFile.fileName())));
+    qDebug() << QString("AdmVoiceMailWidget::sSoundFileReady: currentSource().url()=%1").arg(_mObj->currentSource().url().toString());
+    qDebug() << QString("AdmVoiceMailWidget::sSoundFileReady: before play state()=%1").arg(_mObj->state());
     _mObj->play();
+    qDebug() << QString("AdmVoiceMailWidget::sSoundFileReady: after play state()=%1").arg(_mObj->state());
   }
+  //if(NULL != pf)
+  //{
+    //delete pf;
+    //pf = NULL;
+  //}
 }
 
 void AdmVoiceMailWidget::sMediaObjectTick(qint64 time)
 {
+  qDebug() << QString("AdmVoiceMailWidget::sMediaObjectTick: time=%1").arg(time);
   QTime displayTime(0, (time / 60000) % 60, (time / 1000) % 60);
   ui->_lcdTime->display(displayTime.toString("mm:ss"));
 }
 
 void AdmVoiceMailWidget::sMediaObjectStateChanged(Phonon::State newState, Phonon::State oldState)
 {
+  qDebug() << QString("AdmVoiceMailWidget::sMediaObjectStateChanged: oldState=%1, newState=%2").arg(oldState).arg(newState);
   Q_UNUSED(oldState)
   switch (newState)
   {
@@ -521,8 +594,12 @@ void AdmVoiceMailWidget::sMediaObjectStateChanged(Phonon::State newState, Phonon
     {
       if (_mObj->errorType() == Phonon::FatalError) {
           QMessageBox::warning(this, tr("Fatal Error"),
-          _mObj->errorString());
+                              _mObj->errorString());
+          //_mObj->setCurrentSource(_mSrc);
+          _mObj->clearQueue();
+          _mObj->clear();
       } else {
+
           QMessageBox::warning(this, tr("Error"),
           _mObj->errorString());
       }
@@ -554,20 +631,30 @@ void AdmVoiceMailWidget::sMediaObjectStateChanged(Phonon::State newState, Phonon
       break;
   }
 }
-void AdmVoiceMailWidget::sMediaObjectSourceChanged(Phonon::MediaSource)
+void AdmVoiceMailWidget::sMediaObjectSourceChanged(Phonon::MediaSource src)
 {
+  qDebug() << QString("AdmVoiceMailWidget::sMediaObjectSourceChanged: type=%1, url=%2").arg(src.type()).arg(src.url().toString());
+
   ui->_lcdTime->display("00:00");
 }
 void AdmVoiceMailWidget::sMediaObjectFinished()
 {
+  qDebug() << QString("AdmVoiceMailWidget::sMediaObjectFinished");
   QIcon icon;
   icon.addFile(QString::fromUtf8(":/icons/media-playback-start.png"), QSize(), QIcon::Normal, QIcon::Off);
   ui->_msgTogglePlay->setIcon(icon);
-  _mObj->stop();
+
   if(_mObj->isSeekable())
+  {
+    _mObj->pause();
     _mObj->seek(0);
+  }
   else
-    _mObj->setCurrentSource(_mSrc);
+  {
+      _mObj->stop();
+    //_mObj->setCurrentSource(_mSrc);
+    //_mObj->clear();
+  }
 }
 
 void AdmVoiceMailWidget::sPlayOnPhoneClicked()
@@ -593,5 +680,21 @@ void AdmVoiceMailWidget::showNetworkErrorMsg(const QString& functionName, QNetwo
                           QString("A network error occured: (%1) %2")
                           .arg(QString::number(err))
                           .arg(errString));
+  }
+}
+
+void AdmVoiceMailWidget::sSendAmiVoicemailRefresh()
+{
+  QtAsteriskDesktopMain::getInstance()->sSendAmiVoicemailRefresh(_vmBox, _vmContext);
+}
+
+void AdmVoiceMailWidget::removeTmpMsgFiles()
+{
+  QDir dir(QDir::tempPath());
+  dir.setNameFilters(QStringList() << "qtadm_vm_msg.wav.*");
+  dir.setFilter(QDir::Files);
+  foreach(QString dirFile, dir.entryList())
+  {
+    dir.remove(dirFile);
   }
 }

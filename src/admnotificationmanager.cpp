@@ -52,7 +52,7 @@ void AdmNotificationManager::startCallNotification(AstChannel *chan)
     connect(chan, SIGNAL(updated(AstChannel*)),
             this, SLOT(sChannelUpdated(AstChannel*)));
 
-    n->doNotify(QCoreApplication::applicationName(),"Incoming Call",Qt::escape(chan->getConnectedLineStr()),"call-start",7500);
+    n->doNotify(QCoreApplication::applicationName(),"Incoming Call",chan->getConnectedLineStr().toHtmlEscaped(),"call-start",7500);
   }
 }
 
@@ -89,9 +89,10 @@ void AdmNotificationManager::sChannelUpdated(AstChannel *chan)
     if(ok)
     {
        subject = "Call Ended";
-       body = Qt::escape(chan->getConnectedLineStr()
+       body = chan->getConnectedLineStr()
                 .append("\n\n")
-                .append(chan->getHangupCauseDesc()));
+                .append(chan->getHangupCauseDesc())
+                .toHtmlEscaped();
        icon = "call-stop";
     } else {
       //Find out the nature of the channel status
@@ -117,14 +118,17 @@ void AdmNotificationManager::sChannelUpdated(AstChannel *chan)
           case 6: // line is up
           {
             subject = "Call Handled";
-            body = Qt::escape(chan->getConnectedLineStr());
+            body = chan->getConnectedLineStr().toHtmlEscaped();
             icon = "dialog-information";
             break;
           }
           case 7: // line is busy
+          {
             subject = "Call Busy";
-            body = Qt::escape(chan->getConnectedLineStr());
+            body = chan->getConnectedLineStr().toHtmlEscaped();
             icon = "dialog-error";
+            break;
+          }
           default:
           {
             qWarning() << "Unhandled channel state after ringing to channel state: " << chanState;

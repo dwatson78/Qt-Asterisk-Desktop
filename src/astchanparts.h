@@ -12,8 +12,8 @@ class AstChanParts : public QObject
   Q_PROPERTY(QString  Exten READ getExten  WRITE setExten  NOTIFY ExtenChanged)
   Q_PROPERTY(QString  Extra READ getExtra  WRITE setExtra  NOTIFY ExtraChanged)
   Q_PROPERTY(QString  Special READ getSpecial  WRITE setSpecial  NOTIFY SpecialChanged)
-  Q_PROPERTY(QBool    IsValid READ isValid)
-  Q_PROPERTY(QBool    IsMyDevice READ isMyDevice)
+  Q_PROPERTY(bool    IsValid READ isValid)
+  Q_PROPERTY(bool    IsMyDevice READ isMyDevice)
 
 public:
   explicit AstChanParts(QString channel, QObject *parent = 0);
@@ -33,9 +33,9 @@ public:
   QString getSpecial();
   void setSpecial(QString special);
 
-  QBool isValid();
+  bool isValid();
 
-  QBool isMyDevice();
+  bool isMyDevice();
 
 protected:
 

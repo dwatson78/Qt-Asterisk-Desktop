@@ -39,9 +39,7 @@ Makefile*
 #Backup files
 *~
 
-#bin
+#bin, debug and tmp
 bin
+debug
 tmp
-
-3rdparty/lib/*
-3rdparty/include/*

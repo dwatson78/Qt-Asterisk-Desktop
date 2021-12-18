@@ -120,12 +120,23 @@ QString AdmStatic::eventToString(const QVariantMap &event, const QString &search
   QRegExp re(search);
 
   QString o;
-  for(QVariantMap::const_iterator i = event.begin(); i != event.end(); ++i)
+  QString eventType = "Event";
+  if(event.contains(eventType))
   {
     o.append(QString("%1: %2\n")
-            .arg(i.key())
-            .arg(i.value().toString())
+            .arg(eventType)
+            .arg(event.value(eventType).toString())
     );
+  }
+  for(QVariantMap::const_iterator i = event.begin(); i != event.end(); ++i)
+  {
+    if(i.key() != eventType)
+    {
+      o.append(QString("%1: %2\n")
+              .arg(i.key())
+              .arg(i.value().toString())
+      );
+    }
     if(!re.isEmpty() && !matches)
     {
       if(i.value().toString().contains(re))
@@ -136,4 +147,18 @@ QString AdmStatic::eventToString(const QVariantMap &event, const QString &search
     o.append("\n");
 
   return matches ? o : QString();
+}
+
+void AdmStatic::removeLayoutChildren(QLayout *layout)
+{
+  QLayoutItem *child;
+  while(layout->count()!=0)
+  {
+    child = layout->takeAt(0);
+    if(child->layout() != 0)
+      removeLayoutChildren(child->layout());
+    else if (child->widget() != 0)
+      delete child->widget();
+    delete child;
+  }
 }

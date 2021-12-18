@@ -27,6 +27,13 @@ bool MimeDataAstCall::hasAdmCallWidget() const
   return (NULL != _admCallWidget);
 }
 
+bool MimeDataAstCall::hasFormat(const QString& mimeType) const { Q_UNUSED(mimeType); return false; }
+
+QStringList MimeDataAstCall::formats() const {return QStringList();}
+
+QVariant MimeDataAstCall::retrieveData(const QString& mimeType, QVariant::Type type) const {Q_UNUSED(mimeType); Q_UNUSED(type); return QVariant(type);}
+
+
 DraggableToolButton::DraggableToolButton(QWidget *parent) :
   QToolButton(parent)
 {

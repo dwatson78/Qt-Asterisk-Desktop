@@ -128,8 +128,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>148</width>
-             <height>207</height>
+             <width>98</width>
+             <height>84</height>
             </rect>
            </property>
            <attribute name="label">
@@ -152,8 +152,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>146</width>
-                 <height>205</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -194,8 +194,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>148</width>
-             <height>207</height>
+             <width>98</width>
+             <height>84</height>
             </rect>
            </property>
            <attribute name="label">
@@ -218,8 +218,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>146</width>
-                 <height>205</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -466,6 +466,7 @@
      <string>File</string>
     </property>
     <addaction name="_actionExit"/>
+    <addaction name="_actionOpenVideo"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -520,6 +521,11 @@
   <action name="_actionPhoneFeatures">
    <property name="text">
     <string>Phone Features</string>
+   </property>
+  </action>
+  <action name="_actionOpenVideo">
+   <property name="text">
+    <string>Open Video</string>
    </property>
   </action>
  </widget>

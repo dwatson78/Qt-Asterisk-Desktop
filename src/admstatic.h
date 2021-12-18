@@ -5,6 +5,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QNetworkAccessManager>
+#include <QLayout>
 
 #include "admnotificationmanager.h"
 
@@ -17,6 +18,8 @@ public:
   static QString    elapsedTimeToString(QTime *time);
   static QString    extStatusToString(uint extStatusNum);
   static QString    eventToString(const QVariantMap &event, const QString &search="");
+  static void removeLayoutChildren(QLayout *layout);
+
 
   /* Public members */
   ~AdmStatic();

@@ -39,16 +39,16 @@ void AstChanParts::setExtra(QString extra){_extra = extra;}
 QString AstChanParts::getSpecial(){return _special;}
 void AstChanParts::setSpecial(QString special){_special = special.replace("<","");}
 
-QBool AstChanParts::isValid(){return QBool(_isValid);}
+bool AstChanParts::isValid(){return bool(_isValid);}
 
-QBool AstChanParts::isMyDevice(){
+bool AstChanParts::isMyDevice(){
   if(_isValid)
   {
     QSettings set;
     if(set.contains("DEVICES/default"))
     {
-      return QBool(set.value("DEVICES/default").toString() == QString("%1/%2").arg(getType()).arg(getExten()));
+      return bool(set.value("DEVICES/default").toString() == QString("%1/%2").arg(getType()).arg(getExten()));
     }
   }
-  return QBool(false);
+  return false;
 }
