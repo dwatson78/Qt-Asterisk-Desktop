@@ -28,10 +28,13 @@ public:
 
   QLabel *getIconLabel();
   QLabel *getTextLabel();
+
 protected:
   Ui::AdmIconText *ui;
+
 signals:
   void destroying(AdmIconText*);
+
 private:
 
 };

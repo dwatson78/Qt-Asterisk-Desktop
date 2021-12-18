@@ -6,9 +6,9 @@
 void msgHandler(QtMsgType type, const QMessageLogContext& context, const QString &msg)
 {
   const QString symbols[] = {"DEBUG", "WARN", "ERROR", "FATAL"};
-  QString ou = QString("%1 (%2:%3 %4) [%5]: %6")
+  QString ou = QString("%1 (%2:%3 %4)\n\t[%5]: %6")
       .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz"))
-      .arg(context.file)
+      .arg(QString(context.file).split("/").last())
       .arg(context.line)
       .arg(context.function)
       .arg(symbols[type])

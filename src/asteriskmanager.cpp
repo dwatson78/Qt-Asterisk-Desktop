@@ -730,7 +730,7 @@ QString AsteriskManager::actionVoicemailRefresh(QString mailbox, QString context
   QVariantMap headers;
   headers["Context"] = context;
   headers["Mailbox"] = mailbox;
-  
+
   return sendAction("VoicemailRefresh",headers);
 }
 

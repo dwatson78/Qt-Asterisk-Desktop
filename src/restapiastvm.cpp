@@ -228,7 +228,7 @@ RestApiAstVmGetMsgSoundFile::~RestApiAstVmGetMsgSoundFile()
 void RestApiAstVmGetMsgSoundFile::set(const QVariantMap &values, bool *ok)
 {
   *ok = false;
-  if(   values.contains("vmContext") 
+  if(   values.contains("vmContext")
      && values.contains("vmBox")
      && values.contains("vmFolder")
      && values.contains("vmMsgId"))

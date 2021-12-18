@@ -77,6 +77,7 @@ protected:
 
 signals:
   void sigPlayMsgOnPhone(AdmVoiceMailWidget *obj, const QVariantMap &data);
+  void sigSeek(qint64 seekTo);
 
 private:
   void _setFolderItemName(QListWidgetItem *item);

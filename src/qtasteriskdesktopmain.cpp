@@ -50,6 +50,8 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
   _mySipPeerMap = new QMap<QString, AstSipPeer*>();
   _sipPeerMap = new QMap<QString, AstSipPeer*>();
 
+  _localBridgeMap = new QList<AstLocalBridge>();
+
   _showSipPeerActionId = new QMap<QString, AstSipPeer*>();
   _extensionStateActionId = new QMap<QString, AstSipPeer*>();
   _loginActionId = QString();
@@ -94,7 +96,11 @@ QtAsteriskDesktopMain::QtAsteriskDesktopMain(QWidget *parent) :
       ui->_extStatus->setExten(cp.getExten());
     }
   }
-
+#ifdef AST_DEBUG
+  m_astdebugFile.reset(new QFile("/tmp/ast_debug.log"));
+  m_astdebugFile.data()->open(QFile::Append | QFile::Text);
+  m_astdebugSequence = 0;
+#endif
   connectToAsterisk();
 }
 
@@ -128,6 +134,7 @@ QtAsteriskDesktopMain::~QtAsteriskDesktopMain()
   }
   delete _mySipPeerMap;
 
+  delete _localBridgeMap;
   delete _chanMap;
   delete _showSipPeerActionId;
   delete _extensionStateActionId;
@@ -242,11 +249,15 @@ void QtAsteriskDesktopMain::asteriskDisconnected()
   {
     delete _mySipPeerMap->values().at(0);
   }
+  if(_localBridgeMap->size() > 0)
+  {
+    _localBridgeMap->empty();
+  }
   AdmStatic::removeLayoutChildren(ui->_layoutSipPeersAvail);
   AdmStatic::removeLayoutChildren(ui->_layoutPrograms);
   AdmStatic::removeLayoutChildren(ui->_layoutSipPeersUnavail);
   ui->_voiceMailTabWidget->clearVoiceMailWidgets();
-  
+
   QTimer::singleShot(_asteriskConnectInterval,this,SLOT(connectToAsterisk()));
 }
 
@@ -338,12 +349,15 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
     case (AsteriskManager::Success):
     {
 #ifdef AST_DEBUG
-      QString catchMe = AdmStatic::eventToString(arg2,"(zzNOTESTzz)");
+      QString catchMe = AdmStatic::eventToString(arg2,"(.)");
       if(!catchMe.isNull() && !catchMe.isEmpty())
       {
-        qDebug() << "QtAsteriskDesktopMain::asteriskResponseSent:"
-                 << catchMe
-        ;
+        QTextStream out(m_astdebugFile.data());
+        m_astdebugSequence++;
+        out << QString("CustomSequence: %1\n").arg(m_astdebugSequence);
+        out << QString("CustomTimestamp: %1\n").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
+        out << catchMe;
+        out.flush();
       }
 #endif
       if(_loginActionId.isNull() == false && arg3 == _loginActionId)
@@ -398,11 +412,6 @@ void QtAsteriskDesktopMain::asteriskResponseSent(AsteriskManager::Response arg1,
         if(arg1 == AsteriskManager::Success && peer)
         {
           peer->sExtensionStatusEvent(arg2);
-          if(peer->getObjectName().toString() == "2004"
-             || peer->getObjectName().toString() == "4004")
-          {
-            qDebug() << peer->getObjectName().toString() << " changed once again!";
-          }
         }
       }
       break;
@@ -441,9 +450,12 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
   QString catchMe = AdmStatic::eventToString(arg2,"(.)");
   if(!catchMe.isNull() && !catchMe.isEmpty())
   {
-    qDebug() << "QtAsteriskDesktopMain::asteriskEventGenerated:"
-             << catchMe
-    ;
+      QTextStream out(m_astdebugFile.data());
+      m_astdebugSequence++;
+      out << QString("CustomSequence: %1\n").arg(m_astdebugSequence);
+      out << QString("CustomTimestamp: %1\n").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
+      out << catchMe;
+      out.flush();
   }
 #endif
 
@@ -474,46 +486,6 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
                 this, SLOT(sDestroyingChannel(AstChannel*))
         );
         _chanMap->insert(chan->getUuid(), chan);
-      }
-      break;
-    }
-    case AsteriskManager::Masquerade:
-    {
-      /*
-        catchMeIfYouCan: Begin Caught Event Info
-        catchMeIfYouCan: arg1: Event:  Masquerade
-        catchMeIfYouCan: ChanVar:  "Parked/SIP/4005-0000020c" :  "CHANNEL(uniqueid)" :  QVariant(QString, "1434654886.624")
-        catchMeIfYouCan: ChanVar:  "SIP/4005-0000020c" :  "CHANNEL(uniqueid)" :  QVariant(QString, "1434654879.623")
-        catchMeIfYouCan: arg2:  "Clone" :  QVariant(QString, "SIP/4005-0000020c")
-        catchMeIfYouCan: arg2:  "CloneState" :  QVariant(QString, "Up")
-        catchMeIfYouCan: arg2:  "Event" :  QVariant(QString, "Masquerade")
-        catchMeIfYouCan: arg2:  "Original" :  QVariant(QString, "Parked/SIP/4005-0000020c")
-        catchMeIfYouCan: arg2:  "OriginalState" :  QVariant(QString, "Down")
-        catchMeIfYouCan: arg2:  "Privilege" :  QVariant(QString, "call,all")
-        catchMeIfYouCan: End Caught Event Info
-      */
-      bool origFound = false;
-      QVariant vOrigUuid = AstChannel::getChanVar(
-            arg2,
-            arg2.value("Original").toString(),
-            "CHANNEL(uniqueid)",
-            &origFound
-      );
-      if(origFound && _chanMap->contains(vOrigUuid.toString()))
-      {
-        bool cloneFound = false;
-        QVariant vCloneUuid = AstChannel::getChanVar(
-              arg2,
-              arg2.value("Clone").toString(),
-              "CHANNEL(uniqueid)",
-              &cloneFound
-        );
-        if(cloneFound && _chanMap->contains(vCloneUuid.toString()))
-        {
-          AstChannel *origChan = _chanMap->value(vOrigUuid.toString());
-          AstChannel *cloneChan = _chanMap->value(vCloneUuid.toString());
-          origChan->sMasqueradeChannel(arg2, cloneChan);
-        }
       }
       break;
     }
@@ -604,7 +576,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     case AsteriskManager::Newstate:
     case AsteriskManager::NewCallerid:
     case AsteriskManager::Rename:
-    case AsteriskManager::MusicOnHold:
+    case AsteriskManager::MusicOnHoldStart:
+    case AsteriskManager::MusicOnHoldStop:
     {
       //Get the Uniqueid
       QString uuid1,uuid2;
@@ -645,7 +618,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
     {
       break;
     }
-    case AsteriskManager::Bridge:
+    //case AsteriskManager::Bridge:
     case AsteriskManager::BridgeEnter:
     case AsteriskManager::BridgeMerge:
     {
@@ -663,6 +636,107 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         callUuid = arg2.value("Uniqueid1").toString();
         chanUuid1 = arg2.value("Uniqueid1").toString();
         chanUuid2 = arg2.value("Uniqueid2").toString();
+      }
+      if(_chanMap->contains(chanUuid1))
+      {
+        _chanMap->value(chanUuid1)->setBridgeUuid(callUuid);
+      }
+
+      //LocalBridge handling
+      AstLocalBridge bridge;
+      bool lbFound = false;
+      QList<AstLocalBridge>::Iterator it;
+      for(it = _localBridgeMap->begin(); it != _localBridgeMap->end(); ++it)
+      {
+        //AstLocalBridge iBridge = (*it);
+        if((*it).chanOneUuid == chanUuid1)
+        {
+          (*it).bridgeOneUuid = callUuid;
+          bridge = (*it);
+          lbFound = true;
+          break;
+        }
+        if((*it).chanOneUuid == chanUuid2)
+        {
+          (*it).bridgeOneUuid = callUuid;
+          bridge = (*it);
+          lbFound = true;
+          break;
+        }
+        if((*it).chanTwoUuid == chanUuid1)
+        {
+          (*it).bridgeTwoUuid = callUuid;
+          bridge = (*it);
+          lbFound = true;
+          break;
+        }
+        if((*it).chanTwoUuid == chanUuid2)
+        {
+          (*it).bridgeTwoUuid = callUuid;
+          bridge = (*it);
+          lbFound = true;
+          break;
+        }
+      }
+      QString newCallUuid;
+      if(lbFound)
+      {
+          qDebug() << QString("LocalBridge Found: chanOneUuid=%1, bridgeOneUuid=%2, chanTwoUuid=%3, bridgeTwoUuid=%4")
+                      .arg(bridge.chanOneUuid)
+                      .arg(bridge.bridgeOneUuid)
+                      .arg(bridge.chanTwoUuid)
+                      .arg(bridge.bridgeTwoUuid)
+          ;
+          if((!bridge.bridgeOneUuid.isNull() && !bridge.bridgeOneUuid.isEmpty())
+                  && (!bridge.bridgeTwoUuid.isNull() && !bridge.bridgeTwoUuid.isEmpty()))
+          {
+              qDebug() << "Local Bridged Channel Completed";
+              newCallUuid = bridge.bridgeOneUuid;
+          }
+      }
+      // Find the localBridge that matches this bridge
+      for(it = _localBridgeMap->begin(); it != _localBridgeMap->end(); ++it)
+      {
+          if( (!(*it).bridgeOneUuid.isEmpty() && !(*it).bridgeTwoUuid.isEmpty())
+              && (((*it).bridgeOneUuid == callUuid)||((*it).bridgeTwoUuid == callUuid)))
+          {
+              //Move channels to this call widget
+              newCallUuid = (*it).bridgeOneUuid;
+              QMap<QString, AdmCallWidget*>::Iterator it2;
+              AdmCallWidget* cw1 = NULL;
+              AdmCallWidget* cw2 = NULL;
+              for(it2 = _callMap->begin(); it2 != _callMap->end(); ++it2)
+              {
+                if(cw1 == NULL && (*it2)->getUuid() == (*it).bridgeOneUuid)
+                {
+                  cw1 = (*it2);
+                }
+                else if(cw2 == NULL && (*it2)->getUuid() == (*it).bridgeTwoUuid)
+                {
+                  cw2 = (*it2);
+                }
+                if(NULL != cw1 && NULL != cw2)
+                {
+                    QList<AstChannel*> chansToMove;
+                    QMap<QString, AstChannel *>::Iterator it3;
+                    for(it3 = cw2->getChannels()->begin(); it3 != cw2->getChannels()->end(); ++it3)
+                    {
+                        chansToMove.append((*it3));
+                    }
+                    while(chansToMove.size() > 0)
+                    {
+                        AstChannel *chan = chansToMove.takeFirst();
+                        cw2->sRemoveChannel(chan);
+                        cw1->addChannel(chan);
+                    }
+                    break;
+                }
+              }
+          }
+      }
+      if(!newCallUuid.isEmpty())
+      {
+          callUuid = newCallUuid;
       }
 
       // Call handling
@@ -702,7 +776,7 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
             _callMap->value(callUuid)->addChannel(_chanMap->value(chanUuid2));
         }
       }
-        
+
       //SwapUniqueId handling
       if(arg2.contains("SwapUniqueid"))
       {
@@ -717,15 +791,15 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           qDebug() << "call uuid" << callUuid << "contains channel" << swapId << cw1->getChannels()->contains(swapId);
           qDebug() << "chan uuid" << chanUuid2 << "exists" << _chanMap->contains(chanUuid2);
           qDebug() << "call uuid" << callUuid << "contains channel" << chanUuid2 << cw1->getChannels()->contains(chanUuid2);
-          if(cw1->getChannels()->contains(swapId))
-          {
-            qDebug() << "Removing channel" << swapId << "from call" << callUuid;
-            cw1->sRemoveChannel(_chanMap->value(swapId));
-          }
           if(!cw1->getChannels()->contains(chanUuid2))
           {
             qDebug() << "Adding channel" << chanUuid2 << "to call" << callUuid;
             cw1->addChannel(_chanMap->value(chanUuid2));
+          }
+          if(cw1->getChannels()->contains(swapId))
+          {
+            qDebug() << "Removing channel" << swapId << "from call" << callUuid;
+            cw1->sRemoveChannel(_chanMap->value(swapId));
           }
         }
       }
@@ -761,11 +835,8 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
       }
       break;
     }
-    case AsteriskManager::Dial:
+    case AsteriskManager::DialEnd:
     {
-      if(arg2.contains("SubEvent") && arg2.value("SubEvent").toString() != "Begin")
-        return;
-
       QString uuid = arg2.value("UniqueID").toString();
       if(_chanMap->contains(uuid))
       {
@@ -897,11 +968,6 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
           widget->setSipPeer(peer);
         }
         widget->sExtensionStatusEvent(arg2);
-        if(peer->getObjectName().toString() == "2004"
-           || peer->getObjectName().toString() == "4004")
-        {
-          qDebug() << peer->getObjectName().toString() << " changed once again!";
-        }
       } else if(exten.toString().startsWith("*76")) {
         QRegExp re("^\\*76(.*)$");
         if(re.exactMatch(exten.toString()))
@@ -916,16 +982,49 @@ void QtAsteriskDesktopMain::asteriskEventGenerated(AsteriskManager::Event arg1, 
         }
       } else if(NULL != peer /*&& exten.toString() != sipPeerName*/) {
         peer->sExtensionStatusEvent(arg2);
-        if(peer->getObjectName().toString() == "2004"
-           || peer->getObjectName().toString() == "4004")
+      }
+      break;
+    }
+    case AsteriskManager::DeviceStateChange:
+    {
+      if(arg2.contains("Device") && arg2.contains("State"))
+      {
+        //Is this a DND update?
+        QRegExp re("^Custom:(DEV)?DND(.*)$");
+        if(re.exactMatch(arg2.value("Device").toString()))
         {
-          qDebug() << peer->getObjectName().toString() << " changed once again!";
+          AstSipPeer *peer = NULL;
+          QString sipPeerName = re.cap(2);
+          if(_sipPeerMap->contains(sipPeerName))
+            peer = _sipPeerMap->value(sipPeerName);
+          else if(_mySipPeerMap->contains(sipPeerName))
+            peer = _mySipPeerMap->value(sipPeerName);
+          if(NULL != peer)
+          {
+            bool isDndOn = arg2.value("State").toString() == "BUSY";
+            peer->setDnd(isDndOn);
+          }
         }
       }
       break;
     }
-    case AsteriskManager::MessageWaiting:
+    case AsteriskManager::LocalBridge:
     {
+      QString uuid1;
+      QString uuid2;
+      if(arg2.contains("LocalOneUniqueid"))
+          uuid1 = arg2.value("LocalOneUniqueid").toString();
+      if(arg2.contains("LocalTwoUniqueid"))
+          uuid2 = arg2.value("LocalTwoUniqueid").toString();
+      if((!uuid1.isNull() && !uuid1.isEmpty())
+         && (!uuid2.isNull() && !uuid2.isEmpty()))
+      {
+          qDebug() << "Local Bridge Created:" << arg2.value("LocalOneChannel").toString() << arg2.value("LocalTwoChannel").toString();
+          AstLocalBridge bridge;
+          bridge.chanOneUuid = uuid1;
+          bridge.chanTwoUuid = uuid2;
+          _localBridgeMap->append(bridge);
+      }
       break;
     }
     default:
@@ -1288,7 +1387,22 @@ void QtAsteriskDesktopMain::sPickUpParkedCall(AstParkedCall *parkedCall)
 void QtAsteriskDesktopMain::sDestroyingChannel(AstChannel *channel)
 {
   if(_chanMap->contains(channel->getUuid()))
+  {
     _chanMap->remove(channel->getUuid());
+  }
+
+  QList<AstLocalBridge>::Iterator it;
+  for(it = _localBridgeMap->begin(); it != _localBridgeMap->end();)
+  {
+      if( (*it).chanOneUuid == channel->getUuid()
+              || (*it).chanTwoUuid == channel->getUuid())
+      {
+          qDebug() << "Removing LocalBridge:" << (*it).chanOneUuid << (*it).chanTwoUuid;
+          it = _localBridgeMap->erase(it);
+      } else {
+          ++it;
+      }
+  }
 }
 
 void QtAsteriskDesktopMain::sDestroyingCall(AdmCallWidget *call)

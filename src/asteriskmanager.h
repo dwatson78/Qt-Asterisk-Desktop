@@ -39,96 +39,162 @@ public:
   };
 
   enum Event {
-    AgentCalled,
-    AgentComplete,
-    AgentConnect,
-    AgentDump,
-    AgentRingNoAnswer,
-    Agentlogin,
-    Agentlogoff,
-    Alarm,
-    AlarmClear,
-    Bridge,
-    BridgeAction,
-    BridgeExec,
-    BridgeEnter, //13
-    BridgeLeave, //13
-    BridgeMerge, //13
-    BridgeCreate,
-    ChanSpyStart,
-    ChanSpyStop,
-    ConfbridgeEnd,
-    ConfbridgeJoin,
-    ConfbridgeLeave,
-    ConfbridgeStart,
-    ConfbridgeTalking,
-    DAHDIChannel,
-    DNDState,
-    DTMF,
-    Dial,
-    DialBegin, //13
-    DialEnd, //13
-    ExtensionStatus,
-    FullyBooted,
-    Hangup,
-    HangupHandlerPop,
-    HangupHandlerPush,
-    HangupHandlerRun,
-    HangupRequest,
-    Hold,
-    Join,
-    Leave,
-    LocalBridge,
-    LogChannel,
-    Masquerade,
-    MeetmeEnd,
-    MeetmeJoin,
-    MeetmeLeave,
-    MeetmeMute,
-    MeetmeTalkRequest,
-    MeetmeTalking,
-    MessageWaiting,
-    ModuleLoadReport,
-    NewAccountCode,
-    NewCallerid,
-    NewPeerAccount,
-    Newchannel,
-    NewConnectedLine,
-    Newexten,
-    Newstate,
-    OriginateResponse,
-    ParkedCall,
-    ParkedCallGiveUp,
-    ParkedCallTimeOut,
-    Pickup,
-    PresenceStatus,
-    QueueCallerAbandon,
-    QueueMemberAdded,
-    QueueMemberPaused,
-    QueueMemberPenalty,
-    QueueMemberRemoved,
-    QueueMemberRinginuse,
-    QueueMemberStatus,
-    Rename,
-    Shutdown,
-    SoftHangupRequest,
-    SpanAlarm,
-    SpanAlarmClear,
-    UnParkedCall,
-    VarSet,
-    // Event yg gak ke dokumentasi di 'make full' asterisk
-    CoreShowChannel,
-    CoreShowChannelsComplete,
-    MusicOnHold,
-    PeerEntry,
-    PeerlistComplete,
-    PeerStatus,
-    QueueEntry,
-    QueueMember,
-    QueueParams,
-    QueueStatusComplete,
-    RTCPReceived,
-    RTCPSent
+      NOOP_PLACEHOLDER
+    , AgentCalled
+    , AgentComplete
+    , AgentConnect
+    , AgentDump
+    , AgentLogin
+    , AgentLogoff
+    , AgentRingNoAnswer
+    , Agents
+    , AgentsComplete
+    , AGIExecEnd
+    , AGIExecStart
+    , Alarm
+    , AlarmClear
+    , AorDetail
+    , AsyncAGIEnd
+    , AsyncAGIExec
+    , AsyncAGIStart
+    , AttendedTransfer
+    , AuthDetail
+    , AuthMethodNotAllowed
+    , BlindTransfer
+    , BridgeCreate
+    , BridgeDestroy
+    , BridgeEnter
+    , BridgeInfoChannel
+    , BridgeInfoComplete
+    , BridgeLeave
+    , BridgeMerge
+    , BridgeVideoSourceUpdate
+    , Cdr
+    , CEL
+    , ChallengeResponseFailed
+    , ChallengeSent
+    , ChannelTalkingStart
+    , ChannelTalkingStop
+    , ChanSpyStart
+    , ChanSpyStop
+    , ConfbridgeEnd
+    , ConfbridgeJoin
+    , ConfbridgeLeave
+    , ConfbridgeList
+    , ConfbridgeMute
+    , ConfbridgeRecord
+    , ConfbridgeStart
+    , ConfbridgeStopRecord
+    , ConfbridgeTalking
+    , ConfbridgeUnmute
+    , ContactStatus
+    , ContactStatusDetail
+    , CoreShowChannel
+    , CoreShowChannelsComplete
+    , DAHDIChannel
+    , DeviceStateChange
+    , DeviceStateListComplete
+    , DialBegin
+    , DialEnd
+    , DNDState
+    , DTMFBegin
+    , DTMFEnd
+    , EndpointDetail
+    , EndpointDetailComplete
+    , EndpointList
+    , EndpointListComplete
+    , ExtensionStateListComplete
+    , ExtensionStatus
+    , FailedACL
+    , FAXSession
+    , FAXSessionsComplete
+    , FAXSessionsEntry
+    , FAXStats
+    , FAXStatus
+    , FullyBooted
+    , Hangup
+    , HangupHandlerPop
+    , HangupHandlerPush
+    , HangupHandlerRun
+    , HangupRequest
+    , Hold
+    , IdentifyDetail
+    , InvalidAccountID
+    , InvalidPassword
+    , InvalidTransport
+    , LoadAverageLimit
+    , LocalBridge
+    , LocalOptimizationBegin
+    , LocalOptimizationEnd
+    , LogChannel
+    , MCID
+    , MeetmeEnd
+    , MeetmeJoin
+    , MeetmeLeave
+    , MeetmeMute
+    , MeetmeTalking
+    , MeetmeTalkRequest
+    , MemoryLimit
+    , MessageWaiting
+    , MiniVoiceMail
+    , MonitorStart
+    , MonitorStop
+    , MusicOnHoldStart
+    , MusicOnHoldStop
+    , MWIGet
+    , MWIGetComplete
+    , NewAccountCode
+    , NewCallerid
+    , Newchannel
+    , NewConnectedLine
+    , NewExten
+    , Newstate
+    , OriginateResponse
+    , ParkedCall
+    , ParkedCallGiveUp
+    , ParkedCallSwap
+    , ParkedCallTimeOut
+    , PeerEntry
+    , PeerStatus
+    , Pickup
+    , PresenceStateChange
+    , PresenceStateListComplete
+    , PresenceStatus
+    , QueueCallerAbandon
+    , QueueCallerJoin
+    , QueueCallerLeave
+    , QueueMemberAdded
+    , QueueMemberPause
+    , QueueMemberPenalty
+    , QueueMemberRemoved
+    , QueueMemberRinginuse
+    , QueueMemberStatus
+    , ReceiveFAX
+    , Registry
+    , Reload
+    , Rename
+    , RequestBadFormat
+    , RequestNotAllowed
+    , RequestNotSupported
+    , RTCPReceived
+    , RTCPSent
+    , SendFAX
+    , SessionLimit
+    , SessionTimeout
+    , Shutdown
+    , SIPQualifyPeerDone
+    , SoftHangupRequest
+    , SpanAlarm
+    , SpanAlarmClear
+    , Status
+    , StatusComplete
+    , SuccessfulAuth
+    , TransportDetail
+    , UnexpectedAddress
+    , Unhold
+    , UnParkedCall
+    , UserEvent
+    , VarSet
   };
 
   enum ExtStatus{

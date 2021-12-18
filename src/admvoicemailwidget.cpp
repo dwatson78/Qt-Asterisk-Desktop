@@ -13,6 +13,8 @@
 #include <QMetaObject>
 #include <QMetaEnum>
 #include <QInputDialog>
+#include <QFuture>
+#include <QtConcurrent/QtConcurrentRun>
 
 AdmVoiceMailWidget::AdmVoiceMailWidget(QString mailbox, QWidget *parent) :
   QWidget(parent),
@@ -31,8 +33,8 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString mailbox, QWidget *parent) :
       _vmContext = vmBoxParts[1];
     }
   }
-  
-  _mObj = new Phonon::MediaObject();
+
+  _mObj = new Phonon::MediaObject(this);
   _mSrc = Phonon::MediaSource();
   _mOut = new Phonon::AudioOutput(Phonon::CommunicationCategory, this);
   Phonon::createPath(_mObj,_mOut);
@@ -79,6 +81,8 @@ AdmVoiceMailWidget::AdmVoiceMailWidget(QString mailbox, QWidget *parent) :
             this, SLOT(sMediaObjectSourceChanged(Phonon::MediaSource)));
   connect(_mObj,  SIGNAL(finished()),
           this,   SLOT(sMediaObjectFinished()));
+  connect(this,   SIGNAL(sigSeek(qint64)),
+          _mObj,  SLOT(seek(qint64)));
   connect(ui->_msgSeekBack, SIGNAL(clicked()),
           this,             SLOT(sMsgSeekBackClick()));
   connect(ui->_msgSeekForward,  SIGNAL(clicked()),
@@ -527,18 +531,21 @@ void AdmVoiceMailWidget::sMsgSeekBackClick()
 {
   if(_mObj->isSeekable() && _mObj->state() == Phonon::PlayingState)
   {
-    _mObj->seek( (_mObj->currentTime() - 1500) < 0
-                  ? 0
-                  : _mObj->currentTime() - 1500);
+    qint64 seekTo = (_mObj->currentTime() - 1500) < 0
+            ? 0
+            : _mObj->currentTime() - 1500;
+    emit sigSeek(seekTo);
   }
 }
 void AdmVoiceMailWidget::sMsgSeekForwardClick()
 {
+
   if(_mObj->isSeekable() && _mObj->state() == Phonon::PlayingState)
   {
-    _mObj->seek( (_mObj->currentTime() + 1500) >= _mObj->totalTime()
-                  ? _mObj->totalTime()
-                  : _mObj->currentTime() + 1500);
+    qint64 seekTo = (_mObj->currentTime() + 1500) >= _mObj->totalTime()
+            ? _mObj->totalTime()
+            : _mObj->currentTime() + 1500;
+    emit sigSeek(seekTo);
   }
 }
 

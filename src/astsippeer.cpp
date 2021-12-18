@@ -114,21 +114,6 @@ void AstSipPeer::sPeerStatusEvent(const QVariantMap &event)
 
 void AstSipPeer::sResponseShowSipPeer(const QVariantMap &event)
 {
-  /*arg2:  "Address-IP" :  QVariant(QString, "10.121.212.154")
-arg2:  "Address-Port" :  QVariant(uint, 5060)
-arg2:  "Busy-level" :  QVariant(uint, 0)
-arg2:  "Call-limit" :  QVariant(uint, 2147483647)
-arg2:  "Callerid" :  QVariant(QString, ""Daniel W Desk" <2004>")
-arg2:  "Callgroup" :  QVariant(QString, "")
-arg2:  "Context" :  QVariant(QString, "from-internal")
-arg2:  "Default-Username" :  QVariant(uint, 2004)
-arg2:  "ObjectName" :  QVariant(uint, 2004)
-arg2:  "Pickupgroup" :  QVariant(QString, "")
-arg2:  "Reg-Contact" :  QVariant(QString, "sip:2004@10.121.212.154")
-arg2:  "SIP-Useragent" :  QVariant(QString, "PolycomVVX-VVX_300-UA/5.3.0.12074")
-arg2:  "Status" :  QVariant(QString, "OK (24 ms)")
-arg2:  "VoiceMailbox" :  QVariant(uint, 5004)
-arg3:  "{b5e85124-23b3-4c32-b024-335f0a6a0b8c}" */
   QString varName = "Address-IP";
   if(event.contains(varName))
     _ipAdress = event.value(varName).toString();

@@ -12,6 +12,12 @@
 #include "astsippeer.h"
 #include "admvoicemailtabwidget.h"
 #include "dlgphonefeatures.h"
+#include "astlocalbridge.h"
+
+#ifdef AST_DEBUG
+  #include <QScopedPointer>
+  #include <QFile>
+#endif
 
 namespace Ui {
 class QtAsteriskDesktopMain;
@@ -61,7 +67,7 @@ public slots:
   void sPlayMsgOnPhone(AdmVoiceMailWidget* obj, const QVariantMap &data);
 
   void sSendDtmf(AstChannel *channel, QString dtmfSequence, bool hangup = false, int hangupDelay = 0);
-  
+
   void sSendAmiVoicemailRefresh(QString mailbox, QString context = "default");
 
   static QtAsteriskDesktopMain* getInstance(){return _instance;}
@@ -80,10 +86,15 @@ private:
   QMap<QString, AdmExtensionWidget *> * _extensionMap;
   QMap<QString, AstSipPeer *>         * _sipPeerMap;
   QMap<QString, AstSipPeer *>         * _mySipPeerMap;
+  QList<AstLocalBridge>               * _localBridgeMap;
   static QtAsteriskDesktopMain        * _instance;
   DlgPhoneFeatures                    * _phoneFeatures;
   uint                                  _asteriskConnectInterval;
 
+#ifdef AST_DEBUG
+  QScopedPointer<QFile> m_astdebugFile;
+  int m_astdebugSequence;
+#endif
 
 };
 

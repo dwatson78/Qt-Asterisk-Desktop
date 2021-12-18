@@ -76,7 +76,7 @@ void AstParkedCall::sParkedCallEvent(AsteriskManager::Event eventType, QVariantM
   {
     case AsteriskManager::ParkedCall:
       break;
-    case AsteriskManager::Bridge:
+    case AsteriskManager::BridgeEnter:
     {
       if(NULL != from)
       {

@@ -6,6 +6,7 @@
 #include <QTime>
 #include <QVariantMap>
 #include <QSettings>
+#include <QList>
 
 #include "astchanparts.h"
 
@@ -46,6 +47,11 @@ public:
   bool getIsMusicOn(){return _isMusicOn;}
 
   static QVariant getChanVar(QVariantMap event, QString channel, QString variable, bool *found);
+
+  QString getBridgeUuid(){return _bridgeUuid;}
+  void setBridgeUuid(QString bridgeUuid){_bridgeUuid = bridgeUuid;}
+
+  QList<QVariantMap> getEvents();
 
 
 public slots:
@@ -93,6 +99,9 @@ private:
   QString       _parkedFromChannelName;
   bool          _isMusicOn;
   AstChannel  * _masq;
+  QString       _bridgeUuid;
+  QList<QVariantMap> _events;
+
 };
 
 #endif // ASTCHANNEL_H

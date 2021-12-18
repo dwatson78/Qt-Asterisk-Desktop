@@ -61,7 +61,9 @@ AstChannel::AstChannel(const QString &uuid, QVariantMap &event, QObject *parent)
   if(event.contains("ChannelStateDesc"))
     this->_chanStateDesc = event.value("ChannelStateDesc").toString();
   if(event.contains("Context"))
+  {
     this->_context = event.value("Context").toString();
+  }
   if(event.contains("Exten"))
   {
     this->_exten = event.value("Exten").toString() == ""
@@ -73,7 +75,10 @@ AstChannel::AstChannel(const QString &uuid, QVariantMap &event, QObject *parent)
     emit updated(this);
     emit parkOn(this, event);
   }
+  _events = QList<QVariantMap>();
 
+  event.insert(QString("EventTimeStamp"), QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
+  _events.append(event);
 }
 AstChannel::~AstChannel()
 {
@@ -84,6 +89,8 @@ AstChannel::~AstChannel()
 
 void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap event)
 {
+  event.insert(QString("EventTimeStamp"), QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
+  _events.append(event);
   switch(eventType)
   {
     case AsteriskManager::Newstate:
@@ -170,26 +177,20 @@ void AstChannel::sChannelEvent(AsteriskManager::Event eventType, QVariantMap eve
       }
       break;
     }
-    case AsteriskManager::MusicOnHold:
+    case AsteriskManager::MusicOnHoldStart:
     {
-      if(event.contains("State"))
-      {
-        if(event.value("State").toString() == "Start")
-        {
-          this->sMusicOn(event);
-          if(NULL != this->_masq)
-            this->_masq->sMusicOn(event);
-        }
-        else if(event.value("State").toString() == "Stop")
-        {
-          this->sMusicOff(event);
-          if(NULL != this->_masq)
-            this->_masq->sMusicOff(event);
-        }
-      }
+      this->sMusicOn(event);
+      if(NULL != this->_masq)
+        this->_masq->sMusicOn(event);
       break;
     }
-
+    case AsteriskManager::MusicOnHoldStop:
+    {
+      this->sMusicOff(event);
+      if(NULL != this->_masq)
+        this->_masq->sMusicOff(event);
+      break;
+    }
     case AsteriskManager::Hangup:
     {
       if(event.contains("AccountCode"))
@@ -364,20 +365,19 @@ void AstChannel::sParkOff(QVariantMap event)
   emit parkOff(this, event);
 }
 
-
 void AstChannel::sMusicOn(QVariantMap event)
 {
   this->_isMusicOn = true;
   emit updated(this);
   emit musicOn(this, event);
 }
+
 void AstChannel::sMusicOff(QVariantMap event)
 {
   this->_isMusicOn = false;
   emit updated(this);
   emit musicOff(this, event);
 }
-
 
 QVariant AstChannel::getChanVar(QVariantMap event, QString channel, QString variable, bool *found)
 {
@@ -476,4 +476,9 @@ QString AstChannel::getParkedFromStr()
     }
   }
   return QString();
+}
+
+QList<QVariantMap> AstChannel::getEvents()
+{
+    return _events;
 }

@@ -35,6 +35,8 @@ public:
 public slots:
   void sUpdateChannel();
   void sShowHideMusic();
+  void sCustomContextMenu(const QPoint &point);
+  void sShowEvents(bool triggered);
 
 protected:
 
@@ -45,7 +47,6 @@ private:
   Ui::AdmChanWidget *ui;
   AstChannel *_chan;
   bool _isMusicShowing;
-
 };
 
 #endif // ADMCHANWIDGET_H

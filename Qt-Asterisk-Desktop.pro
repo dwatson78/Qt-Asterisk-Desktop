@@ -54,6 +54,7 @@ SOURCES +=   \
     src/astchanparts.cpp \
     src/dlgphonefeatures.cpp \
     src/admxmppbuddyitem.cpp \
+    src/astdialogshowevents.cpp \
     src/admintercomvideodialog.cpp \
     src/delayedamiaction.cpp
 
@@ -85,6 +86,8 @@ HEADERS +=   \
     src/astchanparts.h \
     src/dlgphonefeatures.h \
     src/admxmppbuddyitem.h \
+    src/astdialogshowevents.h \
+    src/astlocalbridge.h \
     src/admintercomvideodialog.h \
     src/delayedamiaction.h
 
@@ -103,6 +106,7 @@ FORMS +=     \
     src/ui/admxmppchatwidget.ui \
     src/ui/admxmppchatblockwidget.ui \
     src/ui/dlgphonefeatures.ui \
+    src/ui/astdialogshowevents.ui \
     src/ui/admintercomvideodialog.ui
 
 RESOURCES += \
@@ -123,3 +127,5 @@ MOC_DIR = tmp/$$DESTDIR/moc
 OBJECTS_DIR = tmp/$$DESTDIR/obj
 UI_DIR = tmp/$$DESTDIR/ui
 RCC_DIR = tmp/$$DESTDIR/rcc
+
+#DEFINES += AST_DEBUG
